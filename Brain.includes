@@ -1,0 +1,7 @@
+core
+core/math
+thirdparty/misc
+thirdparty/rapidjson
+thirdparty/rapidjson/error
+thirdparty/rapidjson/internal
+thirdparty/rapidjson/msinttypes

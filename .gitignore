@@ -1,0 +1,79 @@
+# Compilation
+bin/*
+shaders/bin/*
+
+*.gen.*
+
+# Scons cache
+.sconf_temp
+.sconsign.dblite
+*.pyc
+
+# QT project files
+*.config
+*.creator
+*.creator.*
+*.files
+*.includes
+
+# Prerequisites
+*.d
+
+# Vim temp files
+*.swo
+*.swp
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.a
+*_i.c
+*_p.c
+*_i.h
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+!assets/*
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
