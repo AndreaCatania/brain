@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/math/math_defs.h"
-#include "core/string.h"
+#include "brain/math/math_defs.h"
+#include "brain/string.h"
 
 namespace brain {
 class DynamicMatrix {

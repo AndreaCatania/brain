@@ -1,7 +1,7 @@
 #include "dynamic_matrix.h"
 
-#include "core/error_macros.h"
-#include "core/math/math_funcs.h"
+#include "brain/error_macros.h"
+#include "brain/math/math_funcs.h"
 
 #define FOREACH                   \
 	for (int r(0); r < rows; ++r) \

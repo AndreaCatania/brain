@@ -52,7 +52,7 @@ env.Append(LIBPATH=[executable_dir])
 Export('env')
 
 """ Script executions """
-SConscript("core/SCsub")
+SConscript("brain/SCsub")
 
 """ Build test main """
 if env.debug:

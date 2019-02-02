@@ -1,9 +1,9 @@
 
 
-#include "core/error_macros.h"
-#include "core/math/dynamic_matrix.h"
-#include "core/string.h"
-#include "core/typedefs.h"
+#include "brain/error_macros.h"
+#include "brain/math/dynamic_matrix.h"
+#include "brain/string.h"
+#include "brain/typedefs.h"
 #include <time.h>
 
 void print_line(const std::string &p_msg) {

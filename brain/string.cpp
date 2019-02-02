@@ -1,6 +1,6 @@
 #include "string.h"
 
-#include "core/math/math_funcs.h"
+#include "brain/math/math_funcs.h"
 
 std::string brain::itos(int64_t p_number, int base, bool capitalize_hex) {
 	bool sign = p_number < 0;

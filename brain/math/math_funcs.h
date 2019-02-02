@@ -31,8 +31,8 @@
 #ifndef MATH_FUNCS_H
 #define MATH_FUNCS_H
 
-#include "core/math/math_defs.h"
-#include "core/typedefs.h"
+#include "brain/math/math_defs.h"
+#include "brain/typedefs.h"
 
 #include "thirdparty/misc/pcg.h"
 

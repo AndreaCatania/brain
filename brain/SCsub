@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import methods
+
+Import('env')
+
+env_brain = env.Clone()
+
+env_brain.brain_sources = []
+
+Export("env_brain")
+
+# Add all thirdparty library used by the brain
+thirdparty_misc_sources = methods.detect_files("../thirdparty/misc", [], ['c', 'cc', 'cpp'])
+env_brain.add_source_files(env_brain.brain_sources, thirdparty_misc_sources)
+
+# Add brain cpp files
+env_brain.add_source_files(env_brain.brain_sources, "*.cpp")
+
+# Execute math scsub scritp
+SConscript("math/SCsub")
+
+lib = env_brain.add_library("brain", env_brain.brain_sources)
+env.Prepend(LIBS=[lib])

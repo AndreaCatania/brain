@@ -30,7 +30,7 @@
 
 #include "math_funcs.h"
 
-#include "core/error_macros.h"
+#include "brain/error_macros.h"
 
 pcg32_random_t brain::Math::default_pcg = { 12047754176567800795ULL, PCG_DEFAULT_INC_64 };
 

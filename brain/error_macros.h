@@ -30,8 +30,8 @@
 
 #pragma once
 
-#include "core/string.h"
-#include "core/typedefs.h"
+#include "brain/string.h"
+#include "brain/typedefs.h"
 
 /**
   * Important this is a modified version of error_macros.h of Godot since
