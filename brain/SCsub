@@ -19,6 +19,7 @@ env_brain.add_source_files(env_brain.brain_sources, "*.cpp")
 
 # Execute math scsub scritp
 SConscript("math/SCsub")
+SConscript("areas/SCsub")
 
 lib = env_brain.add_library("brain", env_brain.brain_sources)
 env.Prepend(LIBS=[lib])
