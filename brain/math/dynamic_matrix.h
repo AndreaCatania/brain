@@ -21,9 +21,18 @@ public:
 
 	~DynamicMatrix();
 
+	void set_size(const uint32_t p_rows, const uint32_t p_columns);
 	uint32_t get_rows() const { return rows; }
 	uint32_t get_columns() const { return columns; }
 
+	/**
+	 * Set the matrix using an array
+	 * The array is split in rows depending on the column count.
+	 *
+	 * This is marked as unsafe because it accept a pointer and there is no way
+	 * to know if the passed array has the correct dimension.
+	 * The used must know how to use it.
+	 */
 	void unsafe_set(const real_t *const p_matrix);
 	void unsafe_set_row(const uint32_t p_row, const real_t *const p_data);
 

@@ -2,6 +2,7 @@
 
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
+#include <algorithm>
 
 #define FOREACH                   \
 	for (int r(0); r < rows; ++r) \
@@ -48,6 +49,13 @@ brain::DynamicMatrix::~DynamicMatrix() {
 	free();
 }
 
+void brain::DynamicMatrix::set_size(const uint32_t p_rows, const uint32_t p_columns) {
+	free();
+	rows = p_rows;
+	columns = p_columns;
+	init();
+}
+
 void brain::DynamicMatrix::unsafe_set(const real_t *const p_matrix) {
 	for (int r(0); r < rows; ++r) {
 		unsafe_set_row(r, (p_matrix + r * columns));
@@ -56,10 +64,7 @@ void brain::DynamicMatrix::unsafe_set(const real_t *const p_matrix) {
 
 void brain::DynamicMatrix::unsafe_set_row(const uint32_t p_row, const real_t *const p_data) {
 	ERR_FAIL_COND(p_row > rows);
-
-	for (int c(0); c < columns; ++c) {
-		matrix[p_row][c] = p_data[c];
-	}
+	std::copy(p_data, p_data + columns, matrix[p_row]);
 }
 
 real_t brain::DynamicMatrix::get(int p_row, int p_column) const {
