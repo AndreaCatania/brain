@@ -50,7 +50,11 @@ public:
 	static const uint64_t RANDOM_MAX = 0xFFFFFFFF;
 
 	static _ALWAYS_INLINE_ real_t sigmoid(real_t p_x) { return real_t(1.0) / (1.0 + pow(Math_E, -p_x)); }
-	static _ALWAYS_INLINE_ real_t sigmoid_derivative(real_t p_x) { return p_x * (1.0 - p_x); }
+	/**
+	 * This is the derivative of the sigmoid,
+	 * but works only if you pass the sigmoid of X
+	 */
+	static _ALWAYS_INLINE_ real_t sigmoid_derivative(real_t p_sigmoid) { return p_sigmoid * (1.0 - p_sigmoid); }
 
 	static _ALWAYS_INLINE_ double sin(double p_x) { return ::sin(p_x); }
 	static _ALWAYS_INLINE_ float sin(float p_x) { return ::sinf(p_x); }

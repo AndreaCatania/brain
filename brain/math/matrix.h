@@ -8,22 +8,22 @@ typedef real_t (*matrix_map_a1)(real_t p_val, real_t p_arg1);
 
 // TODO make this class COW please
 namespace brain {
-class DynamicMatrix {
+class Matrix {
 
 	uint32_t rows;
 	uint32_t columns;
 	real_t *matrix;
 
 public:
-	DynamicMatrix();
-	DynamicMatrix(
+	Matrix();
+	Matrix(
 			const uint32_t p_rows,
 			const uint32_t p_columns,
 			const real_t *const p_matrix = nullptr);
 
-	DynamicMatrix(const DynamicMatrix &p_other);
+	Matrix(const Matrix &p_other);
 
-	~DynamicMatrix();
+	~Matrix();
 
 	void resize(const uint32_t p_rows, const uint32_t p_columns);
 	uint32_t get_rows() const { return rows; }
@@ -47,33 +47,33 @@ public:
 
 	// Map each element in the matrix
 	void map(matrix_map p_func);
-	DynamicMatrix mapped(matrix_map p_func);
+	Matrix mapped(matrix_map p_func) const;
 
 	void map(matrix_map_a1 p_func, real_t p_arg1);
-	DynamicMatrix mapped(matrix_map_a1 p_func, real_t p_arg1);
+	Matrix mapped(matrix_map_a1 p_func, real_t p_arg1) const;
 
-	real_t total();
+	real_t summation() const;
 
 	/**
 	 * Perform a element wise multiplication
 	 */
-	DynamicMatrix element_wise_multiplication(const DynamicMatrix &p_other);
+	Matrix element_wise_multiplication(const Matrix &p_other);
 
 	void transpose();
-	DynamicMatrix transposed();
+	Matrix transposed() const;
 
-	void operator=(const DynamicMatrix &p_other);
+	void operator=(const Matrix &p_other);
 
-	DynamicMatrix operator*(const DynamicMatrix &p_other) const;
+	Matrix operator*(const Matrix &p_other) const;
 
 	void operator*=(real_t p_num) const;
-	DynamicMatrix operator*(real_t p_num) const;
+	Matrix operator*(real_t p_num) const;
 
-	void operator+=(const DynamicMatrix &p_other);
-	DynamicMatrix operator+(const DynamicMatrix &p_other) const;
+	void operator+=(const Matrix &p_other);
+	Matrix operator+(const Matrix &p_other) const;
 
-	void operator-=(const DynamicMatrix &p_other);
-	DynamicMatrix operator-(const DynamicMatrix &p_other) const;
+	void operator-=(const Matrix &p_other);
+	Matrix operator-(const Matrix &p_other) const;
 
 	operator std::string() const;
 
