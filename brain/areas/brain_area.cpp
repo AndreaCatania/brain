@@ -167,11 +167,10 @@ real_t brain::BrainArea::learn(
 		gradient *= p_learn_rate;
 
 		// Prepare the input for delta weight calc
-		Matrix &input_transposed(p_cache->layers_inputs[l]);
-		input_transposed.transpose();
+		const Matrix input_transposed(p_cache->layers_output[l - 1].transposed());
 
 		// Adjust weights by its delta
-		weights[WEIGHT_ID(l - 1)] += gradient * input_transposed;
+		weights[WEIGHT_ID(l - 1)] += (gradient * input_transposed);
 		biases[BIAS_ID(l - 1)] += gradient;
 	}
 
@@ -192,31 +191,26 @@ void brain::BrainArea::guess(
 	ERR_FAIL_COND(p_input.get_rows() != get_layer_size(INPUT_LAYER_ID));
 	ERR_FAIL_COND(p_input.get_columns() != 1);
 
-	if (p_cache) {
-		p_cache->layers_inputs.resize(get_layer_count());
+	if (p_cache)
 		p_cache->layers_output.resize(get_layer_count());
-	}
 
 	r_guess = p_input;
 
-	if (p_cache)
-		p_cache->layers_inputs[0] = r_guess;
-
 	for (int i(0); i < weights.size(); ++i) {
 
-		// Layer calculation
-		r_guess = weights[i] * r_guess + biases[i];
-
 		if (p_cache)
-			p_cache->layers_inputs[i + 1] = r_guess;
+			p_cache->layers_output[i] = r_guess;
+
+		// Layer calculation
+		r_guess = (weights[i] * r_guess) + biases[i];
 
 		// Activation of next layer
 		DEBUG_ONLY(ERR_FAIL_COND(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX));
 		r_guess.map(activation_functions[activations[ACTIVATION_ID(i + 1)]]);
-
-		if (p_cache)
-			p_cache->layers_output[i + 1] = r_guess;
 	}
+
+	if (p_cache)
+		p_cache->layers_output[get_layer_count() - 1] = r_guess;
 }
 
 void brain::BrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {

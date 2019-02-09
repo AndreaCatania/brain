@@ -13,7 +13,6 @@ public:
 	};
 
 	struct LearningCache {
-		std::vector<brain::Matrix> layers_inputs;
 		std::vector<brain::Matrix> layers_output;
 	};
 

@@ -7,6 +7,8 @@
 #include "brain/string.h"
 #include "brain/typedefs.h"
 #include <time.h>
+#include <algorithm>
+#include <random>
 
 void print_line(const std::string &p_msg) {
 	printf("[INFO] ");
@@ -106,29 +108,81 @@ void test_brain_area() {
 	area1.resize_hidden_layers(1);
 	area1.set_hidden_layer(0, 2, brain::BrainArea::ACTIVATION_SIGMOID);
 
-	area1.set_output_layer_size(2);
+	area1.set_output_layer_size(1);
 
 	brain::Math::seed(time(nullptr));
 	area1.randomize_weights(1);
 	area1.randomize_biases(1);
 
-	real_t inputs[] = { 1, 0 };
-	brain::Matrix input(2, 1, inputs);
-
-	real_t expected_m[] = { 1, 0 };
-	brain::Matrix expected(2, 1, expected_m);
+	std::vector<brain::Matrix> inputs;
+	std::vector<brain::Matrix> expected;
+	{
+		real_t a[] = { 1, 0 };
+		real_t b[] = { 1 };
+		inputs.push_back(brain::Matrix(2, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 0, 1 };
+		real_t b[] = { 1 };
+		inputs.push_back(brain::Matrix(2, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 1, 1 };
+		real_t b[] = { 0 };
+		inputs.push_back(brain::Matrix(2, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 0, 0 };
+		real_t b[] = { 0 };
+		inputs.push_back(brain::Matrix(2, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
 
 	real_t error;
 	brain::BrainArea::LearningCache lc;
-	for (int i(0); i < 10000; ++i) {
-		error = area1.learn(input, expected, 0.05, &lc);
+	for (int t(0); t < 100000; ++t) {
+		for (int i(0); i < inputs.size(); ++i) {
+			error = area1.learn(inputs[i], expected[i], 0.05, &lc);
+		}
+
+		// SGD prefer shuffled data
+		uint32_t seed = time(nullptr);
+		std::shuffle(inputs.begin(), inputs.end(), std::default_random_engine(seed));
+		std::shuffle(expected.begin(), expected.end(), std::default_random_engine(seed));
 	}
 
-	// Just guess
-	brain::Matrix guess;
-	area1.guess(input, guess);
+	print_line("Error: " + brain::rtos(error));
 
-	print_line("Error: " + brain::rtos(error) + " result " + std::string(guess));
+	// Just guess now
+	brain::Matrix guess;
+
+	{
+		real_t x[] = { 1, 0 };
+		brain::Matrix input(2, 1, x);
+		area1.guess(input, guess);
+		print_line(std::string(input) + " Guess: " + std::string(guess));
+	}
+	{
+		real_t x[] = { 1, 1 };
+		brain::Matrix input(2, 1, x);
+		area1.guess(input, guess);
+		print_line(std::string(input) + " Guess: " + std::string(guess));
+	}
+	{
+		real_t x[] = { 0, 1 };
+		brain::Matrix input(2, 1, x);
+		area1.guess(input, guess);
+		print_line(std::string(input) + " Guess: " + std::string(guess));
+	}
+	{
+		real_t x[] = { 0, 0 };
+		brain::Matrix input(2, 1, x);
+		area1.guess(input, guess);
+		print_line(std::string(input) + " Guess: " + std::string(guess));
+	}
 }
 
 int main() {
