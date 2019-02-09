@@ -5,12 +5,13 @@
 #include <algorithm>
 
 #define GET_ID(row, col) (row * columns + col)
+#define TRANSPOSED_GET_ID(row, col) (col * rows + row)
 
-#define FOREACH                   \
-	for (int r(0); r < rows; ++r) \
-		for (int c(0); c < columns; ++c)
+#define FOREACH                        \
+	const int __count_(rows *columns); \
+	for (int i(0); i < __count_; ++i)
 
-#define ELEMENT matrix[GET_ID(r, c)]
+#define ELEMENT matrix[i]
 
 brain::DynamicMatrix::DynamicMatrix() :
 		rows(0),
@@ -77,34 +78,84 @@ void brain::DynamicMatrix::set_all(real_t p_value) {
 	}
 }
 
-void brain::DynamicMatrix::sigmoid() {
+void brain::DynamicMatrix::map(matrix_map p_func) {
 	FOREACH {
-		ELEMENT = brain::Math::sigmoid(ELEMENT);
+		ELEMENT = p_func(ELEMENT);
 	}
 }
 
-brain::DynamicMatrix brain::DynamicMatrix::sigmoided() const {
-	brain::DynamicMatrix ret(*this);
-	ret.sigmoid();
+brain::DynamicMatrix brain::DynamicMatrix::mapped(matrix_map p_func) {
+	DynamicMatrix ret(*this);
+	ret.map(p_func);
 	return ret;
 }
 
-void brain::DynamicMatrix::randomize(real_t p_range, uint64_t *p_seed) {
-	if (p_seed) {
-		FOREACH {
-			ELEMENT = brain::Math::rand_from_seed(p_range, p_seed);
-		}
-	} else {
-		FOREACH {
-			ELEMENT = brain::Math::random(-p_range, p_range);
-		}
+void brain::DynamicMatrix::map(matrix_map_a1 p_func, real_t p_arg1) {
+	FOREACH {
+		ELEMENT = p_func(ELEMENT, p_arg1);
 	}
 }
 
-brain::DynamicMatrix brain::DynamicMatrix::randomized(real_t p_range, uint64_t *p_seed) const {
-	brain::DynamicMatrix ret(*this);
-	ret.randomize(p_range, p_seed);
+brain::DynamicMatrix brain::DynamicMatrix::mapped(matrix_map_a1 p_func, real_t p_arg1) {
+	DynamicMatrix ret(*this);
+	ret.map(p_func, p_arg1);
 	return ret;
+}
+
+real_t brain::DynamicMatrix::total() {
+	real_t t(0);
+	FOREACH {
+		t += ELEMENT;
+	}
+	return t;
+}
+
+brain::DynamicMatrix brain::DynamicMatrix::element_wise_multiplication(const DynamicMatrix &p_other) {
+	ERR_FAIL_COND_V(get_rows() != p_other.get_rows(), DynamicMatrix());
+	ERR_FAIL_COND_V(get_columns() != p_other.get_columns(), DynamicMatrix());
+
+	DynamicMatrix res(*this);
+	for (int r(0); r < rows; ++r) {
+		for (int c(0); c < columns; ++c) {
+
+			res.matrix[GET_ID(r, c)] *= p_other.matrix[GET_ID(r, c)];
+		}
+	}
+	return res;
+}
+
+void brain::DynamicMatrix::transpose() {
+
+	if (0 >= rows || 0 >= columns)
+		return;
+
+	real_t *new_matrix = new real_t[rows * columns];
+
+	for (int r(0); r < rows; ++r) {
+		for (int c(0); c < columns; ++c) {
+			new_matrix[TRANSPOSED_GET_ID(r, c)] = matrix[GET_ID(r, c)];
+		}
+	}
+
+	const uint32_t trasposed_rows(columns);
+	const uint32_t trasposed_columns(rows);
+
+	free();
+
+	rows = trasposed_rows;
+	columns = trasposed_columns;
+	matrix = new_matrix;
+}
+
+brain::DynamicMatrix brain::DynamicMatrix::transposed() {
+	brain::DynamicMatrix ret(*this);
+	ret.transpose();
+	return ret;
+}
+
+void brain::DynamicMatrix::operator=(const DynamicMatrix &p_other) {
+	resize(p_other.rows, p_other.columns);
+	unsafe_set(p_other.matrix);
 }
 
 brain::DynamicMatrix brain::DynamicMatrix::operator*(const brain::DynamicMatrix &p_other) const {
@@ -127,9 +178,16 @@ brain::DynamicMatrix brain::DynamicMatrix::operator*(const brain::DynamicMatrix 
 	return res;
 }
 
-void brain::DynamicMatrix::operator=(const DynamicMatrix &p_other) {
-	resize(p_other.rows, p_other.columns);
-	unsafe_set(p_other.matrix);
+void brain::DynamicMatrix::operator*=(real_t p_num) const {
+	FOREACH {
+		ELEMENT *= p_num;
+	}
+}
+
+brain::DynamicMatrix brain::DynamicMatrix::operator*(real_t p_num) const {
+	brain::DynamicMatrix ret(*this);
+	ret *= p_num;
+	return ret;
 }
 
 void brain::DynamicMatrix::operator+=(const brain::DynamicMatrix &p_other) {

@@ -3,6 +3,9 @@
 #include "brain/math/math_defs.h"
 #include "brain/string.h"
 
+typedef real_t (*matrix_map)(real_t p_val);
+typedef real_t (*matrix_map_a1)(real_t p_val, real_t p_arg1);
+
 // TODO make this class COW please
 namespace brain {
 class DynamicMatrix {
@@ -42,15 +45,29 @@ public:
 
 	void set_all(real_t p_value);
 
-	void sigmoid();
-	DynamicMatrix sigmoided() const;
+	// Map each element in the matrix
+	void map(matrix_map p_func);
+	DynamicMatrix mapped(matrix_map p_func);
 
-	void randomize(real_t p_range = 0.01, uint64_t *p_seed = nullptr);
-	DynamicMatrix randomized(real_t p_range = 0.01, uint64_t *p_seed = nullptr) const;
+	void map(matrix_map_a1 p_func, real_t p_arg1);
+	DynamicMatrix mapped(matrix_map_a1 p_func, real_t p_arg1);
+
+	real_t total();
+
+	/**
+	 * Perform a element wise multiplication
+	 */
+	DynamicMatrix element_wise_multiplication(const DynamicMatrix &p_other);
+
+	void transpose();
+	DynamicMatrix transposed();
+
+	void operator=(const DynamicMatrix &p_other);
 
 	DynamicMatrix operator*(const DynamicMatrix &p_other) const;
 
-	void operator=(const DynamicMatrix &p_other);
+	void operator*=(real_t p_num) const;
+	DynamicMatrix operator*(real_t p_num) const;
 
 	void operator+=(const DynamicMatrix &p_other);
 	DynamicMatrix operator+(const DynamicMatrix &p_other) const;
