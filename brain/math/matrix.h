@@ -57,7 +57,8 @@ public:
 	/**
 	 * Perform a element wise multiplication
 	 */
-	Matrix element_wise_multiplication(const Matrix &p_other);
+	void element_wise_multiplicate(const Matrix &p_other);
+	Matrix element_wise_multiplicated(const Matrix &p_other);
 
 	void transpose();
 	Matrix transposed() const;

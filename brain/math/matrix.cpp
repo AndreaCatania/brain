@@ -110,17 +110,21 @@ real_t brain::Matrix::summation() const {
 	return t;
 }
 
-brain::Matrix brain::Matrix::element_wise_multiplication(const Matrix &p_other) {
-	ERR_FAIL_COND_V(get_rows() != p_other.get_rows(), Matrix());
-	ERR_FAIL_COND_V(get_columns() != p_other.get_columns(), Matrix());
+void brain::Matrix::element_wise_multiplicate(const Matrix &p_other) {
+	ERR_FAIL_COND(get_rows() != p_other.get_rows());
+	ERR_FAIL_COND(get_columns() != p_other.get_columns());
 
-	Matrix res(*this);
 	for (int r(0); r < rows; ++r) {
 		for (int c(0); c < columns; ++c) {
 
-			res.matrix[GET_ID(r, c)] *= p_other.matrix[GET_ID(r, c)];
+			matrix[GET_ID(r, c)] *= p_other.matrix[GET_ID(r, c)];
 		}
 	}
+}
+
+brain::Matrix brain::Matrix::element_wise_multiplicated(const Matrix &p_other) {
+	Matrix res(*this);
+	res.element_wise_multiplicate(p_other);
 	return res;
 }
 

@@ -21,7 +21,6 @@ private:
 	std::vector<Matrix> weights;
 	std::vector<Matrix> biases;
 	std::vector<Activation> activations;
-	std::vector<Matrix> errors;
 
 public:
 	BrainArea();
@@ -56,20 +55,19 @@ public:
 	const Matrix &get_layer_weights(const int p_layer) const;
 
 	/**
-	 * @brief learn is a function used to adjust the weights to guess better next time
+	 * @brief learn is a function used to train the brain area. It uses the
+	 *	stochastic gradient descent algorithm to adjust weights internally
 	 * @param p_guess
 	 * @param p_expected
-	 * @return Returns the cost of this guess, 0 == Accurate
+	 * @param p_learn_rate usually something around 0.1
+	 * @param p_cache if null the cache is cleared for each call
+	 * @return Returns the error of this guess, 0 == Accurate
 	 */
 	real_t learn(
 			const Matrix &p_input,
 			const Matrix &p_expected,
-			real_t p_lear_rate);
-
-	/**
-	 * @brief This function clear the cache used to speedup the learning process
-	 */
-	void learn_cache_clear();
+			real_t p_learn_rate,
+			LearningCache *p_cache);
 
 	/**
 	 * @brief guess
@@ -78,7 +76,8 @@ public:
 	 */
 	void guess(
 			const Matrix &p_input,
-			Matrix &r_guess);
+			Matrix &r_guess,
+			LearningCache *p_cache = nullptr);
 
 private:
 	void set_layer_size(uint32_t p_layer, uint32_t p_size);

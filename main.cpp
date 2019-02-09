@@ -68,7 +68,7 @@ void test_brain_area_train(brain::BrainArea &area) {
 
 	for (int i(0); i < inputs.size(); ++i) {
 
-		const real_t accuracy = area.learn(inputs[i], expected[i], 0.1);
+		const real_t accuracy = area.learn(inputs[i], expected[i], 0.1, nullptr);
 		print_line("Error: " + brain::rtos(accuracy));
 	}
 }
@@ -108,7 +108,7 @@ void test_brain_area() {
 
 	area1.set_output_layer_size(2);
 
-	//brain::Math::seed(time(nullptr));
+	brain::Math::seed(time(nullptr));
 	area1.randomize_weights(1);
 	area1.randomize_biases(1);
 
@@ -118,9 +118,17 @@ void test_brain_area() {
 	real_t expected_m[] = { 1, 0 };
 	brain::Matrix expected(2, 1, expected_m);
 
-	real_t error = area1.learn(input, expected, 0.1);
+	real_t error;
+	brain::BrainArea::LearningCache lc;
+	for (int i(0); i < 10000; ++i) {
+		error = area1.learn(input, expected, 0.05, &lc);
+	}
 
-	print_line("Error: " + brain::rtos(error));
+	// Just guess
+	brain::Matrix guess;
+	area1.guess(input, guess);
+
+	print_line("Error: " + brain::rtos(error) + " result " + std::string(guess));
 }
 
 int main() {
