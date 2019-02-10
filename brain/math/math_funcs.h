@@ -28,8 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MATH_FUNCS_H
-#define MATH_FUNCS_H
+#pragma once
 
 #include "brain/math/math_defs.h"
 #include "brain/typedefs.h"
@@ -442,4 +441,3 @@ public:
 	}
 };
 } // namespace brain
-#endif // MATH_FUNCS_H
