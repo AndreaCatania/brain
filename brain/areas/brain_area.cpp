@@ -22,6 +22,16 @@ brain::BrainArea::BrainArea() {
 	activations.push_back(ACTIVATION_SIGMOID);
 }
 
+brain::BrainArea::BrainArea(
+		uint32_t p_input_layer_size,
+		uint32_t p_hidden_layers_count,
+		uint32_t p_output_layer_size) :
+		BrainArea() {
+	set_input_layer_size(p_input_layer_size);
+	set_hidden_layers_count(p_hidden_layers_count);
+	set_output_layer_size(p_output_layer_size);
+}
+
 void brain::BrainArea::set_input_layer_size(uint32_t p_size) {
 	set_layer_size(INPUT_LAYER_ID, p_size);
 }
@@ -39,7 +49,7 @@ uint32_t brain::BrainArea::get_output_layer_size() const {
 	return get_layer_size(OUTPUT_LAYER_ID);
 }
 
-void brain::BrainArea::resize_hidden_layers(uint32_t p_count) {
+void brain::BrainArea::set_hidden_layers_count(uint32_t p_count) {
 
 	const int prev_size_output_layer = get_layer_size(OUTPUT_LAYER_ID);
 	const Activation prev_activ_output_layer = activations[activations.size() - 1];
@@ -95,7 +105,7 @@ void brain::BrainArea::randomize_weights(real_t p_range) {
 	}
 }
 
-void brain::BrainArea::set_weights(real_t p_value) {
+void brain::BrainArea::fill_weights(real_t p_value) {
 
 	for (int i(0); i < weights.size(); ++i) {
 		weights[i].set_all(p_value);
@@ -109,7 +119,7 @@ void brain::BrainArea::randomize_biases(real_t p_range) {
 	}
 }
 
-void brain::BrainArea::set_biases(real_t p_value) {
+void brain::BrainArea::fill_biases(real_t p_value) {
 	for (int i(0); i < biases.size(); ++i) {
 		biases[i].set_all(p_value);
 	}
@@ -121,6 +131,21 @@ int brain::BrainArea::get_layer_count() {
 
 const brain::Matrix &brain::BrainArea::get_layer_weights(const int p_layer) const {
 	return weights[p_layer];
+}
+
+void brain::BrainArea::set_weight(int p_index, const Matrix &p_matrix) {
+	ERR_FAIL_INDEX(p_index, weights.size());
+	weights[p_index] = p_matrix;
+}
+
+void brain::BrainArea::set_biases(int p_index, const Matrix &p_matrix) {
+	ERR_FAIL_INDEX(p_index, biases.size());
+	biases[p_index] = p_matrix;
+}
+
+void brain::BrainArea::set_activations(int p_index, Activation p_activation) {
+	ERR_FAIL_INDEX(p_index, activations.size());
+	activations[p_index] = p_activation;
 }
 
 real_t brain::BrainArea::learn(

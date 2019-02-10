@@ -26,6 +26,7 @@ public:
 	~Matrix();
 
 	void resize(const uint32_t p_rows, const uint32_t p_columns);
+
 	uint32_t get_rows() const { return rows; }
 	uint32_t get_columns() const { return columns; }
 
@@ -44,6 +45,8 @@ public:
 	inline real_t get(int p_row, int p_column) const;
 
 	void set_all(real_t p_value);
+
+	const real_t *get_matrix() const { return matrix; }
 
 	// Map each element in the matrix
 	void map(matrix_map p_func);

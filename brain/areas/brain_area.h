@@ -23,6 +23,10 @@ private:
 
 public:
 	BrainArea();
+	BrainArea(
+			uint32_t p_input_layer_size,
+			uint32_t p_hidden_layers_count,
+			uint32_t p_output_layer_size);
 
 	void set_input_layer_size(uint32_t p_size);
 	uint32_t get_input_layer_size() const;
@@ -30,7 +34,7 @@ public:
 	void set_output_layer_size(uint32_t p_size);
 	uint32_t get_output_layer_size() const;
 
-	void resize_hidden_layers(uint32_t p_count);
+	void set_hidden_layers_count(uint32_t p_count);
 	uint32_t get_hidden_layers_count() const;
 
 	void set_hidden_layer(
@@ -45,13 +49,21 @@ public:
 	Activation get_hidden_layer_activation(uint32_t p_layer) const;
 
 	void randomize_weights(real_t p_range);
-	void set_weights(real_t p_value);
+	void fill_weights(real_t p_value);
 
 	void randomize_biases(real_t p_range);
-	void set_biases(real_t p_value);
+	void fill_biases(real_t p_value);
 
 	int get_layer_count();
 	const Matrix &get_layer_weights(const int p_layer) const;
+
+	void set_weight(int p_index, const Matrix &p_matrix);
+	void set_biases(int p_index, const Matrix &p_matrix);
+	void set_activations(int p_index, Activation p_activation);
+
+	const std::vector<Matrix> &get_weights() { return weights; }
+	const std::vector<Matrix> &get_biases() { return biases; }
+	const std::vector<Activation> &get_activations() { return activations; }
 
 	/**
 	 * @brief learn is a function used to train the brain area. It uses the

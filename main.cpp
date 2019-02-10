@@ -81,10 +81,10 @@ void test_complex_brain_area() {
 	brain::BrainArea area1;
 	area1.set_input_layer_size(4);
 	area1.set_output_layer_size(4);
-	area1.resize_hidden_layers(1);
+	area1.set_hidden_layers_count(1);
 	area1.set_hidden_layer(0, 4, brain::BrainArea::ACTIVATION_SIGMOID);
 	area1.randomize_weights(2);
-	area1.set_biases(1.0);
+	area1.fill_biases(1.0);
 
 	test_brain_area_train(area1);
 
@@ -101,14 +101,9 @@ void test_complex_brain_area() {
 void test_brain_area() {
 
 	// Create brain area
-	brain::BrainArea area1;
+	brain::BrainArea area1(2, 1, 1);
 
-	area1.set_input_layer_size(2);
-
-	area1.resize_hidden_layers(1);
 	area1.set_hidden_layer(0, 2, brain::BrainArea::ACTIVATION_SIGMOID);
-
-	area1.set_output_layer_size(1);
 
 	brain::Math::seed(time(nullptr));
 	area1.randomize_weights(1);
