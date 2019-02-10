@@ -154,6 +154,11 @@ real_t brain::BrainArea::learn(
 		real_t p_learn_rate,
 		LearningCache *p_cache) {
 
+	ERR_FAIL_COND_V(p_input.get_rows() != get_layer_size(INPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_input.get_columns() != 1, 10000);
+	ERR_FAIL_COND_V(p_expected.get_rows() != get_layer_size(OUTPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_expected.get_columns() != 1, 10000);
+
 	const bool shared_cache = p_cache;
 	if (!shared_cache) {
 		p_cache = new LearningCache;
