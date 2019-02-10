@@ -1,7 +1,7 @@
 
 
 #include "brain/areas/brain_area.h"
-#include "brain/error_macros.h"
+#include "brain/error_handler.h"
 #include "brain/math/math_funcs.h"
 #include "brain/math/matrix.h"
 #include "brain/string.h"

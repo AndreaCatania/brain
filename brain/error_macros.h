@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include "brain/error_handler.h"
 #include "brain/string.h"
 #include "brain/typedefs.h"
 
@@ -54,41 +55,9 @@
 
 // function, file, line, error, explanation
 namespace brain {
-enum ErrorHandlerType {
-	ERR_HANDLER_ERROR,
-	ERR_HANDLER_WARNING,
-	ERR_HANDLER_SCRIPT,
-	ERR_HANDLER_SHADER,
-};
-
-typedef void (*ErrorHandlerFunc)(
-		void *,
-		const char *,
-		const char *,
-		int p_line,
-		const char *,
-		const char *,
-		ErrorHandlerType p_type);
 
 void _err_set_last_error(const char *p_err);
 void _err_clear_last_error();
-
-struct ErrorHandlerList {
-
-	ErrorHandlerFunc errfunc;
-	void *userdata;
-
-	ErrorHandlerList *next;
-
-	ErrorHandlerList() {
-		errfunc = 0;
-		next = 0;
-		userdata = 0;
-	}
-};
-
-void add_error_handler(ErrorHandlerList *p_handler);
-void remove_error_handler(ErrorHandlerList *p_handler);
 
 void _err_print_error(const char *p_function, const char *p_file, int p_line, const char *p_error, ErrorHandlerType p_type = ERR_HANDLER_ERROR);
 void _err_print_index_error(const char *p_function, const char *p_file, int p_line, int64_t p_index, int64_t p_size, const char *p_index_str, const char *p_size_str, bool fatal = false);
