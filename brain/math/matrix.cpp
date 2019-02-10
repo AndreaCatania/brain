@@ -111,8 +111,8 @@ real_t brain::Matrix::summation() const {
 }
 
 void brain::Matrix::element_wise_multiplicate(const Matrix &p_other) {
-	ERR_FAIL_COND(get_rows() != p_other.get_rows());
-	ERR_FAIL_COND(get_columns() != p_other.get_columns());
+	ERR_FAIL_COND(get_row_count() != p_other.get_row_count());
+	ERR_FAIL_COND(get_column_count() != p_other.get_column_count());
 
 	for (int r(0); r < rows; ++r) {
 		for (int c(0); c < columns; ++c) {
@@ -164,11 +164,11 @@ void brain::Matrix::operator=(const Matrix &p_other) {
 
 brain::Matrix brain::Matrix::operator*(const brain::Matrix &p_other) const {
 
-	brain::Matrix res(get_rows(), p_other.get_columns());
+	brain::Matrix res(get_row_count(), p_other.get_column_count());
 
-	ERR_FAIL_COND_V(get_columns() != p_other.get_rows(), res);
+	ERR_FAIL_COND_V(get_column_count() != p_other.get_row_count(), res);
 
-	for (int o_c(0); o_c < p_other.get_columns(); ++o_c) {
+	for (int o_c(0); o_c < p_other.get_column_count(); ++o_c) {
 
 		for (int r(0); r < rows; ++r) {
 			real_t e(0);
@@ -196,8 +196,8 @@ brain::Matrix brain::Matrix::operator*(real_t p_num) const {
 
 void brain::Matrix::operator+=(const brain::Matrix &p_other) {
 
-	ERR_FAIL_COND(get_rows() != p_other.get_rows());
-	ERR_FAIL_COND(get_columns() != p_other.get_columns());
+	ERR_FAIL_COND(get_row_count() != p_other.get_row_count());
+	ERR_FAIL_COND(get_column_count() != p_other.get_column_count());
 
 	for (int r(0); r < rows; ++r) {
 		for (int c(0); c < columns; ++c) {
@@ -215,8 +215,8 @@ brain::Matrix brain::Matrix::operator+(const brain::Matrix &p_other) const {
 
 void brain::Matrix::operator-=(const brain::Matrix &p_other) {
 
-	ERR_FAIL_COND(get_rows() != p_other.get_rows());
-	ERR_FAIL_COND(get_columns() != p_other.get_columns());
+	ERR_FAIL_COND(get_row_count() != p_other.get_row_count());
+	ERR_FAIL_COND(get_column_count() != p_other.get_column_count());
 
 	for (int r(0); r < rows; ++r) {
 		for (int c(0); c < columns; ++c) {

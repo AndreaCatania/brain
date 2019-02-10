@@ -27,8 +27,8 @@ public:
 
 	void resize(const uint32_t p_rows, const uint32_t p_columns);
 
-	uint32_t get_rows() const { return rows; }
-	uint32_t get_columns() const { return columns; }
+	uint32_t get_row_count() const { return rows; }
+	uint32_t get_column_count() const { return columns; }
 
 	/**
 	 * Set the matrix using an array

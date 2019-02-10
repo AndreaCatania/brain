@@ -154,10 +154,10 @@ real_t brain::BrainArea::learn(
 		real_t p_learn_rate,
 		LearningCache *p_cache) {
 
-	ERR_FAIL_COND_V(p_input.get_rows() != get_layer_size(INPUT_LAYER_ID), 10000);
-	ERR_FAIL_COND_V(p_input.get_columns() != 1, 10000);
-	ERR_FAIL_COND_V(p_expected.get_rows() != get_layer_size(OUTPUT_LAYER_ID), 10000);
-	ERR_FAIL_COND_V(p_expected.get_columns() != 1, 10000);
+	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_input.get_column_count() != 1, 10000);
+	ERR_FAIL_COND_V(p_expected.get_row_count() != get_layer_size(OUTPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_expected.get_column_count() != 1, 10000);
 
 	const bool shared_cache = p_cache;
 	if (!shared_cache) {
@@ -218,8 +218,8 @@ void brain::BrainArea::guess(
 		Matrix &r_guess,
 		LearningCache *p_cache) {
 
-	ERR_FAIL_COND(p_input.get_rows() != get_layer_size(INPUT_LAYER_ID));
-	ERR_FAIL_COND(p_input.get_columns() != 1);
+	ERR_FAIL_COND(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID));
+	ERR_FAIL_COND(p_input.get_column_count() != 1);
 
 	if (p_cache)
 		p_cache->layers_output.resize(get_layer_count());
@@ -269,8 +269,8 @@ uint32_t brain::BrainArea::get_layer_size(uint32_t p_layer) const {
 
 	if (p_layer == OUTPUT_LAYER_ID) {
 		// This happens only for the last layer
-		return weights[p_layer - 1].get_rows();
+		return weights[p_layer - 1].get_row_count();
 	} else {
-		return weights[p_layer].get_columns();
+		return weights[p_layer].get_column_count();
 	}
 }
