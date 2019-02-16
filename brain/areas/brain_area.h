@@ -90,6 +90,52 @@ public:
 			Matrix &r_guess,
 			LearningCache *p_cache = nullptr);
 
+	/// Metadata
+	/// First is an uint32_t with the size of the entire buffer
+	/// Second is an uint32_t that point the size of the real_t
+	/// Third is an uint32_t with the weight count
+	/// Forth is an uint32_t with the biases count
+	/// Fifth is an uint32_t with the activation count
+	/// From now on all arrays store in this order weights, biases, activations
+
+	enum MetadataIndices {
+		METADATA_BUFFER_SIZE,
+		METADATA_REAL_SIZE,
+		METADATA_WEIGHT_COUNT,
+		METADATA_BIAS_COUNT,
+		METADATA_ACTIVATION_COUNT,
+		METADATA_MAX
+	};
+
+	/**
+	 * @brief get_buffer_metadata_size returns the size of metadata
+	 * @param p_buffer_metadata
+	 * @return
+	 */
+	int get_buffer_metadata_size() const;
+
+	/**
+	 * @brief get_buffer_size Read the metadata and returns the size of the entire buffer
+	 * @param p_buffer_metadata
+	 * @return
+	 */
+	uint32_t get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const;
+
+	/**
+	 * @brief set_buffer give the possibility to restore the knowledge
+	 * previously acquired
+	 * @param p_buffer
+	 * @return
+	 */
+	bool set_buffer(const std::vector<uint8_t> &p_buffer);
+
+	/**
+	 * @brief get_buffer return a buffer with the current knowledge
+	 * @param p_buffer
+	 * @return
+	 */
+	bool get_buffer(std::vector<uint8_t> &r_buffer) const;
+
 private:
 	void set_layer_size(uint32_t p_layer, uint32_t p_size);
 	uint32_t get_layer_size(uint32_t p_layer) const;

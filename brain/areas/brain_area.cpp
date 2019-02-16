@@ -243,6 +243,99 @@ void brain::BrainArea::guess(
 		p_cache->layers_output[get_layer_count() - 1] = r_guess;
 }
 
+int brain::BrainArea::get_buffer_metadata_size() const {
+	return sizeof(uint32_t) * METADATA_MAX; // Metadata size
+}
+
+uint32_t brain::BrainArea::get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const {
+	const uint32_t buffer_size = ((uint32_t *)p_buffer_metadata.data())[METADATA_BUFFER_SIZE];
+	return buffer_size;
+}
+
+bool brain::BrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
+
+	// Read metadata
+	const uint32_t buffer_size = ((uint32_t *)p_buffer.data())[METADATA_BUFFER_SIZE];
+	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t weight_count = ((uint32_t *)p_buffer.data())[METADATA_WEIGHT_COUNT];
+	const uint32_t bias_count = ((uint32_t *)p_buffer.data())[METADATA_BIAS_COUNT];
+	const uint32_t activation_count = ((uint32_t *)p_buffer.data())[METADATA_ACTIVATION_COUNT];
+
+	ERR_FAIL_COND_V(p_buffer.size() != buffer_size, false);
+	ERR_FAIL_COND_V(sizeof(float) != real_size && sizeof(double) != real_size, false);
+	ERR_FAIL_COND_V(weight_count != bias_count, false);
+	ERR_FAIL_COND_V(weight_count != activation_count, false);
+
+	weights.resize(weight_count);
+	biases.resize(bias_count);
+	activations.resize(activation_count);
+
+	const uint8_t *b_support = p_buffer.data() + get_buffer_metadata_size();
+
+	for (int i(0); i < weights.size(); ++i) {
+		weights[i].from_byte(b_support, real_size);
+		const size_t matrix_size = weights[i].get_byte_size();
+		b_support += matrix_size;
+	}
+
+	for (int i(0); i < biases.size(); ++i) {
+		biases[i].from_byte(b_support, real_size);
+		const size_t matrix_size = biases[i].get_byte_size();
+		b_support += matrix_size;
+	}
+
+	for (int i(0); i < activations.size(); ++i) {
+		activations[i] = *((const Activation *)b_support);
+		b_support += sizeof(int);
+	}
+
+	return true;
+}
+
+bool brain::BrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
+
+	const int real_size = sizeof(real_t);
+
+	uint32_t buffer_size = get_buffer_metadata_size();
+
+	for (int i(0); i < weights.size(); ++i) {
+		buffer_size += weights[i].get_byte_size();
+	}
+	for (int i(0); i < biases.size(); ++i) {
+		buffer_size += biases[i].get_byte_size();
+	}
+	buffer_size += activations.size() * sizeof(int);
+
+	r_buffer.resize(buffer_size);
+
+	((uint32_t *)r_buffer.data())[METADATA_BUFFER_SIZE] = buffer_size;
+	((uint32_t *)r_buffer.data())[METADATA_REAL_SIZE] = real_size;
+	((uint32_t *)r_buffer.data())[METADATA_WEIGHT_COUNT] = weights.size();
+	((uint32_t *)r_buffer.data())[METADATA_BIAS_COUNT] = biases.size();
+	((uint32_t *)r_buffer.data())[METADATA_ACTIVATION_COUNT] = activations.size();
+
+	uint8_t *b_support = r_buffer.data() + get_buffer_metadata_size();
+
+	for (int i(0); i < weights.size(); ++i) {
+		weights[i].to_byte(b_support);
+		const size_t matrix_size = weights[i].get_byte_size();
+		b_support += matrix_size;
+	}
+
+	for (int i(0); i < biases.size(); ++i) {
+		biases[i].to_byte(b_support);
+		const size_t matrix_size = biases[i].get_byte_size();
+		b_support += matrix_size;
+	}
+
+	for (int i(0); i < activations.size(); ++i) {
+		*((int *)b_support) = activations[i];
+		b_support += sizeof(int);
+	}
+
+	return true;
+}
+
 void brain::BrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {
 	ERR_FAIL_INDEX(p_layer, OUTPUT_LAYER_ID + 1);
 
