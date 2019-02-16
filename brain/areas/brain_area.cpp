@@ -252,19 +252,63 @@ uint32_t brain::BrainArea::get_buffer_size(const std::vector<uint8_t> &p_buffer_
 	return buffer_size;
 }
 
-bool brain::BrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
+bool brain::BrainArea::is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const {
 
-	// Read metadata
 	const uint32_t buffer_size = ((uint32_t *)p_buffer.data())[METADATA_BUFFER_SIZE];
 	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
 	const uint32_t weight_count = ((uint32_t *)p_buffer.data())[METADATA_WEIGHT_COUNT];
 	const uint32_t bias_count = ((uint32_t *)p_buffer.data())[METADATA_BIAS_COUNT];
 	const uint32_t activation_count = ((uint32_t *)p_buffer.data())[METADATA_ACTIVATION_COUNT];
 
-	ERR_FAIL_COND_V(p_buffer.size() != buffer_size, false);
-	ERR_FAIL_COND_V(sizeof(float) != real_size && sizeof(double) != real_size, false);
-	ERR_FAIL_COND_V(weight_count != bias_count, false);
-	ERR_FAIL_COND_V(weight_count != activation_count, false);
+	ERR_FAIL_COND_V(p_buffer.size() != buffer_size, true);
+	ERR_FAIL_COND_V(sizeof(float) != real_size && sizeof(double) != real_size, true);
+	ERR_FAIL_COND_V(weight_count != bias_count, true);
+	ERR_FAIL_COND_V(weight_count != activation_count, true);
+
+	return false;
+}
+
+bool brain::BrainArea::is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const {
+
+	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t weight_count = ((uint32_t *)p_buffer.data())[METADATA_WEIGHT_COUNT];
+	const uint32_t bias_count = ((uint32_t *)p_buffer.data())[METADATA_BIAS_COUNT];
+	const uint32_t activation_count = ((uint32_t *)p_buffer.data())[METADATA_ACTIVATION_COUNT];
+
+	ERR_FAIL_COND_V(is_buffer_corrupted(p_buffer), false);
+
+	if (
+			weights.size() != weight_count ||
+			biases.size() != bias_count ||
+			activations.size() != activation_count)
+		return false;
+
+	const uint8_t *b_support = p_buffer.data() + get_buffer_metadata_size();
+
+	Matrix m;
+	for (int i(0); i < weights.size(); ++i) {
+		m.from_byte(b_support, real_size);
+		const size_t matrix_size = weights[i].get_byte_size();
+		b_support += matrix_size;
+
+		if (
+				m.get_row_count() != weights[i].get_row_count() ||
+				m.get_column_count() != weights[i].get_column_count())
+			return false;
+	}
+
+	return true;
+}
+
+bool brain::BrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
+
+	// Read metadata
+	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t weight_count = ((uint32_t *)p_buffer.data())[METADATA_WEIGHT_COUNT];
+	const uint32_t bias_count = ((uint32_t *)p_buffer.data())[METADATA_BIAS_COUNT];
+	const uint32_t activation_count = ((uint32_t *)p_buffer.data())[METADATA_ACTIVATION_COUNT];
+
+	ERR_FAIL_COND_V(is_buffer_corrupted(p_buffer), false);
 
 	weights.resize(weight_count);
 	biases.resize(bias_count);

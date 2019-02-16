@@ -163,8 +163,10 @@ size_t brain::Matrix::get_byte_size() const {
 }
 
 void brain::Matrix::from_byte(const uint8_t *p_buffer, int p_size_of_real) {
+        free();
         rows = ((const uint32_t *)p_buffer)[0];
         columns = ((const uint32_t *)p_buffer)[1];
+        init();
         std::copy(
                         p_buffer + sizeof(const uint32_t) * 2,
                         p_buffer + sizeof(const uint32_t) * 2 + rows * columns * p_size_of_real,

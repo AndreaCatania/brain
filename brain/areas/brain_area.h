@@ -66,13 +66,16 @@ public:
 	const std::vector<Activation> &get_activations() { return activations; }
 
 	/**
-	 * @brief learn is a function used to train the brain area. It uses the
-	 *	stochastic gradient descent algorithm to adjust weights internally
+	 * @brief learn
 	 * @param p_guess
 	 * @param p_expected
-	 * @param p_learn_rate usually something around 0.1
+	 * @param p_learn_rate usually something around 0.05
 	 * @param p_cache if null the cache is cleared for each call
 	 * @return Returns the error of this guess, 0 == Accurate
+	 *
+	 * This function can be used to train the brain area.
+	 * Currently it uses the stochastic gradient descent algorithm
+	 * to adjust itw weights
 	 */
 	real_t learn(
 			const Matrix &p_input,
@@ -108,24 +111,52 @@ public:
 	};
 
 	/**
-	 * @brief get_buffer_metadata_size returns the size of metadata
+	 * @brief get_buffer_metadata_size
 	 * @param p_buffer_metadata
 	 * @return
+	 *
+	 * Returns the size of the metadata
 	 */
 	int get_buffer_metadata_size() const;
 
 	/**
-	 * @brief get_buffer_size Read the metadata and returns the size of the entire buffer
+	 * @brief get_buffer_size
 	 * @param p_buffer_metadata
 	 * @return
+	 *
+	 * Read the metadata and returns the size of the entire buffer
 	 */
 	uint32_t get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const;
 
 	/**
-	 * @brief set_buffer give the possibility to restore the knowledge
-	 * previously acquired
+	 * @brief is_buffer_corrupted
 	 * @param p_buffer
 	 * @return
+	 *
+	 * Return true if the buffer is corrup
+	 */
+	bool is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const;
+
+	/**
+	 * @brief is_buffer_compatible
+	 * @param p_buffer
+	 * @return
+	 *
+	 * This function returns true if the buffer is compatible with the
+	 * current structure
+	 */
+	bool is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const;
+
+	/**
+	 * @brief set_buffer
+	 * @param p_buffer
+	 * @return
+	 *
+	 * Restore the weights the biases and activations.
+	 *
+	 * This function alter the current structure of the brain area,
+	 * use the function is_buffer_compatible to know if this buffer
+	 * is compatible with the current structure
 	 */
 	bool set_buffer(const std::vector<uint8_t> &p_buffer);
 
