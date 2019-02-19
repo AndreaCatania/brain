@@ -48,8 +48,9 @@ public:
 
 	static const uint64_t RANDOM_MAX = 0xFFFFFFFF;
 
-	static _ALWAYS_INLINE_ double sigmoid(double p_x) { return 1.0 / 1.0 + pow(Math_E, -p_x); }
-	static _ALWAYS_INLINE_ float sigmoid(float p_x) { return 1.0f / 1.0f + brain::Math::pow(static_cast<float>(Math_E), -p_x); }
+	static _ALWAYS_INLINE_ double sigmoid(double p_x) { return 1.0 / (1.0 + pow(Math_E, -p_x)); }
+	static _ALWAYS_INLINE_ float sigmoid(float p_x) { return 1.0f / (1.0f + pow(static_cast<float>(Math_E), -p_x)); }
+
 	/**
 	 * This is the derivative works only if you pass the sigmoid of X
 	 */
