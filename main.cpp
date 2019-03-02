@@ -1,6 +1,6 @@
 
 
-#include "brain/areas/brain_area.h"
+#include "brain/brain_areas/uniform_brain_area.h"
 #include "brain/error_handler.h"
 #include "brain/math/math_funcs.h"
 #include "brain/math/matrix.h"
@@ -39,7 +39,7 @@ void print_error_callback(
 	printf("\n");
 }
 
-void test_brain_area_train(brain::BrainArea &area) {
+void test_brain_area_train(brain::UniformBrainArea &area) {
 
 	std::vector<brain::Matrix> inputs;
 	std::vector<brain::Matrix> expected;
@@ -78,11 +78,11 @@ void test_brain_area_train(brain::BrainArea &area) {
 void test_complex_brain_area() {
 
 	// Create brain area
-	brain::BrainArea area1;
+	brain::UniformBrainArea area1;
 	area1.set_input_layer_size(4);
 	area1.set_output_layer_size(4);
 	area1.set_hidden_layers_count(1);
-	area1.set_hidden_layer(0, 4, brain::BrainArea::ACTIVATION_SIGMOID);
+	area1.set_hidden_layer(0, 4, brain::UniformBrainArea::ACTIVATION_SIGMOID);
 	area1.randomize_weights(2);
 	area1.fill_biases(1.0);
 
@@ -101,9 +101,9 @@ void test_complex_brain_area() {
 void test_brain_area() {
 
 	// Create brain area
-	brain::BrainArea area1(2, 1, 1);
+	brain::UniformBrainArea area1(2, 1, 1);
 
-	area1.set_hidden_layer(0, 2, brain::BrainArea::ACTIVATION_SIGMOID);
+	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_SIGMOID);
 
 	brain::Math::seed(time(nullptr));
 	area1.randomize_weights(1);
@@ -137,7 +137,7 @@ void test_brain_area() {
 	}
 
 	real_t error;
-	brain::BrainArea::LearningCache lc;
+	brain::UniformBrainArea::LearningCache lc;
 	for (int t(0); t < 100000; ++t) {
 		for (int i(0); i < inputs.size(); ++i) {
 			error = area1.learn(inputs[i], expected[i], 0.05, &lc);
@@ -180,13 +180,20 @@ void test_brain_area() {
 	}
 }
 
+#include "brain/brain_areas/sharp_brain_area.h"
+void test_NEAT_XOR() {
+
+	brain::SharpBrainArea brain_area;
+}
+
 int main() {
 
 	brain::ErrorHandlerList *error_handler = new brain::ErrorHandlerList;
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
-	test_brain_area();
+	//test_brain_area();
+	test_NEAT_XOR();
 
 	return 0;
 }

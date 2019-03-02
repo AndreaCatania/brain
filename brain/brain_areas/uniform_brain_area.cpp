@@ -1,4 +1,4 @@
-#include "brain_area.h"
+#include "uniform_brain_area.h"
 
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
@@ -16,40 +16,41 @@
 matrix_map activation_functions[] = { brain::Math::sigmoid };
 matrix_map activation_derivatives[] = { brain::Math::sigmoid_fast_derivative };
 
-brain::BrainArea::BrainArea() {
+brain::UniformBrainArea::UniformBrainArea() :
+		brain::BrainArea(BRAIN_AREA_TYPE_UNIFORM) {
 	weights.resize(1);
 	biases.resize(1);
 	activations.push_back(ACTIVATION_SIGMOID);
 }
 
-brain::BrainArea::BrainArea(
+brain::UniformBrainArea::UniformBrainArea(
 		uint32_t p_input_layer_size,
 		uint32_t p_hidden_layers_count,
 		uint32_t p_output_layer_size) :
-		BrainArea() {
+		UniformBrainArea() {
 	set_input_layer_size(p_input_layer_size);
 	set_hidden_layers_count(p_hidden_layers_count);
 	set_output_layer_size(p_output_layer_size);
 }
 
-void brain::BrainArea::set_input_layer_size(uint32_t p_size) {
+void brain::UniformBrainArea::set_input_layer_size(uint32_t p_size) {
 	set_layer_size(INPUT_LAYER_ID, p_size);
 }
 
-uint32_t brain::BrainArea::get_input_layer_size() const {
+uint32_t brain::UniformBrainArea::get_input_layer_size() const {
 	return get_layer_size(INPUT_LAYER_ID);
 }
 
-void brain::BrainArea::set_output_layer_size(uint32_t p_size) {
+void brain::UniformBrainArea::set_output_layer_size(uint32_t p_size) {
 
 	set_layer_size(OUTPUT_LAYER_ID, p_size);
 }
 
-uint32_t brain::BrainArea::get_output_layer_size() const {
+uint32_t brain::UniformBrainArea::get_output_layer_size() const {
 	return get_layer_size(OUTPUT_LAYER_ID);
 }
 
-void brain::BrainArea::set_hidden_layers_count(uint32_t p_count) {
+void brain::UniformBrainArea::set_hidden_layers_count(uint32_t p_count) {
 
 	const int prev_size_output_layer = get_layer_size(OUTPUT_LAYER_ID);
 	const Activation prev_activ_output_layer = activations[activations.size() - 1];
@@ -62,11 +63,11 @@ void brain::BrainArea::set_hidden_layers_count(uint32_t p_count) {
 	activations[activations.size() - 1] = prev_activ_output_layer;
 }
 
-uint32_t brain::BrainArea::get_hidden_layers_count() const {
+uint32_t brain::UniformBrainArea::get_hidden_layers_count() const {
 	return weights.size() - 1;
 }
 
-void brain::BrainArea::set_hidden_layer(
+void brain::UniformBrainArea::set_hidden_layer(
 		uint32_t p_hidden_layer,
 		uint32_t p_size,
 		Activation p_activation) {
@@ -75,20 +76,20 @@ void brain::BrainArea::set_hidden_layer(
 	set_hidden_layer_activation(p_hidden_layer, p_activation);
 }
 
-void brain::BrainArea::set_hidden_layer_size(uint32_t p_hidden_layer, uint32_t p_size) {
+void brain::UniformBrainArea::set_hidden_layer_size(uint32_t p_hidden_layer, uint32_t p_size) {
 	set_layer_size(HIDDEN_LAYER(p_hidden_layer), p_size);
 }
 
-uint32_t brain::BrainArea::get_hidden_layer_size(uint32_t p_hidden_layer) const {
+uint32_t brain::UniformBrainArea::get_hidden_layer_size(uint32_t p_hidden_layer) const {
 	return get_layer_size(HIDDEN_LAYER(p_hidden_layer));
 }
 
-void brain::BrainArea::set_hidden_layer_activation(uint32_t p_hidden_layer, Activation p_activation) {
+void brain::UniformBrainArea::set_hidden_layer_activation(uint32_t p_hidden_layer, Activation p_activation) {
 	ERR_FAIL_INDEX(p_hidden_layer, activations.size());
 	activations[p_hidden_layer] = p_activation;
 }
 
-brain::BrainArea::Activation brain::BrainArea::get_hidden_layer_activation(
+brain::UniformBrainArea::Activation brain::UniformBrainArea::get_hidden_layer_activation(
 		uint32_t p_hidden_layer) const {
 	ERR_FAIL_INDEX_V(p_hidden_layer, activations.size(), ACTIVATION_MAX);
 	return activations[p_hidden_layer];
@@ -98,57 +99,57 @@ real_t matrix_rand(real_t x, real_t p_range) {
 	return brain::Math::random(-p_range, p_range);
 }
 
-void brain::BrainArea::randomize_weights(real_t p_range) {
+void brain::UniformBrainArea::randomize_weights(real_t p_range) {
 
 	for (int i(0); i < weights.size(); ++i) {
 		weights[i].map(matrix_rand, p_range);
 	}
 }
 
-void brain::BrainArea::fill_weights(real_t p_value) {
+void brain::UniformBrainArea::fill_weights(real_t p_value) {
 
 	for (int i(0); i < weights.size(); ++i) {
 		weights[i].set_all(p_value);
 	}
 }
 
-void brain::BrainArea::randomize_biases(real_t p_range) {
+void brain::UniformBrainArea::randomize_biases(real_t p_range) {
 
 	for (int i(0); i < biases.size(); ++i) {
 		biases[i].map(matrix_rand, p_range);
 	}
 }
 
-void brain::BrainArea::fill_biases(real_t p_value) {
+void brain::UniformBrainArea::fill_biases(real_t p_value) {
 	for (int i(0); i < biases.size(); ++i) {
 		biases[i].set_all(p_value);
 	}
 }
 
-int brain::BrainArea::get_layer_count() {
+int brain::UniformBrainArea::get_layer_count() const {
 	return weights.size() + 1;
 }
 
-const brain::Matrix &brain::BrainArea::get_layer_weights(const int p_layer) const {
+const brain::Matrix &brain::UniformBrainArea::get_layer_weights(const int p_layer) const {
 	return weights[p_layer];
 }
 
-void brain::BrainArea::set_weight(int p_index, const Matrix &p_matrix) {
+void brain::UniformBrainArea::set_weight(int p_index, const Matrix &p_matrix) {
 	ERR_FAIL_INDEX(p_index, weights.size());
 	weights[p_index] = p_matrix;
 }
 
-void brain::BrainArea::set_biases(int p_index, const Matrix &p_matrix) {
+void brain::UniformBrainArea::set_biases(int p_index, const Matrix &p_matrix) {
 	ERR_FAIL_INDEX(p_index, biases.size());
 	biases[p_index] = p_matrix;
 }
 
-void brain::BrainArea::set_activations(int p_index, Activation p_activation) {
+void brain::UniformBrainArea::set_activations(int p_index, Activation p_activation) {
 	ERR_FAIL_INDEX(p_index, activations.size());
 	activations[p_index] = p_activation;
 }
 
-real_t brain::BrainArea::learn(
+real_t brain::UniformBrainArea::learn(
 		const Matrix &p_input,
 		const Matrix &p_expected,
 		real_t p_learn_rate,
@@ -165,7 +166,7 @@ real_t brain::BrainArea::learn(
 	}
 
 	brain::Matrix guess_res;
-	guess(p_input, guess_res, p_cache);
+	_guess(p_input, guess_res, p_cache);
 
 	const Matrix total_error = p_expected - guess_res;
 	Matrix propagated_error = total_error;
@@ -213,10 +214,17 @@ real_t brain::BrainArea::learn(
 	return total_error.mapped(brain::Math::pow, 2).summation();
 }
 
-void brain::BrainArea::guess(
+void brain::UniformBrainArea::guess(
+		const Matrix &p_input,
+		Matrix &r_guess) const {
+
+	_guess(p_input, r_guess);
+}
+
+void brain::UniformBrainArea::_guess(
 		const Matrix &p_input,
 		Matrix &r_guess,
-		LearningCache *p_cache) {
+		LearningCache *p_cache) const {
 
 	ERR_FAIL_COND(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID));
 	ERR_FAIL_COND(p_input.get_column_count() != 1);
@@ -243,16 +251,16 @@ void brain::BrainArea::guess(
 		p_cache->layers_output[get_layer_count() - 1] = r_guess;
 }
 
-int brain::BrainArea::get_buffer_metadata_size() const {
+int brain::UniformBrainArea::get_buffer_metadata_size() const {
 	return sizeof(uint32_t) * METADATA_MAX; // Metadata size
 }
 
-uint32_t brain::BrainArea::get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const {
+uint32_t brain::UniformBrainArea::get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const {
 	const uint32_t buffer_size = ((uint32_t *)p_buffer_metadata.data())[METADATA_BUFFER_SIZE];
 	return buffer_size;
 }
 
-bool brain::BrainArea::is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const {
+bool brain::UniformBrainArea::is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const {
 
 	const uint32_t buffer_size = ((uint32_t *)p_buffer.data())[METADATA_BUFFER_SIZE];
 	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
@@ -268,7 +276,7 @@ bool brain::BrainArea::is_buffer_corrupted(const std::vector<uint8_t> &p_buffer)
 	return false;
 }
 
-bool brain::BrainArea::is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const {
+bool brain::UniformBrainArea::is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const {
 
 	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
 	const uint32_t weight_count = ((uint32_t *)p_buffer.data())[METADATA_WEIGHT_COUNT];
@@ -300,7 +308,7 @@ bool brain::BrainArea::is_buffer_compatible(const std::vector<uint8_t> &p_buffer
 	return true;
 }
 
-bool brain::BrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
+bool brain::UniformBrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
 
 	// Read metadata
 	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
@@ -336,7 +344,7 @@ bool brain::BrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
 	return true;
 }
 
-bool brain::BrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
+bool brain::UniformBrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
 
 	const int real_size = sizeof(real_t);
 
@@ -380,7 +388,7 @@ bool brain::BrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
 	return true;
 }
 
-void brain::BrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {
+void brain::UniformBrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {
 	ERR_FAIL_INDEX(p_layer, OUTPUT_LAYER_ID + 1);
 
 	// Update previous weight layer size
@@ -401,7 +409,7 @@ void brain::BrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {
 	}
 }
 
-uint32_t brain::BrainArea::get_layer_size(uint32_t p_layer) const {
+uint32_t brain::UniformBrainArea::get_layer_size(uint32_t p_layer) const {
 	ERR_FAIL_INDEX_V(p_layer, weights.size() + 1, 0);
 
 	if (p_layer == OUTPUT_LAYER_ID) {
