@@ -82,6 +82,7 @@ void brain::SharpBrainArea::set_neuron_as_input(uint32_t p_neuron_id) {
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
 	inputs.push_back(&neurons[p_neuron_id]);
+	ready = false;
 }
 
 bool brain::SharpBrainArea::is_neuron_output(uint32_t p_neuron_id) const {
@@ -97,8 +98,8 @@ void brain::SharpBrainArea::set_neuron_as_output(uint32_t p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
-
 	outputs.push_back(&neurons[p_neuron_id]);
+	ready = false;
 }
 
 void brain::SharpBrainArea::add_link(
@@ -112,6 +113,14 @@ void brain::SharpBrainArea::add_link(
 	neurons[p_neuron_child_id].add_parent(
 			&neurons[p_neuron_parent_id],
 			p_weight);
+	ready = false;
+}
+
+void brain::SharpBrainArea::clear() {
+	inputs.clear();
+	outputs.clear();
+	neurons.clear();
+	ready = false;
 }
 
 void brain::SharpBrainArea::randomize_weights(real_t p_range) {

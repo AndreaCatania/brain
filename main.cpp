@@ -180,27 +180,36 @@ void test_brain_area() {
 	}
 }
 
+#include "brain/NEAT/neat_genome.h"
 #include "brain/brain_areas/sharp_brain_area.h"
-const uint32_t iterations = 10000000;
+
+const uint32_t iterations = 1;
 
 void test_NEAT_XOR() {
 
 	brain::SharpBrainArea brain_area;
 
-	const uint32_t bias_neuron_id = brain_area.add_neuron();
-	const uint32_t input_neuron_id = brain_area.add_neuron();
-	const uint32_t hidden_neuron_id = brain_area.add_neuron();
-	const uint32_t output_neuron_id = brain_area.add_neuron();
+	if (true) {
 
-	brain_area.add_link(input_neuron_id, hidden_neuron_id, 1.0);
-	brain_area.add_link(bias_neuron_id, hidden_neuron_id, 1.0);
-	brain_area.add_link(hidden_neuron_id, output_neuron_id, 1.0);
-	brain_area.add_link(bias_neuron_id, output_neuron_id, 1.0);
+		brain::NEATGenome genome;
+		genome.generate_neural_network(brain_area);
 
-	// Set input and output
-	brain_area.set_neuron_as_input(input_neuron_id);
-	brain_area.set_neuron_as_input(bias_neuron_id);
-	brain_area.set_neuron_as_output(output_neuron_id);
+	} else {
+		const uint32_t bias_neuron_id = brain_area.add_neuron();
+		const uint32_t input_neuron_id = brain_area.add_neuron();
+		const uint32_t hidden_neuron_id = brain_area.add_neuron();
+		const uint32_t output_neuron_id = brain_area.add_neuron();
+
+		brain_area.add_link(input_neuron_id, hidden_neuron_id, 1.0);
+		brain_area.add_link(bias_neuron_id, hidden_neuron_id, 1.0);
+		brain_area.add_link(hidden_neuron_id, output_neuron_id, 1.0);
+		brain_area.add_link(bias_neuron_id, output_neuron_id, 1.0);
+
+		// Set input and output
+		brain_area.set_neuron_as_input(input_neuron_id);
+		brain_area.set_neuron_as_input(bias_neuron_id);
+		brain_area.set_neuron_as_output(output_neuron_id);
+	}
 
 	real_t x[] = { 1, 1 };
 	brain::Matrix input(2, 1, x);

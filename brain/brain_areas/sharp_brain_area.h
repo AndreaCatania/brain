@@ -207,6 +207,11 @@ public:
 			real_t p_weight = 0.f);
 
 	/**
+	 * @brief clear can be used to delete all neurons
+	 */
+	void clear();
+
+	/**
 	 * @brief randomize_weights randomize the weights
 	 * between the passed -range and range
 	 *
