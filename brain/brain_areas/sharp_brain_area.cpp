@@ -3,6 +3,11 @@
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
 
+//typedef real_t (*activation_func)(real_t p_val);
+//
+//activation_func activation_functions[] = { brain::Math::sigmoid };
+//activation_func activation_derivatives[] = { brain::Math::sigmoid_fast_derivative };
+
 void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) {
 	execution_id = p_execution_id;
 	cached_value = p_val;
@@ -15,13 +20,15 @@ real_t brain::Neuron::get_value(uint32_t p_execution_id) const {
 		for (auto it = parents.begin(); it != parents.end(); ++it) {
 			cached_value += it->neuron->get_value(p_execution_id) * it->weight;
 		}
+		cached_value = brain::BrainArea::activation_functions[activation](cached_value);
 	}
 	return cached_value;
 }
 
 brain::Neuron::Neuron(uint32_t p_id) :
 		id(p_id),
-		execution_id(0) {
+		execution_id(0),
+		activation(BrainArea::ACTIVATION_SIGMOID) {
 }
 
 bool brain::Neuron::has_parent(Neuron *p_neuron) const {
@@ -51,7 +58,7 @@ void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
 }
 
 brain::SharpBrainArea::SharpBrainArea() :
-		brain::BrainArea(brain::BRAIN_AREA_TYPE_NEAT),
+		brain::BrainArea(brain::BRAIN_AREA_TYPE_SHARP),
 		execution_id(0),
 		ready(false) {}
 
@@ -108,10 +115,20 @@ void brain::SharpBrainArea::add_link(
 }
 
 void brain::SharpBrainArea::randomize_weights(real_t p_range) {
-	// TODO finish this
+	// If not ready check it
+	if (!ready) {
+		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
+		mutable_this->check_if_ready();
+		ERR_FAIL_COND(!ready);
+	}
+
+	for (int i(outputs.size() - 1); 0 <= i; ++i) {
+
+		randomize_parents_weight(outputs[i], p_range);
+	}
 }
 
-void brain::SharpBrainArea::fill_weights(real_t p_value) {
+void brain::SharpBrainArea::fill_weights(real_t p_weight) {
 
 	// If not ready check it
 	if (!ready) {
@@ -122,8 +139,7 @@ void brain::SharpBrainArea::fill_weights(real_t p_value) {
 
 	for (int i(outputs.size() - 1); 0 <= i; ++i) {
 
-		outputs[i]->get_value(execution_id);
-		// TODO finish this
+		set_parents_weight(outputs[i], p_weight);
 	}
 }
 
@@ -139,6 +155,8 @@ void brain::SharpBrainArea::guess(
 		const Matrix &p_input,
 		Matrix &r_guess) const {
 
+	r_guess.resize(outputs.size(), 1);
+
 	// If not ready check it
 	if (!ready) {
 		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
@@ -148,16 +166,16 @@ void brain::SharpBrainArea::guess(
 
 	ERR_FAIL_COND(p_input.get_row_count() != inputs.size());
 	ERR_FAIL_COND(p_input.get_column_count() != 1);
-	ERR_FAIL_COND(r_guess.get_row_count() != outputs.size());
-	ERR_FAIL_COND(r_guess.get_column_count() != 1);
 
 	++execution_id;
 
-	for (int i(inputs.size() - 1); 0 <= i; ++i) {
+	// set inputs
+	for (int i(inputs.size() - 1); 0 <= i; --i) {
 		inputs[i]->force_set_value(p_input.get(i, 0), execution_id);
 	}
 
-	for (int i(outputs.size() - 1); 0 <= i; ++i) {
+	// Get outputs
+	for (int i(outputs.size() - 1); 0 <= i; --i) {
 		const real_t val = outputs[i]->get_value(execution_id);
 		r_guess.set(i, 0, val);
 	}
@@ -169,13 +187,18 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 	if (is_neuron_input(p_neuron->id))
 		return true;
 
+	if (!p_neuron->parents.size())
+		return false;
+
 	// This check if this neuron in the hidden layer is fully connected to input
 	for (auto p_it = p_neuron->parents.begin();
 			p_it != p_neuron->parents.end();
 			++p_it) {
 
-		if (!is_fully_linked_to_input(p_it->neuron))
-			return false;
+		if (!is_fully_linked_to_input(p_it->neuron)) {
+			ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
+			ERR_FAIL_V(false);
+		}
 	}
 	return true;
 }
@@ -183,11 +206,8 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 void brain::SharpBrainArea::check_if_ready() {
 	ready = false;
 
-	if (!get_input_layer_size())
-		return;
-
-	if (!get_output_layer_size())
-		return;
+	ERR_FAIL_COND(!get_input_layer_size());
+	ERR_FAIL_COND(!get_output_layer_size());
 
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
@@ -196,4 +216,30 @@ void brain::SharpBrainArea::check_if_ready() {
 	}
 
 	ready = true;
+}
+
+void brain::SharpBrainArea::randomize_parents_weight(
+		Neuron *p_neuron,
+		real_t p_range) {
+
+	for (auto p_it = p_neuron->parents.begin();
+			p_it != p_neuron->parents.end();
+			++p_it) {
+
+		p_it->weight = brain::Math::random(-p_range, p_range);
+		randomize_parents_weight(p_it->neuron, p_range);
+	}
+}
+
+void brain::SharpBrainArea::set_parents_weight(
+		Neuron *p_neuron,
+		real_t p_weight) {
+
+	for (auto p_it = p_neuron->parents.begin();
+			p_it != p_neuron->parents.end();
+			++p_it) {
+
+		p_it->weight = p_weight;
+		set_parents_weight(p_it->neuron, p_weight);
+	}
 }

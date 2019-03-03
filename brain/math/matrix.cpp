@@ -43,6 +43,8 @@ brain::Matrix::~Matrix() {
 }
 
 void brain::Matrix::resize(const uint32_t p_rows, const uint32_t p_columns) {
+	if (p_rows == rows && p_columns == columns)
+		return;
 	free();
 	rows = p_rows;
 	columns = p_columns;
@@ -158,28 +160,28 @@ brain::Matrix brain::Matrix::transposed() const {
 }
 
 size_t brain::Matrix::get_byte_size() const {
-        return (2 * sizeof(uint32_t)) +
-                   (rows * columns * sizeof(real_t));
+	return (2 * sizeof(uint32_t)) +
+		   (rows * columns * sizeof(real_t));
 }
 
 void brain::Matrix::from_byte(const uint8_t *p_buffer, int p_size_of_real) {
-        free();
-        rows = ((const uint32_t *)p_buffer)[0];
-        columns = ((const uint32_t *)p_buffer)[1];
-        init();
-        std::copy(
-                        p_buffer + sizeof(const uint32_t) * 2,
-                        p_buffer + sizeof(const uint32_t) * 2 + rows * columns * p_size_of_real,
-                        (uint8_t *)matrix);
+	free();
+	rows = ((const uint32_t *)p_buffer)[0];
+	columns = ((const uint32_t *)p_buffer)[1];
+	init();
+	std::copy(
+			p_buffer + sizeof(const uint32_t) * 2,
+			p_buffer + sizeof(const uint32_t) * 2 + rows * columns * p_size_of_real,
+			(uint8_t *)matrix);
 }
 
 void brain::Matrix::to_byte(uint8_t *r_buffer) const {
-        ((uint32_t *)r_buffer)[0] = rows;
-        ((uint32_t *)r_buffer)[1] = columns;
-        std::copy(
-                        matrix,
-                        matrix + rows * columns,
-                        (real_t *)(r_buffer + sizeof(uint32_t) * 2));
+	((uint32_t *)r_buffer)[0] = rows;
+	((uint32_t *)r_buffer)[1] = columns;
+	std::copy(
+			matrix,
+			matrix + rows * columns,
+			(real_t *)(r_buffer + sizeof(uint32_t) * 2));
 }
 
 void brain::Matrix::operator=(const Matrix &p_other) {

@@ -2,11 +2,16 @@
 
 #include "brain/math/matrix.h"
 
+typedef real_t (*activation_func)(real_t p_val);
+
 namespace brain {
 
+/**
+ * @brief The BrainAreaType enum is used to point the type of brain area
+ */
 enum BrainAreaType {
 	BRAIN_AREA_TYPE_UNIFORM,
-	BRAIN_AREA_TYPE_NEAT
+	BRAIN_AREA_TYPE_SHARP
 };
 
 /**
@@ -18,6 +23,29 @@ enum BrainAreaType {
  */
 class BrainArea {
 
+public:
+	/**
+	 * @brief The Activation enum is used to indicate the type of
+	 * the activation func
+	 */
+	enum Activation {
+		ACTIVATION_SIGMOID,
+		ACTIVATION_MAX
+	};
+
+	/**
+	 * @brief activation_functions is a vector that holds the activations
+	 * ordered by Activation ID
+	 */
+	static activation_func activation_functions[];
+
+	/**
+	 * @brief activation_derivatives is a vector that holds the derivatives
+	 * ordered by Activation ID
+	 */
+	static activation_func activation_derivatives[];
+
+private:
 	/**
 	 * @brief type
 	 *

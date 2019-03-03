@@ -13,9 +13,6 @@
 #define WEIGHT_ID(layer) (layer)
 #define BIAS_ID(layer) (layer)
 
-matrix_map activation_functions[] = { brain::Math::sigmoid };
-matrix_map activation_derivatives[] = { brain::Math::sigmoid_fast_derivative };
-
 brain::UniformBrainArea::UniformBrainArea() :
 		brain::BrainArea(BRAIN_AREA_TYPE_UNIFORM) {
 	weights.resize(1);

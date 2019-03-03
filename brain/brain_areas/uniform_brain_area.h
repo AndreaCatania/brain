@@ -5,14 +5,17 @@
 #include <vector>
 
 namespace brain {
+
+/**
+ * @brief The UniformBrainArea class is the type of brain area that give the
+ * possibility to create fully connected neural network
+ *
+ * The execution of the guess function is usually two times slower than the
+ * sharp brain area, but its creation is faster.
+ */
 class UniformBrainArea : public brain::BrainArea {
 
 public:
-	enum Activation {
-		ACTIVATION_SIGMOID,
-		ACTIVATION_MAX
-	};
-
 	struct LearningCache {
 		std::vector<brain::Matrix> layers_output;
 	};

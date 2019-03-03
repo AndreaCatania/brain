@@ -28,6 +28,11 @@ struct Neuron {
 	std::vector<Link> parents;
 
 	/**
+	 * @brief activation function of this neuron
+	 */
+	brain::BrainArea::Activation activation;
+
+	/**
 	 * @brief The id of neuron, it indicate the index in the neurons vector
 	 * of the SharpBrainArea class
 	 */
@@ -101,8 +106,14 @@ struct Neuron {
 };
 
 /**
- * @brief The SharpBrainArea class is the type of brain area that give the possibility
- * to create partially connected neural network.
+ * @brief The SharpBrainArea class is the type of brain area that give
+ * the possibility to create partially connected neural network.
+ *
+ * The guess function execution of this neural network is generally 2 times
+ * faster than the uniform brain area, on the other hand its creation is slower
+ *
+ * IMPORTANT: in this brain area the bias is not added automatically, so it
+ * must be explicitly created and treated as input neuron.
  */
 class SharpBrainArea : public brain::BrainArea {
 
@@ -205,9 +216,9 @@ public:
 
 	/**
 	 * @brief fill_weights with the passed value
-	 * @param p_value
+	 * @param p_weight
 	 */
-	virtual void fill_weights(real_t p_value);
+	virtual void fill_weights(real_t p_weight);
 
 	/**
 	 * @brief get_input_layer_size
@@ -240,11 +251,12 @@ public:
 
 private:
 	/**
-	 * @brief is_fully_linked_to_input
+	 * @brief is_fully_linked_to_input tell to you if the neuron parents are
+	 * connected to the input
+	 *
 	 * @param p_neuron
 	 * @return
 	 *
-	 * This function tell you if the neuron is connected to the input
 	 */
 	bool is_fully_linked_to_input(Neuron *p_neuron) const;
 
@@ -255,6 +267,24 @@ private:
 	 * correctly connected
 	 */
 	void check_if_ready();
+
+	/**
+	 * @brief randomize_parents_weight is used to randomize the weight between
+	 * the parents and this neuron between a range of -p_range and p_range
+	 *
+	 * @param p_neuron
+	 * @param p_range
+	 */
+	void randomize_parents_weight(Neuron *p_neuron, real_t p_range);
+
+	/**
+	 * @brief set_parents_weight is used to set the weights to all parents of
+	 * this neuron
+	 *
+	 * @param p_neuron
+	 * @param p_weight
+	 */
+	void set_parents_weight(Neuron *p_neuron, real_t p_weight);
 };
 
 } // namespace brain
