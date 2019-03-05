@@ -5,6 +5,7 @@
 
 namespace brain {
 
+typedef uint32_t NeuronId;
 class Neuron;
 
 /**
@@ -36,7 +37,7 @@ struct Neuron {
 	 * @brief The id of neuron, it indicate the index in the neurons vector
 	 * of the SharpBrainArea class
 	 */
-	uint32_t id;
+	NeuronId id;
 
 	/**
 	 * @brief When the execution_id is the same this value is returned
@@ -52,7 +53,7 @@ struct Neuron {
 	 * @brief Neuron constructor
 	 * @param p_id
 	 */
-	Neuron(uint32_t p_id);
+	Neuron(NeuronId p_id);
 
 	/**
 	 * @brief has_parent
@@ -83,7 +84,7 @@ struct Neuron {
 	 * @param p_parent_index
 	 * @param p_weight
 	 */
-	void set_weight(uint32_t p_parent_index, real_t p_weight);
+	void set_weight(NeuronId p_parent_index, real_t p_weight);
 
 	/**
 	 * @brief force_set_value
@@ -92,7 +93,7 @@ struct Neuron {
 	 *
 	 * Used to set the values of the inputs
 	 */
-	void force_set_value(real_t p_val, uint32_t p_execution_id);
+	void force_set_value(real_t p_val, uint32_t p_execution_id) const;
 
 	/**
 	 * @brief get_value
@@ -128,14 +129,14 @@ class SharpBrainArea : public brain::BrainArea {
 	std::vector<Neuron> neurons;
 
 	/**
-	 * @brief inputs neurons of this brain area
+	 * @brief inputs neuron ids of this brain area
 	 */
-	std::vector<Neuron *> inputs;
+	std::vector<NeuronId> inputs;
 
 	/**
-	 * @brief outputs neurons of this brain area
+	 * @brief outputs neuron ids of this brain area
 	 */
-	std::vector<Neuron *> outputs;
+	std::vector<NeuronId> outputs;
 
 	/**
 	 * @brief ready tells if the network is fully connected
@@ -156,7 +157,7 @@ public:
 	 * Add an unconnected neuron.
 	 * It can become an input, hidden or output neuron
 	 */
-	uint32_t add_neuron();
+	NeuronId add_neuron();
 
 	/**
 	 * @brief is_neuron_input
@@ -165,7 +166,7 @@ public:
 	 *
 	 * Returns true if the neuron is already an input
 	 */
-	bool is_neuron_input(uint32_t p_neuron_id) const;
+	bool is_neuron_input(NeuronId p_neuron_id) const;
 
 	/**
 	 * @brief set_neuron_as_input
@@ -173,7 +174,7 @@ public:
 	 *
 	 * Set neuron as input
 	 */
-	void set_neuron_as_input(uint32_t p_neuron_id);
+	void set_neuron_as_input(NeuronId p_neuron_id);
 
 	/**
 	 * @brief is_neuron_output
@@ -182,7 +183,7 @@ public:
 	 *
 	 * Returns false if the neuron is an output
 	 */
-	bool is_neuron_output(uint32_t p_neuron_id) const;
+	bool is_neuron_output(NeuronId p_neuron_id) const;
 
 	/**
 	 * @brief set_neuron_as_output
@@ -190,7 +191,7 @@ public:
 	 *
 	 * Set the neuron as ouput neuron
 	 */
-	void set_neuron_as_output(uint32_t p_neuron_id);
+	void set_neuron_as_output(NeuronId p_neuron_id);
 
 	/**
 	 * @brief add_link
@@ -202,8 +203,8 @@ public:
 	 * The direction of the linkage is important
 	 */
 	void add_link(
-			uint32_t p_neuron_parent_id,
-			uint32_t p_neuron_child_id,
+			NeuronId p_neuron_parent_id,
+			NeuronId p_neuron_child_id,
 			real_t p_weight = 0.f);
 
 	/**

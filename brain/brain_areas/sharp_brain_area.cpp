@@ -8,7 +8,7 @@
 //activation_func activation_functions[] = { brain::Math::sigmoid };
 //activation_func activation_derivatives[] = { brain::Math::sigmoid_fast_derivative };
 
-void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) {
+void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) const {
 	execution_id = p_execution_id;
 	cached_value = p_val;
 }
@@ -71,7 +71,7 @@ uint32_t brain::SharpBrainArea::add_neuron() {
 bool brain::SharpBrainArea::is_neuron_input(uint32_t p_neuron_id) const {
 	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
 	for (auto it = inputs.begin(); it != inputs.end(); ++it) {
-		if ((*it)->id == p_neuron_id)
+		if (*it == p_neuron_id)
 			return true;
 	}
 	return false;
@@ -81,14 +81,14 @@ void brain::SharpBrainArea::set_neuron_as_input(uint32_t p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
-	inputs.push_back(&neurons[p_neuron_id]);
+	inputs.push_back(p_neuron_id);
 	ready = false;
 }
 
 bool brain::SharpBrainArea::is_neuron_output(uint32_t p_neuron_id) const {
 	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
 	for (auto it = outputs.begin(); it != outputs.end(); ++it) {
-		if ((*it)->id == p_neuron_id)
+		if (*it == p_neuron_id)
 			return true;
 	}
 	return false;
@@ -98,7 +98,7 @@ void brain::SharpBrainArea::set_neuron_as_output(uint32_t p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
-	outputs.push_back(&neurons[p_neuron_id]);
+	outputs.push_back(p_neuron_id);
 	ready = false;
 }
 
@@ -133,7 +133,7 @@ void brain::SharpBrainArea::randomize_weights(real_t p_range) {
 
 	for (int i(outputs.size() - 1); 0 <= i; ++i) {
 
-		randomize_parents_weight(outputs[i], p_range);
+		randomize_parents_weight(&neurons[outputs[i]], p_range);
 	}
 }
 
@@ -148,7 +148,7 @@ void brain::SharpBrainArea::fill_weights(real_t p_weight) {
 
 	for (int i(outputs.size() - 1); 0 <= i; ++i) {
 
-		set_parents_weight(outputs[i], p_weight);
+		set_parents_weight(&neurons[outputs[i]], p_weight);
 	}
 }
 
@@ -180,12 +180,12 @@ void brain::SharpBrainArea::guess(
 
 	// set inputs
 	for (int i(inputs.size() - 1); 0 <= i; --i) {
-		inputs[i]->force_set_value(p_input.get(i, 0), execution_id);
+		neurons[inputs[i]].force_set_value(p_input.get(i, 0), execution_id);
 	}
 
 	// Get outputs
 	for (int i(outputs.size() - 1); 0 <= i; --i) {
-		const real_t val = outputs[i]->get_value(execution_id);
+		const real_t val = neurons[outputs[i]].get_value(execution_id);
 		r_guess.set(i, 0, val);
 	}
 }
@@ -220,7 +220,7 @@ void brain::SharpBrainArea::check_if_ready() {
 
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
-		if (!is_fully_linked_to_input(*o_it))
+		if (!is_fully_linked_to_input(&neurons[*o_it]))
 			return;
 	}
 

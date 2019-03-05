@@ -187,29 +187,26 @@ const uint32_t iterations = 1;
 
 void test_NEAT_XOR() {
 
+	brain::NEATGenome genome;
+
+	int bias_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
+	int input_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
+	int hidden_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	int output_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_OUTPUT);
+
+	genome.add_link(bias_id, hidden_id, 1.0, 0);
+	genome.add_link(bias_id, output_id, 1.0, 1);
+	genome.add_link(input_id, hidden_id, 1.0, 2);
+	genome.add_link(hidden_id, output_id, 1.0, 3);
+	int wrong_link = genome.add_link(input_id, output_id, 1.0, 3);
+
+	genome.suppress_link(wrong_link);
+
+	brain::NEATGenome genome2;
+	genome.duplicate_in(genome2);
+
 	brain::SharpBrainArea brain_area;
-
-	if (true) {
-
-		brain::NEATGenome genome;
-		genome.generate_neural_network(brain_area);
-
-	} else {
-		const uint32_t bias_neuron_id = brain_area.add_neuron();
-		const uint32_t input_neuron_id = brain_area.add_neuron();
-		const uint32_t hidden_neuron_id = brain_area.add_neuron();
-		const uint32_t output_neuron_id = brain_area.add_neuron();
-
-		brain_area.add_link(input_neuron_id, hidden_neuron_id, 1.0);
-		brain_area.add_link(bias_neuron_id, hidden_neuron_id, 1.0);
-		brain_area.add_link(hidden_neuron_id, output_neuron_id, 1.0);
-		brain_area.add_link(bias_neuron_id, output_neuron_id, 1.0);
-
-		// Set input and output
-		brain_area.set_neuron_as_input(input_neuron_id);
-		brain_area.set_neuron_as_input(bias_neuron_id);
-		brain_area.set_neuron_as_output(output_neuron_id);
-	}
+	genome2.generate_neural_network(brain_area);
 
 	real_t x[] = { 1, 1 };
 	brain::Matrix input(2, 1, x);
