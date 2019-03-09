@@ -1,6 +1,7 @@
 #include "neat_genome.h"
 
 #include "brain/error_macros.h"
+#include "brain/math/math_funcs.h"
 
 brain::NeuronGene::NeuronGene(uint32_t p_id, NeuronGeneType p_type) :
 		id(p_id),
@@ -20,9 +21,39 @@ brain::LinkGene::LinkGene(
 		weight(p_weight),
 		innovation_number(p_innovation_number) {}
 
-brain::NEATGenome::NEATGenome() {}
+brain::NtGenome::NtGenome() {}
 
-uint32_t brain::NEATGenome::add_neuron(
+brain::NtGenome::NtGenome(
+		int p_input_count,
+		int p_output_count,
+		bool p_randomize_weights) :
+		NtGenome() {
+
+	ERR_FAIL_COND(p_input_count <= 0);
+	ERR_FAIL_COND(p_output_count <= 0);
+
+	for (int i(0); i < p_input_count; ++i) {
+		add_neuron(NeuronGene::NEURON_GENE_TYPE_INPUT);
+	}
+
+	for (int i(0); i < p_output_count; ++i) {
+		add_neuron(NeuronGene::NEURON_GENE_TYPE_OUTPUT);
+	}
+
+	int innovation_number(0);
+	for (int o_i(0); o_i < p_output_count; ++o_i) {
+		for (int i_i(0); i_i < p_input_count; ++i_i) {
+
+			add_link(
+					i_i,
+					p_input_count + o_i, // Output neurons are after inputs neurons
+					p_randomize_weights ? Math::random(-1, 1) : 1,
+					innovation_number++);
+		}
+	}
+}
+
+uint32_t brain::NtGenome::add_neuron(
 		NeuronGene::NeuronGeneType p_type) {
 
 	const uint32_t id(neuron_genes.size());
@@ -33,7 +64,7 @@ uint32_t brain::NEATGenome::add_neuron(
 	return id;
 }
 
-uint32_t brain::NEATGenome::add_link(
+uint32_t brain::NtGenome::add_link(
 		uint32_t p_parent_neuron_id,
 		uint32_t p_child_neuron_id,
 		real_t p_weight,
@@ -55,19 +86,19 @@ uint32_t brain::NEATGenome::add_link(
 	return id;
 }
 
-void brain::NEATGenome::active_link(uint32_t p_link_id) {
+void brain::NtGenome::active_link(uint32_t p_link_id) {
 	ERR_FAIL_INDEX(p_link_id, link_genes.size());
 
 	link_genes[p_link_id].active = true;
 }
 
-void brain::NEATGenome::suppress_link(uint32_t p_link_id) {
+void brain::NtGenome::suppress_link(uint32_t p_link_id) {
 	ERR_FAIL_INDEX(p_link_id, link_genes.size());
 
 	link_genes[p_link_id].active = false;
 }
 
-uint32_t brain::NEATGenome::find_link(
+uint32_t brain::NtGenome::find_link(
 		uint32_t p_parent_neuron_id,
 		uint32_t p_child_neuron_id) {
 
@@ -80,7 +111,19 @@ uint32_t brain::NEATGenome::find_link(
 	return -1;
 }
 
-void brain::NEATGenome::generate_neural_network(SharpBrainArea &r_brain_area) const {
+void brain::NtGenome::map_link_weights(map_real_1 p_map_func) {
+	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
+		it->weight = p_map_func(it->weight);
+	}
+}
+
+void brain::NtGenome::map_link_weights(map_real_2_ptr p_map_func, void *p_data) {
+	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
+		it->weight = p_map_func(it->weight, p_data);
+	}
+}
+
+void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) const {
 
 	r_brain_area.clear();
 
@@ -111,12 +154,12 @@ void brain::NEATGenome::generate_neural_network(SharpBrainArea &r_brain_area) co
 	}
 }
 
-void brain::NEATGenome::clear() {
+void brain::NtGenome::clear() {
 	neuron_genes.clear();
 	link_genes.clear();
 }
 
-void brain::NEATGenome::duplicate_in(NEATGenome &p_genome) const {
+void brain::NtGenome::duplicate_in(NtGenome &p_genome) const {
 
 	p_genome.clear();
 
@@ -134,4 +177,10 @@ void brain::NEATGenome::duplicate_in(NEATGenome &p_genome) const {
 
 		p_genome.link_genes.push_back(*it);
 	}
+}
+
+uint32_t brain::NtGenome::get_innovation_number() const {
+	const int last_gene = link_genes.size() - 1;
+	ERR_FAIL_INDEX_V(last_gene, link_genes.size(), -1);
+	return link_genes[last_gene].innovation_number;
 }

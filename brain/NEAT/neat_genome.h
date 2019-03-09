@@ -3,6 +3,9 @@
 #include "brain/brain_areas/sharp_brain_area.h"
 #include <vector>
 
+typedef real_t (*map_real_1)(real_t p_arg_1);
+typedef real_t (*map_real_2_ptr)(real_t p_arg_1, void *p_data);
+
 namespace brain {
 
 /**
@@ -108,7 +111,7 @@ struct LinkGene : public Gene {
  * To maintain the history of the mutations this class keep all genes but
  * deactivates the mutated ones.
  */
-class NEATGenome {
+class NtGenome {
 
 	/**
 	 * @brief neuron_genes store all neuron information used to create the
@@ -127,7 +130,20 @@ public:
 	/**
 	 * @brief NEATGenome constructor
 	 */
-	NEATGenome();
+	NtGenome();
+
+	/**
+	 * @brief NtGenome this constructor created automatically a fully connected
+	 * genome with input and outputs passes as parameters.
+	 *
+	 * This constructor is perfect to create the ancestor genome to pass to
+	 * create the population
+	 *
+	 * @param p_input_count
+	 * @param p_output_count
+	 * @param p_randomize_weights = true
+	 */
+	NtGenome(int p_input_count, int p_output_count, bool p_randomize_weights = true);
 
 	/**
 	 * @brief add_neuron add a neuron gene to the genome
@@ -174,6 +190,19 @@ public:
 			uint32_t p_child_neuron_id);
 
 	/**
+	 * @brief map_link_weights map the weights
+	 * @param p_map_func
+	 */
+	void map_link_weights(map_real_1 p_map_func);
+
+	/**
+	 * @brief map_link_weights map the weights
+	 * @param p_map_func
+	 * @param p_data is passed directly to the map_func
+	 */
+	void map_link_weights(map_real_2_ptr p_map_func, void *p_data);
+
+	/**
 	 * @brief generate_neural_network is used to generate the phenotype using
 	 * the description of this Genome.
 	 *
@@ -190,7 +219,13 @@ public:
 	 * @brief duplicate_in this genome
 	 * @param p_genome
 	 */
-	void duplicate_in(NEATGenome &p_genome) const;
+	void duplicate_in(NtGenome &p_genome) const;
+
+	/**
+	 * @brief get_innovation_number returns the innovation number of the last gene
+	 * @return
+	 */
+	uint32_t get_innovation_number() const;
 };
 
 } // namespace brain
