@@ -1,0 +1,21 @@
+#include "neat_specie.h"
+
+#include "brain/NEAT/neat_population.h"
+#include "brain/error_macros.h"
+#include <algorithm>
+
+brain::NtSpecie::NtSpecie(const NtPopulation *p_owner) :
+		owner(p_owner) {
+}
+
+void brain::NtSpecie::add_organism(const NtOrganism *p_organism) {
+	ERR_FAIL_COND(!p_organism);
+	ERR_FAIL_COND();
+	organisms.push_back(p_organism);
+}
+
+void brain::NtSpecie::remove_organism(const NtOrganism *p_organism) {
+	auto it = std::find(organisms.begin(), organisms.end(), p_organism);
+	if (it != organisms.end())
+		organisms.erase(it);
+}

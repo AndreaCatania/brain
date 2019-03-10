@@ -86,6 +86,15 @@ uint32_t brain::NtGenome::add_link(
 	return id;
 }
 
+uint32_t brain::NtGenome::get_link_count() const {
+	return link_genes.size();
+}
+
+const brain::LinkGene *brain::NtGenome::get_link(int p_i) const {
+	ERR_FAIL_INDEX_V(p_i, link_genes.size(), nullptr);
+	return link_genes.data() + p_i;
+}
+
 void brain::NtGenome::active_link(uint32_t p_link_id) {
 	ERR_FAIL_INDEX(p_link_id, link_genes.size());
 

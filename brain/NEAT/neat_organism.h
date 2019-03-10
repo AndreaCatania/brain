@@ -6,6 +6,7 @@
 namespace brain {
 
 class NtPopulation;
+class NtSpecies;
 
 /**
  * @brief The NtOrganism class represent the actual organism with all info
@@ -17,6 +18,12 @@ class NtOrganism {
 	 * @brief owner is the population where this organism belong
 	 */
 	const NtPopulation *owner;
+
+	/**
+	 * @brief specie where this organism belong. If null mean that it is not part
+	 * of any specie yet
+	 */
+	NtSpecies *species;
 
 	/**
 	 * @brief The genome holds all information to create the brain area
@@ -47,11 +54,34 @@ public:
 	NtOrganism(const NtPopulation *p_owner);
 
 	/**
+	 * @brief NtOrganism Destructor
+	 */
+	~NtOrganism();
+
+	/**
 	 * @brief get_genome_mutable give the possibility to mutate the
 	 * genome from outside
 	 * @return
 	 */
 	NtGenome &get_genome_mutable();
+
+	/**
+	 * @brief get_genome get the genome
+	 * @return
+	 */
+	const NtGenome &get_genome() const;
+
+	/**
+	 * @brief set_species set the species where this organism belongs
+	 * @param p_specie
+	 */
+	void set_species(NtSpecies *p_species);
+
+	/**
+	 * @brief get_species returns the speciews where this organism belongs
+	 * @return
+	 */
+	NtSpecies *get_species() const;
 };
 
 } // namespace brain

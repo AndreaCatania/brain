@@ -168,6 +168,19 @@ public:
 			uint32_t p_innovation_number);
 
 	/**
+	 * @brief get_link_size get the link count
+	 * @return
+	 */
+	uint32_t get_link_count() const;
+
+	/**
+	 * @brief get_link returns the link gene or nullptr if p_i is not valid
+	 * @param p_i
+	 * @return
+	 */
+	const LinkGene *get_link(int p_i) const;
+
+	/**
 	 * @brief active_link active a link
 	 * @param p_link_id
 	 */

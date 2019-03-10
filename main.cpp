@@ -39,66 +39,7 @@ void print_error_callback(
 	printf("\n");
 }
 
-void test_brain_area_train(brain::UniformBrainArea &area) {
-
-	std::vector<brain::Matrix> inputs;
-	std::vector<brain::Matrix> expected;
-	{
-		real_t a[] = { 1, 0, 0, 0 };
-		real_t b[] = { 1, 0, 0, 0 };
-		inputs.push_back(brain::Matrix(4, 1, a));
-		expected.push_back(brain::Matrix(4, 1, b));
-	}
-	{
-		real_t a[] = { 0, 1, 0, 0 };
-		real_t b[] = { 0, 1, 0, 0 };
-		inputs.push_back(brain::Matrix(4, 1, a));
-		expected.push_back(brain::Matrix(4, 1, b));
-	}
-	{
-		real_t a[] = { 0, 0, 1, 0 };
-		real_t b[] = { 0, 0, 1, 0 };
-		inputs.push_back(brain::Matrix(4, 1, a));
-		expected.push_back(brain::Matrix(4, 1, b));
-	}
-	{
-		real_t a[] = { 0, 0, 0, 1 };
-		real_t b[] = { 0, 0, 0, 1 };
-		inputs.push_back(brain::Matrix(4, 1, a));
-		expected.push_back(brain::Matrix(4, 1, b));
-	}
-
-	for (int i(0); i < inputs.size(); ++i) {
-
-		const real_t accuracy = area.learn(inputs[i], expected[i], 0.1, nullptr);
-		print_line("Error: " + brain::rtos(accuracy));
-	}
-}
-
-void test_complex_brain_area() {
-
-	// Create brain area
-	brain::UniformBrainArea area1;
-	area1.set_input_layer_size(4);
-	area1.set_output_layer_size(4);
-	area1.set_hidden_layers_count(1);
-	area1.set_hidden_layer(0, 4, brain::UniformBrainArea::ACTIVATION_SIGMOID);
-	area1.randomize_weights(2);
-	area1.fill_biases(1.0);
-
-	test_brain_area_train(area1);
-
-	real_t features_m[] = { 1, 0, 0, 0 };
-	brain::Matrix features(4, 1, features_m);
-
-	brain::Matrix guess;
-	area1.guess(features, guess);
-
-	print_line("Result:");
-	print_line(guess);
-}
-
-void test_brain_area() {
+void test_uniform_ba_XOR() {
 
 	// Create brain area
 	brain::UniformBrainArea area1(2, 1, 1);
@@ -145,8 +86,15 @@ void test_brain_area() {
 
 		// SGD prefer shuffled data
 		uint32_t seed = time(nullptr);
-		std::shuffle(inputs.begin(), inputs.end(), std::default_random_engine(seed));
-		std::shuffle(expected.begin(), expected.end(), std::default_random_engine(seed));
+		std::shuffle(
+				inputs.begin(),
+				inputs.end(),
+				std::default_random_engine(seed));
+
+		std::shuffle(
+				expected.begin(),
+				expected.end(),
+				std::default_random_engine(seed));
 	}
 
 	print_line("Error: " + brain::rtos(error));
@@ -180,61 +128,22 @@ void test_brain_area() {
 	}
 }
 
-#include "brain/NEAT/neat_genome.h"
+#include "brain/NEAT/neat_genetic.h"
+#include "brain/NEAT/neat_population.h"
 #include "brain/brain_areas/sharp_brain_area.h"
 
 const uint32_t iterations = 1;
 
 void test_NEAT_XOR() {
 
-	brain::NEATGenome genome;
+	brain::NtPopulationSettings settings;
+	settings.seed = time(nullptr);
 
-	int bias_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
-	int input_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
-	int hidden_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
-	int output_id = genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_OUTPUT);
-
-	genome.add_link(bias_id, hidden_id, 1.0, 0);
-	genome.add_link(bias_id, output_id, 1.0, 1);
-	genome.add_link(input_id, hidden_id, 1.0, 2);
-	genome.add_link(hidden_id, output_id, 1.0, 3);
-	int wrong_link = genome.add_link(input_id, output_id, 1.0, 3);
-
-	genome.suppress_link(wrong_link);
-
-	brain::NEATGenome genome2;
-	genome.duplicate_in(genome2);
-
-	brain::SharpBrainArea brain_area;
-	genome2.generate_neural_network(brain_area);
-
-	real_t x[] = { 1, 1 };
-	brain::Matrix input(2, 1, x);
-
-	brain::Matrix guess;
-
-	for (uint32_t i(0); i < iterations; ++i)
-		brain_area.guess(input, guess);
-
-	print_line(guess);
-}
-
-void test_UNIFORM_XOR() {
-	brain::UniformBrainArea brain_area(1, 1, 1);
-
-	brain_area.set_hidden_layer(0, 1, brain::UniformBrainArea::ACTIVATION_SIGMOID);
-	brain_area.fill_weights(1.0);
-	brain_area.fill_biases(1.0);
-
-	real_t x[] = { 1 };
-	brain::Matrix input(1, 1, x);
-
-	brain::Matrix guess;
-
-	for (uint32_t i(0); i < iterations; ++i)
-		brain_area.guess(input, guess);
-
-	print_line(guess);
+	brain::NtPopulation population(
+			brain::NtGenome(3, 1, true),
+			200 /*population size*/,
+			settings);
+	int a = 0;
 }
 
 int main() {
@@ -245,7 +154,7 @@ int main() {
 
 	test_NEAT_XOR();
 
-	test_UNIFORM_XOR();
+	//test_uniform_ba_XOR();
 
 	return 0;
 }
