@@ -15,8 +15,14 @@ brain::NtPopulation::NtPopulation(
 		genetic_disjoints_significance(p_settings.genetic_disjoints_significance),
 		genetic_excesses_significance(p_settings.genetic_excesses_significance),
 		genetic_weights_significance(p_settings.genetic_weights_significance),
+		fitness_exponent(p_settings.fitness_exponent),
+		species_youngness_age_threshold(p_settings.species_youngness_age_threshold),
+		species_youngness_multiplier(p_settings.species_youngness_multiplier),
+		species_stagnant_age_threshold(p_settings.species_stagnant_age_threshold),
+		species_stagnant_multiplier(p_settings.species_stagnant_multiplier),
 		rand_generator(p_settings.seed),
-		gaussian_distribution(0, p_settings.learning_deviation) {
+		gaussian_distribution(0, p_settings.learning_deviation),
+		epoch(1) {
 
 	organisms.resize(p_population_size, nullptr);
 
@@ -42,6 +48,55 @@ brain::NtPopulation::NtPopulation(
 brain::NtPopulation::~NtPopulation() {
 	destroy_all_organism();
 	destroy_all_species();
+}
+
+uint32_t brain::NtPopulation::get_epoch() const {
+	return epoch;
+}
+
+uint32_t brain::NtPopulation::get_organism_count() const {
+	return organisms.size();
+}
+
+const brain::SharpBrainArea *brain::NtPopulation::organism_get_network(uint32_t p_organism_i) const {
+	ERR_FAIL_INDEX_V(p_organism_i, organisms.size(), nullptr);
+	return &organisms[p_organism_i]->get_brain_area();
+}
+
+void brain::NtPopulation::organism_add_fitness(uint32_t p_organism_i, real_t p_fitness) const {
+	ERR_FAIL_INDEX(p_organism_i, organisms.size());
+	organisms[p_organism_i]->add_middle_fitness(p_fitness);
+}
+
+void brain::NtPopulation::epoch_advance() {
+
+	++epoch;
+
+	real_t best_fitness(0);
+	NtOrganism *population_champion(nullptr);
+
+	/// Step 1. Compute fitness and find population champion
+	for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
+		(*it_o)->compute_final_fitness(fitness_exponent);
+		(*it_o)->clear_middle_fitness();
+
+		if (best_fitness < (*it_o)->get_fitness()) {
+			best_fitness = (*it_o)->get_fitness();
+			population_champion = *it_o;
+		}
+	}
+
+	/// Step 2. Compute species average fitness, then adjust it
+	for (auto it_s = species.begin(); it_s != species.end(); ++it_s) {
+		(*it_s)->compute_average_fitness();
+		(*it_s)->adjust_fitness(
+				species_youngness_age_threshold,
+				species_youngness_multiplier,
+				species_stagnant_age_threshold,
+				species_stagnant_multiplier);
+	}
+
+	/// Stage 3.
 }
 
 void brain::NtPopulation::speciate() {
@@ -99,7 +154,7 @@ void brain::NtPopulation::speciate() {
 }
 
 brain::NtSpecies *brain::NtPopulation::create_species() {
-	NtSpecies *new_species = new NtSpecies(this);
+	NtSpecies *new_species = new NtSpecies(this, epoch);
 	species.push_back(new_species);
 	return new_species;
 }

@@ -136,14 +136,62 @@ const uint32_t iterations = 1;
 
 void test_NEAT_XOR() {
 
+	std::vector<brain::Matrix> inputs;
+	std::vector<brain::Matrix> expected;
+	{
+		real_t a[] = { 1, 1, 0 };
+		real_t b[] = { 1 };
+		inputs.push_back(brain::Matrix(3, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 1, 0, 1 };
+		real_t b[] = { 1 };
+		inputs.push_back(brain::Matrix(3, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 1, 1, 1 };
+		real_t b[] = { 0 };
+		inputs.push_back(brain::Matrix(3, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+	{
+		real_t a[] = { 1, 0, 0 };
+		real_t b[] = { 0 };
+		inputs.push_back(brain::Matrix(3, 1, a));
+		expected.push_back(brain::Matrix(1, 1, b));
+	}
+
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
 
+	/// Step 1. Population creation
 	brain::NtPopulation population(
 			brain::NtGenome(3, 1, true),
-			200 /*population size*/,
+			5 /*population size*/,
 			settings);
-	int a = 0;
+
+	const int epoch_max(2);
+	for (int epoch(0); epoch < epoch_max; ++epoch) {
+
+		/// Step 2. Population testing and evaluation
+		for (int i = population.get_organism_count() - 1; 0 <= i; --i) {
+			const brain::SharpBrainArea *brain_area = population.organism_get_network(i);
+			brain::Matrix result;
+			for (int k(inputs.size() - 1); 0 <= k; --k) {
+				brain_area->guess(inputs[k], result);
+				real_t error = result.get(0, 0) - expected[k].get(0, 0);
+				population.organism_add_fitness(i, 1.f - ABS(error));
+			}
+		}
+
+		/// Step 3. advance the epoch
+		population.epoch_advance();
+	}
+
+	// TODO get the population champion and test it.
+	int b = 0;
 }
 
 int main() {

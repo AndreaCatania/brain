@@ -91,6 +91,39 @@ struct NtPopulationSettings {
 	 * Disjoint, Excess, Weight mean.
 	 */
 	real_t genetic_weights_significance = 0.4f;
+
+	/**
+	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
+	 * differentiate more the organisms when the fitness increase.
+	 *
+	 * This is useful because in some situations when the network is already optimized
+	 * the fitness gain is low even if there are some benefits that is worth to notice.
+	 */
+	real_t fitness_exponent = 2.f;
+
+	/**
+	 * @brief species_youngness_age_threshold the ages within a species is considered
+	 * young and so is protected
+	 */
+	int species_youngness_age_threshold = 10;
+
+	/**
+	 * @brief species_youngness_multiplier the fitness multiplier applied to the
+	 * young species
+	 */
+	real_t species_youngness_multiplier = 3.0f;
+
+	/**
+	 * @brief species_stagnant_age_threshold the ages without improvements
+	 * to consider a species stagnant
+	 */
+	int species_stagnant_age_threshold = 10;
+
+	/**
+	 * @brief species_stagnant_multiplier the penalty multiplier applied to the
+	 * stagnant species
+	 */
+	real_t species_stagnant_multiplier = 0.01f;
 };
 
 /**
@@ -114,13 +147,13 @@ class NtPopulation {
 	real_t genetic_compatibility_threshold;
 
 	/**
-	 * @brief genetic_weights_significance is used during the genetic comparison
+	 * @brief genetic_disjoints_significance is used during the genetic comparison
 	 * between two genomes.
 	 */
 	real_t genetic_disjoints_significance;
 
 	/**
-	 * @brief genetic_weights_significance is used during the genetic comparison
+	 * @brief genetic_excesses_significance is used during the genetic comparison
 	 * between two genomes.
 	 */
 	real_t genetic_excesses_significance;
@@ -130,6 +163,39 @@ class NtPopulation {
 	 * between two genomes.
 	 */
 	real_t genetic_weights_significance;
+
+	/**
+	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
+	 * differentiate more the organisms when the fitness increase.
+	 *
+	 * This is useful because in some situations when the network is already optimized
+	 * the fitness gain is low even if there are some benefits that is worth to notice.
+	 */
+	real_t fitness_exponent;
+
+	/**
+	 * @brief species_youngness_age_threshold the ages within a species is considered
+	 * young and so is protected
+	 */
+	int species_youngness_age_threshold;
+
+	/**
+	 * @brief species_youngness_multiplier the fitness multiplier applied to the
+	 * young species
+	 */
+	real_t species_youngness_multiplier;
+
+	/**
+	 * @brief species_stagnant_age_threshold the ages without improvements
+	 * to consider a species stagnant
+	 */
+	int species_stagnant_age_threshold;
+
+	/**
+	 * @brief species_stagnant_multiplier the penalty multiplier applied to the
+	 * stagnant species
+	 */
+	real_t species_stagnant_multiplier;
 
 	/**
 	 * @brief rand_generator is used to generate a random number
@@ -152,6 +218,11 @@ class NtPopulation {
 	 * This class is fully responsible for the memory management
 	 */
 	std::vector<NtOrganism *> organisms;
+
+	/**
+	 * @brief epoch counter
+	 */
+	uint32_t epoch;
 
 public:
 	/**
@@ -176,6 +247,39 @@ public:
 	 * @brief NtPopulation Destructor
 	 */
 	~NtPopulation();
+
+	/**
+	 * @brief get_epoch returns the current population epoch
+	 * @return
+	 */
+	uint32_t get_epoch() const;
+
+	/**
+	 * @brief get_organism_count returns the count of population organisms
+	 * @return
+	 */
+	uint32_t get_organism_count() const;
+
+	/**
+	 * @brief organism_get_network returns the neural network on this organism
+	 * @param p_organism_i
+	 * @return
+	 */
+	const SharpBrainArea *organism_get_network(uint32_t p_organism_i) const;
+
+	/**
+	 * @brief organism_add_fitness is used to tell how this organism is doing well
+	 * @param p_organism_i
+	 * @param p_fitness
+	 */
+	void organism_add_fitness(uint32_t p_organism_i, real_t p_fitness) const;
+
+	/**
+	 * @brief epoch_advance is the function that depending on the fitness
+	 * decide to replace the less performant organisms with the offspring of
+	 * most performant organisms called champions.
+	 */
+	void epoch_advance();
 
 private:
 	/**
