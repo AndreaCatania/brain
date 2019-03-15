@@ -3,13 +3,16 @@
 #include "brain/NEAT/neat_organism.h"
 #include "brain/NEAT/neat_population.h"
 #include "brain/error_macros.h"
+#include "brain/math/math_funcs.h"
 #include <algorithm>
 
 brain::NtSpecies::NtSpecies(const NtPopulation *p_owner, uint32_t current_epoch) :
 		owner(p_owner),
 		born_epoch(current_epoch),
+		champion(nullptr),
 		higher_fitness_ever(0),
-		age_of_last_improvement(0) {
+		age_of_last_improvement(0),
+		offspring_count(0) {
 }
 
 brain::NtSpecies::~NtSpecies() {
@@ -28,6 +31,7 @@ void brain::NtSpecies::add_organism(NtOrganism *p_organism) {
 	ERR_FAIL_COND(!p_organism);
 	ERR_FAIL_COND(p_organism->get_species());
 	organisms.push_back(p_organism);
+	champion = nullptr;
 }
 
 void brain::NtSpecies::remove_organism(const NtOrganism *p_organism) {
@@ -35,6 +39,7 @@ void brain::NtSpecies::remove_organism(const NtOrganism *p_organism) {
 	auto it = std::find(organisms.begin(), organisms.end(), p_organism);
 	if (it != organisms.end())
 		organisms.erase(it);
+	champion = nullptr;
 }
 
 int brain::NtSpecies::size() const {
@@ -44,6 +49,35 @@ int brain::NtSpecies::size() const {
 brain::NtOrganism *brain::NtSpecies::get_organism(int p_i) const {
 	ERR_FAIL_INDEX_V(p_i, organisms.size(), nullptr);
 	return organisms[p_i];
+}
+
+void brain::NtSpecies::reset_age_of_last_improvement() {
+	age_of_last_improvement = get_age();
+}
+
+void brain::NtSpecies::set_offspring_count(int p_offspring) {
+	offspring_count = p_offspring;
+}
+
+int brain::NtSpecies::get_offspring_count() const {
+	return offspring_count;
+}
+
+void brain::NtSpecies::set_champion_offspring_count(int p_offspring) {
+	ERR_FAIL_COND(p_offspring > offspring_count);
+	champion_offspring_count = p_offspring;
+}
+
+int brain::NtSpecies::get_champion_offspring_count() const {
+	return champion_offspring_count;
+}
+
+brain::NtOrganism *brain::NtSpecies::get_champion() const {
+	return champion;
+}
+
+real_t brain::NtSpecies::get_average_fitness() const {
+	return average_fitness;
 }
 
 void brain::NtSpecies::compute_average_fitness() {
@@ -59,7 +93,8 @@ void brain::NtSpecies::adjust_fitness(
 		int p_youngness_age_threshold,
 		real_t p_youngness_multiplier,
 		int p_stagnant_age_threshold,
-		real_t p_stagnant_multiplier) {
+		real_t p_stagnant_multiplier,
+		real_t p_survival_ratio) {
 
 	const int age = get_age();
 	const int stagnant_time = age - age_of_last_improvement;
@@ -100,6 +135,37 @@ void brain::NtSpecies::adjust_fitness(
 		age_of_last_improvement = age;
 	}
 
-	// TODO genetics.cpp:2724
-	int a = 0;
+	// Get champion
+	champion = organisms[0];
+
+	// Calculates the survival
+	uint32_t survival_count = organisms.size() * p_survival_ratio;
+	survival_count = MAX(1, survival_count); // 1 should always survive
+
+	ERR_FAIL_COND(survival_count > organisms.size());
+
+	// Mark all others for death
+	for (
+			auto it = organisms.begin() + survival_count;
+			it != organisms.end();
+			++it) {
+
+		(*it)->set_mark_for_death(true);
+	}
+}
+
+int brain::NtSpecies::compute_offspring(double &r_remaining) {
+	double expected = r_remaining;
+
+	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
+		expected += (*it)->get_expected_offspring();
+	}
+
+	offspring_count = Math::floor(expected);
+	r_remaining = Math::fmod(expected, 1.0);
+	return offspring_count;
+}
+
+bool species_fitness_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2) {
+	return p_1->get_average_fitness() > p_2->get_average_fitness();
 }

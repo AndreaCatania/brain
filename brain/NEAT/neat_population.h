@@ -124,6 +124,40 @@ struct NtPopulationSettings {
 	 * stagnant species
 	 */
 	real_t species_stagnant_multiplier = 0.01f;
+
+	/**
+	 * @brief species_survival_ratio is used to know the percetage of survival
+	 * inside the population.
+	 * This must be always between 0 and 1.
+	 */
+	real_t species_survival_ratio = 0.5f;
+
+	/**
+	 * @brief species_stealing_protection_age_threshold is used to protect the
+	 * species from stealing even if they perform low until they pass this threshold
+	 */
+	int species_stealing_protection_age_threshold = 5;
+
+	/**
+	 * @brief species_stealing_limit is used to stop the stealing when they get
+	 * below this value.
+	 * In thi way is possible to protect the specie from the death due to the
+	 * stealing.
+	 */
+	int species_stealing_limit = 2;
+
+	/**
+	 * @brief population_stagnant_age_thresold is used to detect if the population
+	 * become stagnant and is not able to improve more.
+	 */
+	int population_stagnant_age_thresold = 15;
+
+	/**
+	 * @brief population_cribs_stealing is used to take the expected offspring from
+	 * the lowest species and assign them as offspring of the champion of the most
+	 * fittest species
+	 */
+	int population_cribs_stealing = 10;
 };
 
 /**
@@ -135,67 +169,15 @@ struct NtPopulationSettings {
 class NtPopulation {
 
 	/**
+	 * @brief Customizable settings of the population
+	 */
+	NtPopulationSettings settings;
+
+	/**
 	 * @brief innovation_number is an incremental number that is used to
 	 * mark and so track all changes to the organism genome.
 	 */
 	uint32_t innovation_number;
-
-	/**
-	 * @brief genetic_compatibility_threshold is used to determine the species
-	 * organisms, during genetic comparison.
-	 */
-	real_t genetic_compatibility_threshold;
-
-	/**
-	 * @brief genetic_disjoints_significance is used during the genetic comparison
-	 * between two genomes.
-	 */
-	real_t genetic_disjoints_significance;
-
-	/**
-	 * @brief genetic_excesses_significance is used during the genetic comparison
-	 * between two genomes.
-	 */
-	real_t genetic_excesses_significance;
-
-	/**
-	 * @brief genetic_weights_significance is used during the genetic comparison
-	 * between two genomes.
-	 */
-	real_t genetic_weights_significance;
-
-	/**
-	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
-	 * differentiate more the organisms when the fitness increase.
-	 *
-	 * This is useful because in some situations when the network is already optimized
-	 * the fitness gain is low even if there are some benefits that is worth to notice.
-	 */
-	real_t fitness_exponent;
-
-	/**
-	 * @brief species_youngness_age_threshold the ages within a species is considered
-	 * young and so is protected
-	 */
-	int species_youngness_age_threshold;
-
-	/**
-	 * @brief species_youngness_multiplier the fitness multiplier applied to the
-	 * young species
-	 */
-	real_t species_youngness_multiplier;
-
-	/**
-	 * @brief species_stagnant_age_threshold the ages without improvements
-	 * to consider a species stagnant
-	 */
-	int species_stagnant_age_threshold;
-
-	/**
-	 * @brief species_stagnant_multiplier the penalty multiplier applied to the
-	 * stagnant species
-	 */
-	real_t species_stagnant_multiplier;
 
 	/**
 	 * @brief rand_generator is used to generate a random number
@@ -223,6 +205,19 @@ class NtPopulation {
 	 * @brief epoch counter
 	 */
 	uint32_t epoch;
+
+	/**
+	 * @brief best_personal_fitness is the best fitness of the population champion
+	 * ever.
+	 * This is used to understand if the population is stagnant.
+	 */
+	real_t best_personal_fitness;
+
+	/**
+	 * @brief epoch_last_improvement is used to track the last improvements over
+	 * the epochs and so understand if the population is stagnant.
+	 */
+	int epoch_last_improvement;
 
 public:
 	/**

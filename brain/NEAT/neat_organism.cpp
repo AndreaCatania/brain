@@ -8,7 +8,8 @@
 brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		owner(p_owner),
 		species(nullptr),
-		dead(true),
+		dead(false),
+		marked_for_death(false),
 		is_dirty_brain_area(true),
 		middle_fitness_sum(0.f),
 		middle_fitness_count(0),
@@ -36,6 +37,14 @@ const brain::SharpBrainArea &brain::NtOrganism::get_brain_area() const {
 		genome.generate_neural_network(brain_area);
 	}
 	return brain_area;
+}
+
+void brain::NtOrganism::set_mark_for_death(bool p_mark) {
+	marked_for_death = p_mark;
+}
+
+bool brain::NtOrganism::is_marked_for_death() const {
+	return marked_for_death;
 }
 
 void brain::NtOrganism::set_species(NtSpecies *p_species) {
@@ -73,6 +82,14 @@ real_t brain::NtOrganism::get_fitness() const {
 
 real_t brain::NtOrganism::get_personal_fitness() const {
 	return personal_fitness;
+}
+
+void brain::NtOrganism::set_expected_offspring(real_t p_offspring) {
+	expected_offspring = p_offspring;
+}
+
+real_t brain::NtOrganism::get_expected_offspring() const {
+	return expected_offspring;
 }
 
 bool organism_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2) {

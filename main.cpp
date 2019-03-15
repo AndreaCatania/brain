@@ -169,10 +169,10 @@ void test_NEAT_XOR() {
 	/// Step 1. Population creation
 	brain::NtPopulation population(
 			brain::NtGenome(3, 1, true),
-			5 /*population size*/,
+			100 /*population size*/,
 			settings);
 
-	const int epoch_max(2);
+	const int epoch_max(20);
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 
 		/// Step 2. Population testing and evaluation

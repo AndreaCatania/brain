@@ -39,6 +39,12 @@ class NtSpecies {
 	std::vector<NtOrganism *> organisms;
 
 	/**
+	 * @brief champion the champion on this specie
+	 * The champion is defined inside the function adjust_fitness
+	 */
+	NtOrganism *champion;
+
+	/**
 	 * @brief average_fitness the average fitness of the species
 	 */
 	real_t average_fitness;
@@ -54,6 +60,19 @@ class NtSpecies {
 	 * registered
 	 */
 	uint32_t age_of_last_improvement;
+
+	/**
+	 * @brief offspring_count is the number of babies of this species
+	 */
+	int offspring_count;
+
+	/**
+	 * @brief champion_offspring_count is used to know how much babies are direct
+	 * childs of the champion.
+	 *
+	 * Be aware of that this value is not added to the offspring_count.
+	 */
+	int champion_offspring_count;
 
 public:
 	/**
@@ -106,6 +125,55 @@ public:
 	NtOrganism *get_organism(int p_i) const;
 
 	/**
+	 * @brief reset_age_of_last_improvement
+	 */
+	void reset_age_of_last_improvement();
+
+	/**
+	 * @brief set_offspring_count is used to specify how much babies this species
+	 * will have
+	 * @param p_offspring
+	 */
+	void set_offspring_count(int p_offspring);
+
+	/**
+	 * @brief get_offspring_count returns the expected offspring of this species
+	 * @return
+	 */
+	int get_offspring_count() const;
+
+	/**
+	 * @brief set_champion_offspring_count set the amount of babies that born
+	 * from the champion.
+	 *
+	 * It can't be more than the offspring_count, since it tell how much of
+	 * offspring is from champion
+	 * @param p_offspring
+	 */
+	void set_champion_offspring_count(int p_offspring);
+
+	/**
+	 * @brief get_champion_offspring_count returns the amount of babies born from
+	 * the champion
+	 * @return
+	 */
+	int get_champion_offspring_count() const;
+
+	/**
+	 * @brief get_champion returns the species champion or null if not yet defined.
+	 * The champion is defined inside the function adjust_fitness.
+	 * @return
+	 */
+	NtOrganism *get_champion() const;
+
+	/**
+	 * @brief get_average_fitness can be used to get the average fitness of this
+	 * species
+	 * @return
+	 */
+	real_t get_average_fitness() const;
+
+	/**
 	 * @brief compute_average_fitness compute the average fitness
 	 */
 	void compute_average_fitness();
@@ -122,12 +190,32 @@ public:
 	 * @param p_youngness_multiplier
 	 * @param p_stagnant_age_threshold
 	 * @param p_stagnant_multiplier
+	 * @param p_survival_ratio
 	 */
 	void adjust_fitness(
 			int p_youngness_age_threshold,
 			real_t p_youngness_multiplier,
 			int p_stagnant_age_threshold,
-			real_t p_stagnant_multiplier);
+			real_t p_stagnant_multiplier,
+			real_t p_survival_ratio);
+
+	/**
+	 * @brief compute_offspring calculates the offspring of this specie according
+	 * to the expected organisms offspring quantity
+	 * @param p_remaining is the fractional part that exceded from the previous
+	 * species compute_offspring iteration.
+	 * @return returns the expected offspring count
+	 */
+	int compute_offspring(double &r_remaining);
 };
 
 } // namespace brain
+
+/**
+ * @brief species_fitness_comparator is used to sort an array of species from
+ * the most fittest to last
+ * @param
+ * @param
+ * @return
+ */
+extern bool species_fitness_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2);

@@ -42,6 +42,11 @@ class NtOrganism {
 	bool dead;
 
 	/**
+	 * @brief used to know if this organism will die since performed bad
+	 */
+	bool marked_for_death;
+
+	/**
 	 * @brief is_dirty_brain_area is used to know when the brain_area doesn't
 	 * match anymore the genome and it must be recreated.
 	 */
@@ -70,6 +75,14 @@ class NtOrganism {
 	 * be influenced by the species where it belong
 	 */
 	real_t personal_fitness;
+
+	/**
+	 * @brief expected_offspring is the quantity of offsprings that the organisms
+	 * eventually will have.
+	 *
+	 * This parameter is used only to calculates the offspring of the species.
+	 */
+	real_t expected_offspring;
 
 public:
 	/**
@@ -100,6 +113,19 @@ public:
 	 * @return
 	 */
 	const SharpBrainArea &get_brain_area() const;
+
+	/**
+	 * @brief set_mark_for_death control if the organism should be marked for
+	 * death
+	 * @param p_mark
+	 */
+	void set_mark_for_death(bool p_mark);
+
+	/**
+	 * @brief is_marked_for_death returns true if marked for death
+	 * @return
+	 */
+	bool is_marked_for_death() const;
 
 	/**
 	 * @brief set_species set the species where this organism belongs
@@ -153,6 +179,17 @@ public:
 	 * @return
 	 */
 	real_t get_personal_fitness() const;
+
+	/**
+	 * @brief set_expected_offspring set the expected offspring
+	 */
+	void set_expected_offspring(real_t p_offspring);
+
+	/**
+	 * @brief get_expected_offspring returns the expected offspring
+	 * @return
+	 */
+	real_t get_expected_offspring() const;
 };
 
 } // namespace brain
