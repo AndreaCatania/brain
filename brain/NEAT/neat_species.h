@@ -34,6 +34,11 @@ class NtSpecies {
 	const uint32_t born_epoch;
 
 	/**
+	 * @brief The current age of the species
+	 */
+	int age;
+
+	/**
 	 * @brief organisms is the array of organisms of this specie
 	 */
 	std::vector<NtOrganism *> organisms;
@@ -62,6 +67,12 @@ class NtSpecies {
 	uint32_t age_of_last_improvement;
 
 	/**
+	 * @brief stagnant_epochs counts how much epochs are passed from the last
+	 * improvement
+	 */
+	int stagnant_epochs;
+
+	/**
 	 * @brief offspring_count is the number of babies of this species
 	 */
 	int offspring_count;
@@ -88,18 +99,6 @@ public:
 	~NtSpecies();
 
 	/**
-	 * @brief get_born_epoch returns the born epoch
-	 * @return
-	 */
-	uint32_t get_born_epoch() const;
-
-	/**
-	 * @brief get_age compute the age and returns it
-	 * @return
-	 */
-	uint32_t get_age() const;
-
-	/**
 	 * @brief add_organism add new organism to this specie
 	 * @param p_organism
 	 */
@@ -110,6 +109,24 @@ public:
 	 * @param p_organism
 	 */
 	void remove_organism(const NtOrganism *p_organism);
+
+	/**
+	 * @brief get_born_epoch returns the born epoch
+	 * @return
+	 */
+	uint32_t get_born_epoch() const;
+
+	/**
+	 * @brief updates the age
+	 * @return
+	 */
+	void update_age();
+
+	/**
+	 * @brief returns the age
+	 * @return
+	 */
+	uint32_t get_age() const;
 
 	/**
 	 * @brief size returns the organisms count
@@ -123,6 +140,12 @@ public:
 	 * @return
 	 */
 	NtOrganism *get_organism(int p_i) const;
+
+	/**
+	 * @brief get_stagnant_epochs returns how much stagnant epochs
+	 * @return
+	 */
+	int get_stagnant_epochs() const;
 
 	/**
 	 * @brief reset_age_of_last_improvement
@@ -207,6 +230,24 @@ public:
 	 * @return returns the expected offspring count
 	 */
 	int compute_offspring(double &r_remaining);
+
+	/**
+	 * @brief reproduce will make born new organisms depending on the
+	 * expected_offspring, the new organism will be sligtly mutated
+	 * compared of the current alive organisms.
+	 *
+	 * The new organisms will not be assigned to any species because
+	 * this task is demanded to the function Population::spetiate()
+	 *
+	 * This function will mark all its old organisms for death,
+	 * that can be deleted using kill_old_organisms.
+	 */
+	void reproduce();
+
+	/**
+	 * @brief kill all its old organisms
+	 */
+	void kill_old_organisms();
 };
 
 } // namespace brain

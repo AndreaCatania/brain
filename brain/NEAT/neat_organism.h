@@ -37,11 +37,6 @@ class NtOrganism {
 	mutable SharpBrainArea brain_area;
 
 	/**
-	 * @brief dead is used to know if the current organism is ready to be used
-	 */
-	bool dead;
-
-	/**
 	 * @brief used to know if this organism will die since performed bad
 	 */
 	bool marked_for_death;

@@ -11,6 +11,7 @@ brain::NtPopulation::NtPopulation(
 		const NtGenome &p_ancestor_genome,
 		int p_population_size,
 		NtPopulationSettings &p_settings) :
+		population_size(p_population_size),
 		settings(p_settings),
 		rand_generator(p_settings.seed),
 		gaussian_distribution(0, p_settings.learning_deviation),
@@ -40,7 +41,7 @@ brain::NtPopulation::NtPopulation(
 }
 
 brain::NtPopulation::~NtPopulation() {
-	destroy_all_organism();
+	destroy_all_organisms();
 	destroy_all_species();
 }
 
@@ -48,17 +49,17 @@ uint32_t brain::NtPopulation::get_epoch() const {
 	return epoch;
 }
 
-uint32_t brain::NtPopulation::get_organism_count() const {
-	return organisms.size();
+uint32_t brain::NtPopulation::get_population_size() const {
+	return population_size;
 }
 
 const brain::SharpBrainArea *brain::NtPopulation::organism_get_network(uint32_t p_organism_i) const {
-	ERR_FAIL_INDEX_V(p_organism_i, organisms.size(), nullptr);
+	ERR_FAIL_INDEX_V(p_organism_i, population_size, nullptr);
 	return &organisms[p_organism_i]->get_brain_area();
 }
 
 void brain::NtPopulation::organism_add_fitness(uint32_t p_organism_i, real_t p_fitness) const {
-	ERR_FAIL_INDEX(p_organism_i, organisms.size());
+	ERR_FAIL_INDEX(p_organism_i, population_size);
 	organisms[p_organism_i]->add_middle_fitness(p_fitness);
 }
 
@@ -88,7 +89,7 @@ void brain::NtPopulation::epoch_advance() {
 	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 		total_fitness += (*it)->get_fitness();
 	}
-	real_t population_average_fitness = total_fitness / organisms.size();
+	real_t population_average_fitness = total_fitness / population_size;
 
 	/// Step 4. Calculates the number of offspring for each organism
 	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
@@ -105,7 +106,7 @@ void brain::NtPopulation::epoch_advance() {
 
 		// Check if the expected offsprings are less than expected due to
 		// the precision loss
-		if (total_expected_offsprings < organisms.size()) {
+		if (total_expected_offsprings < population_size) {
 			int biggest_offsprings = 0;
 			NtSpecies *best_species = nullptr;
 			for (auto it = species.begin(); it != species.end(); ++it) {
@@ -117,21 +118,24 @@ void brain::NtPopulation::epoch_advance() {
 			best_species->set_offspring_count(biggest_offsprings++);
 			++total_expected_offsprings;
 
-			// When the total_expected still below
-			// could mean that there is a bug somewhere
-			// or the best species is a stagnant species and it get killed by its age
-			// What happens is that the population rebord from the best specie
-			if (total_expected_offsprings < organisms.size()) {
+			/// When the total_expected still below
+			/// could mean that there is a bug somewhere
+			/// or the best species is a stagnant species and it get killed by its age
+			/// What happens is that the population rebord from the best specie
+			if (total_expected_offsprings < population_size) {
 				WARN_PRINTS("The expected offsprings are below normality, The population is going to rebord from the best population.");
 				for (auto it = species.begin(); it != species.end(); ++it) {
 					(*it)->set_offspring_count(0);
 				}
-				best_species->set_offspring_count(organisms.size());
+				best_species->set_offspring_count(population_size);
+				total_expected_offsprings = population_size;
 			}
 		}
+
+		ERR_FAIL_COND(total_expected_offsprings != population_size);
 	}
 
-	/// Step 6. Perform offspring assignment
+	/// Step 6. Perform offspring re-assignment
 	/// This phase changes depending if the population is stagnant or not
 	/// When the pop is not stagnant and is allowed to stole cribs from
 	/// the lowest species the stoling process is performed
@@ -154,14 +158,15 @@ void brain::NtPopulation::epoch_advance() {
 
 	if (epoch - epoch_last_improvement > settings.population_stagnant_age_thresold) {
 
-		// Stagnant population
+		/// The population is stagnant
+		/// So try to restart it from the best species
 
 		if (ordered_species.size() < 2) {
 
 			WARN_PRINTS("The population is stagnant, and there is only one species. Trying to repopulate, but the expectation is low.");
 
-			best_species->set_offspring_count(organisms.size());
-			best_species->set_champion_offspring_count(organisms.size());
+			best_species->set_offspring_count(population_size);
+			best_species->set_champion_offspring_count(population_size);
 			best_species->reset_age_of_last_improvement();
 
 		} else {
@@ -171,12 +176,12 @@ void brain::NtPopulation::epoch_advance() {
 			NtSpecies *first_species = *(ordered_species.begin() + 0);
 			NtSpecies *second_species = *(ordered_species.begin() + 1);
 
-			const int population_half_size = organisms.size() * 0.5;
+			const int population_half_size = population_size * 0.5;
 			// Avoid precision loss during above division operation
-			first_species->set_offspring_count(organisms.size() - population_half_size);
+			first_species->set_offspring_count(population_size - population_half_size);
 			second_species->set_offspring_count(population_half_size);
 
-			first_species->set_champion_offspring_count(organisms.size() - population_half_size);
+			first_species->set_champion_offspring_count(population_size - population_half_size);
 			second_species->set_champion_offspring_count(population_half_size);
 
 			// Avoid to become stagnant
@@ -194,11 +199,18 @@ void brain::NtPopulation::epoch_advance() {
 		}
 
 		epoch_last_improvement = epoch;
+
 	} else if (settings.population_cribs_stealing) {
+
+		/// Stole the cribs from the worst species
+		/// Then reassign it following this criterias:
+		///  1/5 are given to the two not dying best species
+		///  1/10 are give to the third not dying best species
+		///  The rest is assigned to all other not dying species randomly
+		///  If remains yet cribs to allocate, will be given them all to the best species
 
 		int stolen_cribs(0);
 
-		// Stole the cribs from the worst species
 		// Iterates from the botton and skip the champion species
 		for (auto it = ordered_species.end() - 1; it != ordered_species.begin(); --it) {
 			NtSpecies *s = *it;
@@ -224,9 +236,131 @@ void brain::NtPopulation::epoch_advance() {
 				}
 			}
 		}
+
+		// Assign stolen cribs to the first second and third species
+		const int stolen_one_fifth = stolen_cribs / 5;
+		const int stolen_one_tenth = stolen_cribs / 10;
+
+		std::vector<NtSpecies *>::iterator last_promoted_species =
+				ordered_species.begin();
+
+		{
+			int i(0);
+			for (auto it = ordered_species.begin();
+					it != ordered_species.end() && i < 3;
+					++it) {
+
+				// Avoid to add it to dying species
+				if ((*it)->get_stagnant_epochs() > settings.species_stagnant_age_threshold)
+					continue;
+
+				const int assignment = i <= 1 ? stolen_one_fifth : stolen_one_tenth;
+
+				(*it)->set_champion_offspring_count(
+						(*it)->get_champion_offspring_count() + assignment);
+
+				(*it)->set_offspring_count(
+						(*it)->get_offspring_count() + assignment);
+
+				stolen_cribs -= assignment;
+				++i;
+				last_promoted_species = it;
+			}
+		}
+
+		// Assign the rest using a roulet to all other non dying species
+		{
+			auto shifted_begin = last_promoted_species + 1;
+
+			const int roulet_spots = ordered_species.end() - shifted_begin;
+
+			if (roulet_spots) {
+
+				// Thanks to this is possible to give always the same percentage
+				// of possibility to the all species no matter the quantity
+				const double roulet_threshold = 0.1 / roulet_spots;
+
+				// This is used as fallback to stop the roulet
+				int spin_left = stolen_cribs * 4;
+
+				while (stolen_cribs > 0 && spin_left > 0) {
+					--spin_left;
+					bool all_are_stagnant = true;
+					for (auto it = shifted_begin; it != ordered_species.end(); ++it) {
+
+						if ((*it)->get_stagnant_epochs() > settings.species_stagnant_age_threshold)
+							continue;
+
+						all_are_stagnant = false;
+
+						if (Math::randf() <= roulet_threshold) {
+
+							(*it)->set_champion_offspring_count(
+									(*it)->get_champion_offspring_count() + 1);
+
+							(*it)->set_offspring_count(
+									(*it)->get_offspring_count() + 1);
+
+							--stolen_cribs;
+						}
+					}
+
+					// Premature stop if all are stagnant
+					if (all_are_stagnant)
+						break;
+				}
+			}
+		}
+
+		// Assign all the remaining stolen cribs to the bast species even if it
+		// is going to die
+		if (stolen_cribs > 0) {
+			best_species->set_champion_offspring_count(
+					best_species->get_champion_offspring_count() + stolen_cribs);
+
+			best_species->set_offspring_count(
+					best_species->get_offspring_count() + stolen_cribs);
+
+			stolen_cribs = 0;
+		}
 	}
 
-	int a = 0;
+	/// Step 7. Reproduction phase.
+	kill_organisms_marked_for_death();
+
+	// Prepares the organism pool to repopulate
+	organisms.clear();
+
+	// Make the fittest organism reproduct
+	for (auto it = species.begin(); it != species.end(); ++it) {
+		(*it)->reproduce();
+	}
+
+	// Speciate the newest organism
+	speciate();
+
+	// Kill older organisms that still inside the species
+	for (auto it = species.begin(); it != species.end(); ++it) {
+		(*it)->kill_old_organisms();
+	}
+	population_champion = nullptr;
+
+	// Make rid of void species
+	kill_void_species();
+
+	/// Step 8. Population verification
+
+	// Checks if the organisms size is correct
+	ERR_FAIL_COND(organisms.size() != population_size);
+
+	// Checks if the best species still alive
+	auto best_species_iterator =
+			std::find(species.begin(), species.end(), best_species);
+	if (best_species_iterator == species.end()) {
+
+		ERR_EXPLAIN("For some reason the best species died. This could be a bug!");
+		ERR_FAIL();
+	}
 }
 
 void brain::NtPopulation::speciate() {
@@ -267,8 +401,11 @@ void brain::NtPopulation::speciate() {
 
 		ERR_FAIL_COND(!compatible_species);
 
-		add_organism_to_specie(o, compatible_species);
+		add_organism_to_species(o, compatible_species);
 	}
+}
+
+void brain::NtPopulation::kill_void_species() {
 
 	/// Removes all species with 0 organisms
 	for (
@@ -308,20 +445,45 @@ void brain::NtPopulation::destroy_all_species() {
 	organisms.clear();
 }
 
-void brain::NtPopulation::destroy_all_organism() {
+void brain::NtPopulation::destroy_organism(NtOrganism *p_organism) {
+	auto iterator = std::find(organisms.begin(), organisms.end(), p_organism);
+	ERR_FAIL_COND(iterator == organisms.end());
+	destroy_organism(iterator);
+}
+
+std::vector<brain::NtOrganism *>::iterator brain::NtPopulation::destroy_organism(
+		std::vector<NtOrganism *>::iterator p_organism_iterator) {
+
+	remove_organism_from_species(*p_organism_iterator);
+	NtOrganism *o = *p_organism_iterator;
+	auto ret = organisms.erase(p_organism_iterator);
+	delete o;
+	return ret;
+}
+
+void brain::NtPopulation::destroy_all_organisms() {
 	for (
 			auto it = organisms.begin();
 			it != organisms.end();
 			++it) {
 
-		remove_organism_from_specie(*it);
+		remove_organism_from_species(*it);
 		delete (*it);
-		*it = nullptr;
 	}
 	organisms.clear();
 }
 
-void brain::NtPopulation::add_organism_to_specie(
+void brain::NtPopulation::kill_organisms_marked_for_death() {
+	auto it = organisms.begin();
+	while (it != organisms.end()) {
+		if ((*it)->is_marked_for_death())
+			it = destroy_organism(it);
+		else
+			++it;
+	}
+}
+
+void brain::NtPopulation::add_organism_to_species(
 		NtOrganism *p_organism,
 		NtSpecies *p_species) {
 
@@ -330,9 +492,9 @@ void brain::NtPopulation::add_organism_to_specie(
 	p_organism->set_species(p_species);
 }
 
-void brain::NtPopulation::remove_organism_from_specie(NtOrganism *p_organism) {
-
-	ERR_FAIL_COND(!p_organism->get_species());
+void brain::NtPopulation::remove_organism_from_species(NtOrganism *p_organism) {
+	if (!p_organism->get_species())
+		return;
 	p_organism->get_species()->remove_organism(p_organism);
 	p_organism->set_species(nullptr);
 }

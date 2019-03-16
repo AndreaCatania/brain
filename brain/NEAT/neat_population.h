@@ -153,9 +153,21 @@ struct NtPopulationSettings {
 	int population_stagnant_age_thresold = 15;
 
 	/**
-	 * @brief population_cribs_stealing is used to take the expected offspring from
-	 * the lowest species and assign them as offspring of the champion of the most
-	 * fittest species
+	 * @brief population_cribs_stealing is used to define how much cribs should be
+	 * stealed from the worst species.
+	 *
+	 * These cribs are assigned in this order:
+	 *	1/5 are given to the two not dying best species
+	 *	1/10 are give to the third not dying best species
+	 *	The rest is assigned to all other not dying species randomly
+	 *	If remains yet cribs to allocate, will be given them all to the best species
+	 *
+	 * With these extra cribs the species will have the possibility to have more
+	 * offsprings, in this way is possible to promote the growing of the best
+	 * species.
+	 *
+	 * Also the assigned cribs will be used to create some clones of the species
+	 * champion, where the most part will have only the weight mutated
 	 */
 	int population_cribs_stealing = 10;
 };
@@ -167,6 +179,13 @@ struct NtPopulationSettings {
  * This class is the API of the NEAT.
  */
 class NtPopulation {
+
+	friend class NtSpecies;
+
+	/**
+	 * @brief The population size
+	 */
+	const int population_size;
 
 	/**
 	 * @brief Customizable settings of the population
@@ -250,10 +269,10 @@ public:
 	uint32_t get_epoch() const;
 
 	/**
-	 * @brief get_organism_count returns the count of population organisms
+	 * @brief returns the population size
 	 * @return
 	 */
-	uint32_t get_organism_count() const;
+	uint32_t get_population_size() const;
 
 	/**
 	 * @brief organism_get_network returns the neural network on this organism
@@ -270,9 +289,10 @@ public:
 	void organism_add_fitness(uint32_t p_organism_i, real_t p_fitness) const;
 
 	/**
-	 * @brief epoch_advance is the function that depending on the fitness
-	 * decide to replace the less performant organisms with the offspring of
-	 * most performant organisms called champions.
+	 * @brief epoch_advance is who make possible the turnover of the population.
+	 * In this function every organism die and get replaced with a new one of
+	 * new generation that is born with the base genes of the most fittest organisms
+	 * of the previous epoch.
 	 */
 	void epoch_advance();
 
@@ -283,6 +303,11 @@ private:
 	 * The splitting criteria can be controlled by changing the splitting_threshold
 	 */
 	void speciate();
+
+	/**
+	 * @brief kill all species with no organisms
+	 */
+	void kill_void_species();
 
 	/**
 	 * @brief create_species creates a new void species and returns its pointer
@@ -302,21 +327,43 @@ private:
 	void destroy_all_species();
 
 	/**
-	 * @brief destroy_all_organism is used to destroy all organism
+	 * @brief destroy the organism and remove it from the organism pool
+	 * This version is slower
+	 * @param p_organism
 	 */
-	void destroy_all_organism();
+	void destroy_organism(NtOrganism *p_organism);
 
 	/**
-	 * @brief add_to_specie is responsible for the organism addition to the species
+	 * @brief destroy the organism and remove it from the organism pool
+	 * This version is faster
+	 * @param p_organism
+	 * @return the next iterator
+	 */
+	std::vector<NtOrganism *>::iterator destroy_organism(
+			std::vector<NtOrganism *>::iterator p_organism_iterator);
+
+	/**
+	 * @brief destroy_all_organisms is used to destroy all organisms
+	 */
+	void destroy_all_organisms();
+
+	/**
+	 * @brief This function will kill all organisms marked for death inside the
+	 * population organisms
+	 */
+	void kill_organisms_marked_for_death();
+
+	/**
+	 * @brief add_to_species is responsible for the organism addition to the species
 	 * @param p_organism
 	 * @param p_species
 	 */
-	void add_organism_to_specie(NtOrganism *p_organism, NtSpecies *p_species);
+	void add_organism_to_species(NtOrganism *p_organism, NtSpecies *p_species);
 
 	/**
-	 * @brief remove_specie remove the organism from the assigned specie
+	 * @brief remove_organism_from_species remove the organism from the assigned specie
 	 */
-	void remove_organism_from_specie(NtOrganism *);
+	void remove_organism_from_species(NtOrganism *p_organism);
 
 private:
 	/**

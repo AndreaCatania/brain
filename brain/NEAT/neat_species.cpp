@@ -19,14 +19,6 @@ brain::NtSpecies::~NtSpecies() {
 	ERR_FAIL_COND(organisms.size());
 }
 
-uint32_t brain::NtSpecies::get_born_epoch() const {
-	return born_epoch;
-}
-
-uint32_t brain::NtSpecies::get_age() const {
-	return owner->get_epoch() - born_epoch;
-}
-
 void brain::NtSpecies::add_organism(NtOrganism *p_organism) {
 	ERR_FAIL_COND(!p_organism);
 	ERR_FAIL_COND(p_organism->get_species());
@@ -42,6 +34,18 @@ void brain::NtSpecies::remove_organism(const NtOrganism *p_organism) {
 	champion = nullptr;
 }
 
+uint32_t brain::NtSpecies::get_born_epoch() const {
+	return born_epoch;
+}
+
+void brain::NtSpecies::update_age() {
+	age = owner->get_epoch() - born_epoch;
+}
+
+uint32_t brain::NtSpecies::get_age() const {
+	return age;
+}
+
 int brain::NtSpecies::size() const {
 	return organisms.size();
 }
@@ -51,8 +55,13 @@ brain::NtOrganism *brain::NtSpecies::get_organism(int p_i) const {
 	return organisms[p_i];
 }
 
+int brain::NtSpecies::get_stagnant_epochs() const {
+	return stagnant_epochs;
+}
+
 void brain::NtSpecies::reset_age_of_last_improvement() {
 	age_of_last_improvement = get_age();
+	stagnant_epochs = 0;
 }
 
 void brain::NtSpecies::set_offspring_count(int p_offspring) {
@@ -96,8 +105,8 @@ void brain::NtSpecies::adjust_fitness(
 		real_t p_stagnant_multiplier,
 		real_t p_survival_ratio) {
 
-	const int age = get_age();
-	const int stagnant_time = age - age_of_last_improvement;
+	update_age();
+	stagnant_epochs = age - age_of_last_improvement;
 
 	// Computes forgiving and penalizations
 	if (age <= p_youngness_age_threshold) {
@@ -107,7 +116,7 @@ void brain::NtSpecies::adjust_fitness(
 			NtOrganism *o = (*it);
 			o->set_fitness(o->get_fitness() * p_youngness_multiplier);
 		}
-	} else if (stagnant_time > p_stagnant_age_threshold) {
+	} else if (stagnant_epochs > p_stagnant_age_threshold) {
 
 		// This is not young and also it's stagnant penalize brutally
 		for (auto it = organisms.begin(); it != organisms.end(); ++it) {
@@ -132,7 +141,7 @@ void brain::NtSpecies::adjust_fitness(
 	// Check if the species get an improvement
 	if (higher_fitness_ever < organisms[0]->get_fitness()) {
 		higher_fitness_ever = organisms[0]->get_fitness();
-		age_of_last_improvement = age;
+		reset_age_of_last_improvement();
 	}
 
 	// Get champion
@@ -164,6 +173,24 @@ int brain::NtSpecies::compute_offspring(double &r_remaining) {
 	offspring_count = Math::floor(expected);
 	r_remaining = Math::fmod(expected, 1.0);
 	return offspring_count;
+}
+
+void brain::NtSpecies::reproduce() {
+	// TODO rep
+}
+
+void brain::NtSpecies::kill_old_organisms() {
+	auto it = organisms.begin();
+	while (it != organisms.end()) {
+		if ((*it)->is_marked_for_death()) {
+			NtOrganism *o = *it;
+			it = organisms.erase(it);
+			o->set_species(nullptr);
+			delete o;
+		} else {
+			++it;
+		}
+	}
 }
 
 bool species_fitness_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2) {

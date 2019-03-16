@@ -8,7 +8,6 @@
 brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		owner(p_owner),
 		species(nullptr),
-		dead(false),
 		marked_for_death(false),
 		is_dirty_brain_area(true),
 		middle_fitness_sum(0.f),
