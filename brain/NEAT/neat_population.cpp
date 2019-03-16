@@ -63,7 +63,7 @@ void brain::NtPopulation::organism_add_fitness(uint32_t p_organism_i, real_t p_f
 	organisms[p_organism_i]->add_middle_fitness(p_fitness);
 }
 
-void brain::NtPopulation::epoch_advance() {
+bool brain::NtPopulation::epoch_advance() {
 
 	++epoch;
 
@@ -132,7 +132,7 @@ void brain::NtPopulation::epoch_advance() {
 			}
 		}
 
-		ERR_FAIL_COND(total_expected_offsprings != population_size);
+		ERR_FAIL_COND_V(total_expected_offsprings != population_size, false);
 	}
 
 	/// Step 6. Perform offspring re-assignment
@@ -149,7 +149,7 @@ void brain::NtPopulation::epoch_advance() {
 
 	NtSpecies *best_species = *ordered_species.begin();
 	NtOrganism *population_champion = best_species->get_champion();
-	ERR_FAIL_COND(!population_champion);
+	ERR_FAIL_COND_V(!population_champion, false);
 
 	if (best_personal_fitness < population_champion->get_personal_fitness()) {
 		best_personal_fitness = population_champion->get_personal_fitness();
@@ -230,7 +230,7 @@ void brain::NtPopulation::epoch_advance() {
 				s->set_offspring_count(s->get_offspring_count() - booty);
 				stolen_cribs += booty;
 
-				ERR_FAIL_COND(stolen_cribs > settings.population_cribs_stealing);
+				ERR_FAIL_COND_V(stolen_cribs > settings.population_cribs_stealing, false);
 				if (stolen_cribs == settings.population_cribs_stealing) {
 					break;
 				}
@@ -351,7 +351,7 @@ void brain::NtPopulation::epoch_advance() {
 	/// Step 8. Population verification
 
 	// Checks if the organisms size is correct
-	ERR_FAIL_COND(organisms.size() != population_size);
+	ERR_FAIL_COND_V(organisms.size() != population_size, false);
 
 	// Checks if the best species still alive
 	auto best_species_iterator =
@@ -359,8 +359,11 @@ void brain::NtPopulation::epoch_advance() {
 	if (best_species_iterator == species.end()) {
 
 		ERR_EXPLAIN("For some reason the best species died. This could be a bug!");
-		ERR_FAIL();
+		ERR_FAIL_V(false);
 	}
+
+	// Finally Done!
+	return true;
 }
 
 void brain::NtPopulation::speciate() {
@@ -408,14 +411,13 @@ void brain::NtPopulation::speciate() {
 void brain::NtPopulation::kill_void_species() {
 
 	/// Removes all species with 0 organisms
-	for (
-			auto it = species.begin();
-			it != species.end();
-			++it) {
+	auto it = species.begin();
+	while (it != species.end()) {
 
-		NtSpecies *s = *it;
-		if (!s->size()) {
-			destroy_species(s);
+		if (!(*it)->size()) {
+			it = destroy_species(it);
+		} else {
+			++it;
 		}
 	}
 }
@@ -429,8 +431,15 @@ brain::NtSpecies *brain::NtPopulation::create_species() {
 void brain::NtPopulation::destroy_species(NtSpecies *p_species) {
 	auto it_s = std::find(species.begin(), species.end(), p_species);
 	ERR_FAIL_COND(it_s == species.end());
-	species.erase(it_s);
-	delete p_species;
+	destroy_species(it_s);
+}
+
+std::vector<brain::NtSpecies *>::iterator brain::NtPopulation::destroy_species(
+		std::vector<NtSpecies *>::iterator p_species_iterator) {
+	NtSpecies *s(*p_species_iterator);
+	auto ret = species.erase(p_species_iterator);
+	delete s;
+	return ret;
 }
 
 void brain::NtPopulation::destroy_all_species() {

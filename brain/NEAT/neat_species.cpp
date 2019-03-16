@@ -177,6 +177,12 @@ int brain::NtSpecies::compute_offspring(double &r_remaining) {
 
 void brain::NtSpecies::reproduce() {
 	// TODO rep
+
+	// Mark all organisms as dead since from the previous generation
+	// But don't kill them now since they still need for the speciation
+	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
+		(*it)->set_mark_for_death(true);
+	}
 }
 
 void brain::NtSpecies::kill_old_organisms() {

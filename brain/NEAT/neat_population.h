@@ -293,8 +293,9 @@ public:
 	 * In this function every organism die and get replaced with a new one of
 	 * new generation that is born with the base genes of the most fittest organisms
 	 * of the previous epoch.
+	 * @return true if the advancing was successful
 	 */
-	void epoch_advance();
+	bool epoch_advance();
 
 private:
 	/**
@@ -320,6 +321,14 @@ private:
 	 * @param p_species
 	 */
 	void destroy_species(NtSpecies *p_species);
+
+	/**
+	 * @brief destroy_species destroy a species and remove it from the pool
+	 * @param p_species
+	 * @return the next iterator
+	 */
+	std::vector<NtSpecies *>::iterator destroy_species(
+			std::vector<NtSpecies *>::iterator p_species_iterator);
 
 	/**
 	 * @brief destroy_all_species is used to destroy all species

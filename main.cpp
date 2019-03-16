@@ -176,7 +176,7 @@ void test_NEAT_XOR() {
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 
 		/// Step 2. Population testing and evaluation
-		for (int i = population.get_organism_count() - 1; 0 <= i; --i) {
+		for (int i = population.get_population_size() - 1; 0 <= i; --i) {
 			const brain::SharpBrainArea *brain_area = population.organism_get_network(i);
 			brain::Matrix result;
 			for (int k(inputs.size() - 1); 0 <= k; --k) {
@@ -187,7 +187,9 @@ void test_NEAT_XOR() {
 		}
 
 		/// Step 3. advance the epoch
-		population.epoch_advance();
+		const bool success = population.epoch_advance();
+		if (!success)
+			break;
 	}
 
 	// TODO get the population champion and test it.
