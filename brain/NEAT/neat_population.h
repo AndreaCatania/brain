@@ -93,6 +93,19 @@ struct NtPopulationSettings {
 	real_t genetic_weights_significance = 0.4f;
 
 	/**
+	 * @brief genetic_spawn_recurrent_link_threshold goes from 0 to 1 and is used
+	 * to determinates the probability to spawn a recurrent link instead of a
+	 * regular one.
+	 *
+	 * The reccurrent links are links that move the data in the opposite direction
+	 * (Right to Left), due to this characteristics these links returns the value
+	 * of the previous iterations.
+	 * This means that these links are useful to remember the previous datas and
+	 * thus the taken decision is affected by the previous datas.
+	 */
+	real_t genetic_spawn_recurrent_link_threshold = 0.35;
+
+	/**
 	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
 	 * differentiate more the organisms when the fitness increase.
 	 *
@@ -334,6 +347,13 @@ private:
 	 * @brief destroy_all_species is used to destroy all species
 	 */
 	void destroy_all_species();
+
+	/**
+	 * @brief create a new organism and add it to the pool, return nullptr
+	 * if the pool is already full
+	 * @return
+	 */
+	NtOrganism *create_organism();
 
 	/**
 	 * @brief destroy the organism and remove it from the organism pool

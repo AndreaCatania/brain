@@ -1,5 +1,6 @@
 #pragma once
 
+#include "brain/NEAT/neat_genome.h"
 #include "brain/math/math_defs.h"
 #include "brain/typedefs.h"
 #include <vector>
@@ -26,7 +27,7 @@ class NtSpecies {
 	/**
 	 * @brief owner of this specie
 	 */
-	const NtPopulation *owner;
+	NtPopulation *owner;
 
 	/**
 	 * @brief born_epoch the epoch when this species is born
@@ -39,7 +40,8 @@ class NtSpecies {
 	int age;
 
 	/**
-	 * @brief organisms is the array of organisms of this specie
+	 * @brief organisms is the array of organisms of this species, after calling
+	 * adjust_fitness this vector get ordered with the most fit as first
 	 */
 	std::vector<NtOrganism *> organisms;
 
@@ -91,7 +93,7 @@ public:
 	 * @param p_population
 	 * @param p_current_epoch
 	 */
-	NtSpecies(const NtPopulation *p_population, uint32_t p_current_epoch);
+	NtSpecies(NtPopulation *p_population, uint32_t p_current_epoch);
 
 	/**
 	 * @brief ~NtSpecies is a destructor
@@ -241,8 +243,11 @@ public:
 	 *
 	 * This function will mark all its old organisms for death,
 	 * that can be deleted using kill_old_organisms.
+	 *
+	 * @param r_innovations Is the shared list of innovations that happens
+	 * in the other species during this epoch transition
 	 */
-	void reproduce();
+	void reproduce(std::vector<Innovation> &r_innovations);
 
 	/**
 	 * @brief kill all its old organisms

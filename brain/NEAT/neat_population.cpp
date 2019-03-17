@@ -19,18 +19,16 @@ brain::NtPopulation::NtPopulation(
 		best_personal_fitness(0.f),
 		epoch_last_improvement(epoch) {
 
-	organisms.resize(p_population_size, nullptr);
+	organisms.reserve(p_population_size);
 
-	for (
-			auto it = organisms.begin();
-			it != organisms.end();
-			++it) {
+	for (int i = 0; i < population_size; ++i) {
 
-		*it = new NtOrganism(this);
-		NtGenome &organism_genome = (*it)->get_genome_mutable();
-		p_ancestor_genome.duplicate_in(organism_genome);
+		NtOrganism *o = create_organism();
 
-		organism_genome.map_link_weights(
+		NtGenome &new_organism_genome = o->get_genome_mutable();
+		p_ancestor_genome.duplicate_in(new_organism_genome);
+
+		new_organism_genome.map_link_weights(
 				rand_gaussian,
 				static_cast<void *>(this));
 	}
@@ -66,6 +64,10 @@ void brain::NtPopulation::organism_add_fitness(uint32_t p_organism_i, real_t p_f
 bool brain::NtPopulation::epoch_advance() {
 
 	++epoch;
+
+	// Used to store all innovation of next epoch
+	std::vector<Innovation> innovations;
+	innovations.reserve(20);
 
 	/// Step 1. Compute organisms fitness
 	for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
@@ -333,7 +335,7 @@ bool brain::NtPopulation::epoch_advance() {
 
 	// Make the fittest organism reproduct
 	for (auto it = species.begin(); it != species.end(); ++it) {
-		(*it)->reproduce();
+		(*it)->reproduce(innovations);
 	}
 
 	// Speciate the newest organism
@@ -452,6 +454,13 @@ void brain::NtPopulation::destroy_all_species() {
 		*it = nullptr;
 	}
 	organisms.clear();
+}
+
+brain::NtOrganism *brain::NtPopulation::create_organism() {
+	ERR_FAIL_COND_V(organisms.size() >= population_size, nullptr);
+	NtOrganism *o = new NtOrganism(this);
+	organisms.push_back(o);
+	return o;
 }
 
 void brain::NtPopulation::destroy_organism(NtOrganism *p_organism) {

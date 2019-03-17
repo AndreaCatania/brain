@@ -132,6 +132,15 @@ void brain::NtGenome::map_link_weights(map_real_2_ptr p_map_func, void *p_data) 
 	}
 }
 
+bool brain::NtGenome::add_random_link(
+		real_t p_spawn_recurrent_threshold,
+		std::vector<Innovation> &r_innovations,
+		uint32_t &r_current_innovation_number) {
+
+	ERR_FAIL_V(false);
+	return false;
+}
+
 void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) const {
 
 	r_brain_area.clear();

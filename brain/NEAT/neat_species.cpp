@@ -6,7 +6,7 @@
 #include "brain/math/math_funcs.h"
 #include <algorithm>
 
-brain::NtSpecies::NtSpecies(const NtPopulation *p_owner, uint32_t current_epoch) :
+brain::NtSpecies::NtSpecies(NtPopulation *p_owner, uint32_t current_epoch) :
 		owner(p_owner),
 		born_epoch(current_epoch),
 		champion(nullptr),
@@ -175,14 +175,81 @@ int brain::NtSpecies::compute_offspring(double &r_remaining) {
 	return offspring_count;
 }
 
-void brain::NtSpecies::reproduce() {
-	// TODO rep
+void brain::NtSpecies::reproduce(std::vector<Innovation> &r_innovations) {
 
-	// Mark all organisms as dead since from the previous generation
-	// But don't kill them now since they still need for the speciation
+	ERR_FAIL_COND(organisms.size() == 0);
+	ERR_FAIL_COND(champion_offspring_count > offspring_count);
+
+	// Mark all organisms as dead since they are from the previous generation
+	// But don't kill them now since they still need
 	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 		(*it)->set_mark_for_death(true);
 	}
+
+	if (!offspring_count)
+		return; // Nothing to do
+
+	organisms.reserve(organisms.size() + offspring_count);
+
+	/// Step 1. reproduce the champion offsprings
+	/// The last offspring is a perfect clone
+	{
+		offspring_count -= champion_offspring_count;
+
+		const NtOrganism *champion = *organisms.begin();
+		while (champion_offspring_count > 0) {
+
+			NtOrganism *child = owner->create_organism();
+
+			champion->get_genome().duplicate_in(child->get_genome_mutable());
+
+			if (champion_offspring_count > 1) {
+				if (Math::randd() < 0.8) {
+
+					// Happens often
+					// Mutate link weights
+					child->get_genome_mutable().map_link_weights(
+							NtPopulation::rand_gaussian,
+							owner);
+				} else {
+
+					// Happens sometimes
+					// Add a link
+					const bool add_link_status =
+							child->get_genome_mutable().add_random_link(
+									owner->settings.genetic_spawn_recurrent_link_threshold,
+									r_innovations,
+									owner->innovation_number);
+
+					if (!add_link_status) {
+
+						// Almost never happens
+						// Was not possible to add a link, so mutates
+						// the weights with completelly new weights
+						child->get_genome_mutable().map_link_weights(
+								NtPopulation::rand_cold_gaussian,
+								owner);
+					}
+				}
+
+			} /*else
+				exact copy*/
+
+			--champion_offspring_count;
+		}
+	}
+
+	/// Step 2. Normal reproduction
+	while (offspring_count > 0) {
+
+		// TODO reproduce
+
+		--offspring_count;
+	}
+
+	/// Step 3. check phase.
+	ERR_FAIL_COND(champion_offspring_count != 0);
+	ERR_FAIL_COND(offspring_count != 0);
 }
 
 void brain::NtSpecies::kill_old_organisms() {

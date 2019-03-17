@@ -12,6 +12,7 @@ class NtGenome;
  */
 class NtGenetic {
 public:
+	// TODO think about port this inside the Genome as static function
 	/**
 	 * @brief compatibility function returns a crescent value more the difference
 	 * between the genomes increase.

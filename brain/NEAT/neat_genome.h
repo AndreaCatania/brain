@@ -105,6 +105,48 @@ struct LinkGene : public Gene {
 };
 
 /**
+ * @brief The Innovation struct is used to track all innovation that happens
+ * during the innovation phase.
+ * This is necessary in order to assign the correct innovation number to a
+ * mutation.
+ */
+struct Innovation {
+
+	/**
+	 * @brief The InnovationType enum
+	 */
+	enum InnovationType {
+		INNOVATION_NODE,
+		INNOVATION_LINK
+	};
+
+	/**
+	 * @brief The type of the innovation
+	 */
+	InnovationType type;
+
+	/**
+	 * @brief The id of the parent neuron
+	 */
+	uint32_t parent_neuron_id;
+
+	/**
+	 * @brief The id of the child neuron
+	 */
+	uint32_t child_neuron_id;
+
+	/**
+	 * @brief is recurrent link
+	 */
+	bool is_recurrent;
+
+	/**
+	 * @brief The innovation number of this innovation
+	 */
+	uint32_t innovation_number;
+};
+
+/**
  * @brief The NEATGenome class is the organism structure description that can
  * be used to generates the phenotype that is neural network
  *
@@ -214,6 +256,19 @@ public:
 	 * @param p_data is passed directly to the map_func
 	 */
 	void map_link_weights(map_real_2_ptr p_map_func, void *p_data);
+
+	/**
+	 * @brief add a random link between nodes, depending on the spwn recurrent
+	 * threshold is possible to spawn a recurrent link
+	 * @param p_spawn_recurrent_threshold
+	 * @param r_innovations Shared Innovation list that is updates in case of new innovation
+	 * @param r_current_innovation_number shared innovation number that is updated in acse of new innovation
+	 * @return returns true if the genome is mutated
+	 */
+	bool add_random_link(
+			real_t p_spawn_recurrent_threshold,
+			std::vector<Innovation> &r_innovations,
+			uint32_t &r_current_innovation_number);
 
 	/**
 	 * @brief generate_neural_network is used to generate the phenotype using
