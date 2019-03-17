@@ -202,7 +202,60 @@ int main() {
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
-	test_NEAT_XOR();
+	//test_NEAT_XOR();
+
+	brain::NtGenome genome;
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_INPUT);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	genome.add_neuron(brain::NeuronGene::NEURON_GENE_TYPE_OUTPUT);
+	genome.add_link(0, 1, 1, false, 0);
+	genome.add_link(1, 2, 2, false, 0);
+	genome.add_link(2, 6, 3, false, 0);
+	genome.add_link(3, 4, 4, false, 0);
+	genome.add_link(4, 5, 5, false, 0);
+	genome.add_link(5, 6, 6, false, 0);
+	genome.add_link(5, 1, 7, true, 0);
+	genome.add_link(6, 6, 2, true, 0);
+
+	brain::SharpBrainArea gen_ba;
+	genome.generate_neural_network(gen_ba);
+
+	brain::SharpBrainArea ba;
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.add_neuron();
+	ba.set_neuron_as_input(0);
+	ba.set_neuron_as_input(3);
+	ba.set_neuron_as_output(6);
+	ba.add_link(0, 1, 1, false);
+	ba.add_link(1, 2, 2, false);
+	ba.add_link(2, 6, 3, false);
+	ba.add_link(3, 4, 4, false);
+	ba.add_link(4, 5, 5, false);
+	ba.add_link(5, 6, 6, false);
+	ba.add_link(5, 1, 7, true);
+	ba.add_link(6, 6, 2, true);
+
+	real_t a[] = { 1, 1 };
+	brain::Matrix res;
+	ba.guess(brain::Matrix(2, 1, a), res);
+	ba.guess(brain::Matrix(2, 1, a), res);
+	ba.guess(brain::Matrix(2, 1, a), res);
+
+	brain::Matrix res2;
+	gen_ba.guess(brain::Matrix(2, 1, a), res2);
+	gen_ba.guess(brain::Matrix(2, 1, a), res2);
+	gen_ba.guess(brain::Matrix(2, 1, a), res2);
+
+	int bre_ak = 0;
 
 	//test_uniform_ba_XOR();
 

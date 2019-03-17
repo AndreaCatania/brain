@@ -13,12 +13,14 @@ brain::LinkGene::LinkGene(
 		uint32_t p_parent_neuron_id,
 		uint32_t p_child_neuron_id,
 		real_t p_weight,
+		bool p_recurrent,
 		uint32_t p_innovation_number) :
 		id(p_id),
 		active(p_active),
 		parent_neuron_id(p_parent_neuron_id),
 		child_neuron_id(p_child_neuron_id),
 		weight(p_weight),
+		recurrent(p_recurrent),
 		innovation_number(p_innovation_number) {}
 
 brain::NtGenome::NtGenome() {}
@@ -48,6 +50,7 @@ brain::NtGenome::NtGenome(
 					i_i,
 					p_input_count + o_i, // Output neurons are after inputs neurons
 					p_randomize_weights ? Math::random(-1, 1) : 1,
+					false /* Recurrent */,
 					innovation_number++);
 		}
 	}
@@ -68,6 +71,7 @@ uint32_t brain::NtGenome::add_link(
 		uint32_t p_parent_neuron_id,
 		uint32_t p_child_neuron_id,
 		real_t p_weight,
+		bool p_recurrent,
 		uint32_t p_innovation_number) {
 
 	DEBUG_ONLY(ERR_FAIL_COND_V(0 > find_link(p_parent_neuron_id, p_child_neuron_id), -1));
@@ -81,6 +85,7 @@ uint32_t brain::NtGenome::add_link(
 					p_parent_neuron_id,
 					p_child_neuron_id,
 					p_weight,
+					p_recurrent,
 					p_innovation_number));
 
 	return id;
@@ -168,7 +173,8 @@ void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) cons
 		r_brain_area.add_link(
 				it->parent_neuron_id,
 				it->child_neuron_id,
-				it->weight);
+				it->weight,
+				it->recurrent);
 	}
 }
 

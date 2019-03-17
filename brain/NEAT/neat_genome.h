@@ -59,6 +59,7 @@ struct LinkGene : public Gene {
 	 * @param p_parent_neuron_id
 	 * @param p_child_neuron_id
 	 * @param p_weight
+	 * @param p_recurrent
 	 * @param p_innovation_number
 	 */
 	LinkGene(
@@ -67,6 +68,7 @@ struct LinkGene : public Gene {
 			uint32_t p_parent_neuron_id,
 			uint32_t p_child_neuron_id,
 			real_t p_weight,
+			bool p_recurrent,
 			uint32_t p_innovation_number);
 
 	/**
@@ -96,6 +98,12 @@ struct LinkGene : public Gene {
 	 * @brief weight of the connection
 	 */
 	real_t weight;
+
+	/**
+	 * @brief When recurrent is true the connection go in the opposite direction
+	 * and the returned value is the one calculated in the previous iteration
+	 */
+	bool recurrent;
 
 	/**
 	 * @brief innovation_number is used to maintain the history of the
@@ -200,6 +208,7 @@ public:
 	 * @param p_parent_neuron_id
 	 * @param p_child_neuron_id
 	 * @param p_weight
+	 * @param p_recurrent
 	 * @param p_innovation_number
 	 * @return the id of the added link
 	 */
@@ -207,6 +216,7 @@ public:
 			uint32_t p_parent_neuron_id,
 			uint32_t p_child_neuron_id,
 			real_t p_weight,
+			bool p_recurrent,
 			uint32_t p_innovation_number);
 
 	/**
