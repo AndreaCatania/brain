@@ -3,11 +3,6 @@
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
 
-//typedef real_t (*activation_func)(real_t p_val);
-//
-//activation_func activation_functions[] = { brain::Math::sigmoid };
-//activation_func activation_derivatives[] = { brain::Math::sigmoid_fast_derivative };
-
 void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) const {
 	execution_id = p_execution_id;
 	cached_value = p_val;
@@ -15,25 +10,43 @@ void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) const
 
 real_t brain::Neuron::get_value(uint32_t p_execution_id) const {
 	if (execution_id != p_execution_id) {
-		execution_id = p_execution_id;
-		cached_value = 0.f;
+		real_t value = 0.f;
 		for (auto it = parents.begin(); it != parents.end(); ++it) {
-			cached_value += it->neuron->get_value(p_execution_id) * it->weight;
+			if (it->is_recurrent)
+				value += it->neuron->get_recurrent(p_execution_id) * it->weight;
+			else
+				value += it->neuron->get_value(p_execution_id) * it->weight;
 		}
-		cached_value = brain::BrainArea::activation_functions[activation](cached_value);
+		recurrent = cached_value;
+		// TODO a test
+		//cached_value = brain::BrainArea::activation_functions[activation](value);
+		cached_value = value;
+		execution_id = p_execution_id;
 	}
 	return cached_value;
 }
 
-brain::Neuron::Neuron(uint32_t p_id) :
+real_t brain::Neuron::get_recurrent(uint32_t p_execution_id) const {
+	return execution_id == p_execution_id ? recurrent : cached_value;
+}
+
+brain::Neuron::Neuron(NeuronId p_id) :
 		id(p_id),
+		cached_value(0),
+		recurrent(0),
 		execution_id(0),
 		activation(BrainArea::ACTIVATION_SIGMOID) {
 }
 
-bool brain::Neuron::has_parent(Neuron *p_neuron) const {
+void brain::Neuron::prepare_internal_memory(SharpBrainArea *p_owner) {
 	for (auto it = parents.begin(); it != parents.end(); ++it) {
-		if (it->neuron == p_neuron)
+		it->neuron = &*(p_owner->neurons.begin() + it->neuron_id);
+	}
+}
+
+bool brain::Neuron::has_parent(NeuronId p_neuron_id) const {
+	for (auto it = parents.begin(); it != parents.end(); ++it) {
+		if (it->neuron_id == p_neuron_id)
 			return true;
 	}
 	return false;
@@ -43,12 +56,9 @@ uint32_t brain::Neuron::get_parent_count() const {
 	return parents.size();
 }
 
-void brain::Neuron::add_parent(Neuron *p_neuron, real_t p_weight) {
+void brain::Neuron::add_parent(NeuronId p_neuron_id, real_t p_weight, bool p_recurrent) {
 
-	ERR_FAIL_COND(has_parent(p_neuron));
-	ERR_FAIL_COND(p_neuron->has_parent(this));
-
-	parents.push_back({ p_neuron, p_weight });
+	parents.push_back({ nullptr, p_neuron_id, p_weight, p_recurrent });
 }
 
 void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
@@ -62,13 +72,14 @@ brain::SharpBrainArea::SharpBrainArea() :
 		execution_id(0),
 		ready(false) {}
 
-uint32_t brain::SharpBrainArea::add_neuron() {
-	const uint32_t id(neurons.size());
+brain::NeuronId brain::SharpBrainArea::add_neuron() {
+	const NeuronId id(neurons.size());
 	neurons.push_back(Neuron(id));
+	ready = false;
 	return id;
 }
 
-bool brain::SharpBrainArea::is_neuron_input(uint32_t p_neuron_id) const {
+bool brain::SharpBrainArea::is_neuron_input(NeuronId p_neuron_id) const {
 	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
 	for (auto it = inputs.begin(); it != inputs.end(); ++it) {
 		if (*it == p_neuron_id)
@@ -77,7 +88,7 @@ bool brain::SharpBrainArea::is_neuron_input(uint32_t p_neuron_id) const {
 	return false;
 }
 
-void brain::SharpBrainArea::set_neuron_as_input(uint32_t p_neuron_id) {
+void brain::SharpBrainArea::set_neuron_as_input(NeuronId p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
@@ -85,7 +96,7 @@ void brain::SharpBrainArea::set_neuron_as_input(uint32_t p_neuron_id) {
 	ready = false;
 }
 
-bool brain::SharpBrainArea::is_neuron_output(uint32_t p_neuron_id) const {
+bool brain::SharpBrainArea::is_neuron_output(NeuronId p_neuron_id) const {
 	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
 	for (auto it = outputs.begin(); it != outputs.end(); ++it) {
 		if (*it == p_neuron_id)
@@ -94,7 +105,7 @@ bool brain::SharpBrainArea::is_neuron_output(uint32_t p_neuron_id) const {
 	return false;
 }
 
-void brain::SharpBrainArea::set_neuron_as_output(uint32_t p_neuron_id) {
+void brain::SharpBrainArea::set_neuron_as_output(NeuronId p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));
 	ERR_FAIL_COND(is_neuron_output(p_neuron_id));
@@ -103,16 +114,24 @@ void brain::SharpBrainArea::set_neuron_as_output(uint32_t p_neuron_id) {
 }
 
 void brain::SharpBrainArea::add_link(
-		uint32_t p_neuron_parent_id,
-		uint32_t p_neuron_child_id,
-		real_t p_weight) {
+		NeuronId p_neuron_parent_id,
+		NeuronId p_neuron_child_id,
+		real_t p_weight,
+		bool p_recurrent) {
 
 	ERR_FAIL_INDEX(p_neuron_parent_id, neurons.size());
 	ERR_FAIL_INDEX(p_neuron_child_id, neurons.size());
 
-	neurons[p_neuron_child_id].add_parent(
-			&neurons[p_neuron_parent_id],
-			p_weight);
+	Neuron *child = &*(neurons.begin() + p_neuron_child_id);
+
+	ERR_FAIL_COND(child->has_parent(p_neuron_parent_id));
+	ERR_FAIL_COND(!p_recurrent && p_neuron_parent_id == p_neuron_child_id);
+
+	child->add_parent(
+			p_neuron_parent_id,
+			p_weight,
+			p_recurrent);
+
 	ready = false;
 }
 
@@ -127,7 +146,7 @@ void brain::SharpBrainArea::randomize_weights(real_t p_range) {
 	// If not ready check it
 	if (!ready) {
 		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
-		mutable_this->check_if_ready();
+		mutable_this->check_ready();
 		ERR_FAIL_COND(!ready);
 	}
 
@@ -142,7 +161,7 @@ void brain::SharpBrainArea::fill_weights(real_t p_weight) {
 	// If not ready check it
 	if (!ready) {
 		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
-		mutable_this->check_if_ready();
+		mutable_this->check_ready();
 		ERR_FAIL_COND(!ready);
 	}
 
@@ -169,7 +188,7 @@ void brain::SharpBrainArea::guess(
 	// If not ready check it
 	if (!ready) {
 		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
-		mutable_this->check_if_ready();
+		mutable_this->check_ready();
 		ERR_FAIL_COND(!ready);
 	}
 
@@ -204,6 +223,9 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 			p_it != p_neuron->parents.end();
 			++p_it) {
 
+		if (p_it->is_recurrent)
+			continue;
+
 		if (!is_fully_linked_to_input(p_it->neuron)) {
 			ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
 			ERR_FAIL_V(false);
@@ -212,11 +234,15 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 	return true;
 }
 
-void brain::SharpBrainArea::check_if_ready() {
+void brain::SharpBrainArea::check_ready() {
 	ready = false;
 
 	ERR_FAIL_COND(!get_input_layer_size());
 	ERR_FAIL_COND(!get_output_layer_size());
+
+	for (auto it = neurons.begin(); it != neurons.end(); ++it) {
+		it->prepare_internal_memory(this);
+	}
 
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
