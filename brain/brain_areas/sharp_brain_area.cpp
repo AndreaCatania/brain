@@ -2,6 +2,7 @@
 
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
+#include <algorithm>
 
 void brain::Neuron::force_set_value(real_t p_val, uint32_t p_execution_id) const {
 	execution_id = p_execution_id;
@@ -18,9 +19,7 @@ real_t brain::Neuron::get_value(uint32_t p_execution_id) const {
 				value += it->neuron->get_value(p_execution_id) * it->weight;
 		}
 		recurrent = cached_value;
-		// TODO a test
-		//cached_value = brain::BrainArea::activation_functions[activation](value);
-		cached_value = value;
+		cached_value = brain::BrainArea::activation_functions[activation](value);
 		execution_id = p_execution_id;
 	}
 	return cached_value;
@@ -209,7 +208,9 @@ void brain::SharpBrainArea::guess(
 	}
 }
 
-bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
+bool brain::SharpBrainArea::is_fully_linked_to_input(
+		Neuron *p_neuron,
+		std::vector<NeuronId> &r_cache) const {
 
 	// This happens only to the input layer
 	if (is_neuron_input(p_neuron->id))
@@ -217,6 +218,8 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 
 	if (!p_neuron->parents.size())
 		return false;
+
+	r_cache.push_back(p_neuron->id);
 
 	// This check if this neuron in the hidden layer is fully connected to input
 	for (auto p_it = p_neuron->parents.begin();
@@ -226,11 +229,26 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(Neuron *p_neuron) const {
 		if (p_it->is_recurrent)
 			continue;
 
-		if (!is_fully_linked_to_input(p_it->neuron)) {
+		if (r_cache.end() != std::find(r_cache.begin(), r_cache.end(), p_it->neuron_id)) {
+			std::string s("Just detected a loop in the network. between these neurons:");
+			for (auto it = r_cache.begin(); it != r_cache.end(); ++it) {
+				s += "\n" + itos(*it);
+			}
+
+			ERR_EXPLAIN(s);
+			ERR_FAIL_V(false);
+		}
+
+		if (!is_fully_linked_to_input(p_it->neuron, r_cache)) {
 			ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
 			ERR_FAIL_V(false);
 		}
 	}
+
+	auto it = std::find(r_cache.begin(), r_cache.end(), p_neuron->id);
+	ERR_FAIL_COND_V(it == r_cache.end(), false);
+	r_cache.erase(it);
+
 	return true;
 }
 
@@ -244,9 +262,11 @@ void brain::SharpBrainArea::check_ready() {
 		it->prepare_internal_memory(this);
 	}
 
+	std::vector<NeuronId> cache;
+
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
-		if (!is_fully_linked_to_input(&neurons[*o_it]))
+		if (!is_fully_linked_to_input(&neurons[*o_it], cache))
 			return;
 	}
 

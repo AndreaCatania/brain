@@ -175,7 +175,7 @@ int brain::NtSpecies::compute_offspring(double &r_remaining) {
 	return offspring_count;
 }
 
-void brain::NtSpecies::reproduce(std::vector<Innovation> &r_innovations) {
+void brain::NtSpecies::reproduce(std::vector<NtInnovation> &r_innovations) {
 
 	ERR_FAIL_COND(organisms.size() == 0);
 	ERR_FAIL_COND(champion_offspring_count > offspring_count);
@@ -208,7 +208,7 @@ void brain::NtSpecies::reproduce(std::vector<Innovation> &r_innovations) {
 
 					// Happens often
 					// Mutate link weights
-					child->get_genome_mutable().map_link_weights(
+					child->get_genome_mutable().mudate_link_weights(
 							NtPopulation::rand_gaussian,
 							owner);
 				} else {
@@ -216,7 +216,7 @@ void brain::NtSpecies::reproduce(std::vector<Innovation> &r_innovations) {
 					// Happens sometimes
 					// Add a link
 					const bool add_link_status =
-							child->get_genome_mutable().add_random_link(
+							child->get_genome_mutable().mutate_add_random_link(
 									owner->settings.genetic_spawn_recurrent_link_threshold,
 									r_innovations,
 									owner->innovation_number);
@@ -226,7 +226,7 @@ void brain::NtSpecies::reproduce(std::vector<Innovation> &r_innovations) {
 						// Almost never happens
 						// Was not possible to add a link, so mutates
 						// the weights with completelly new weights
-						child->get_genome_mutable().map_link_weights(
+						child->get_genome_mutable().mudate_link_weights(
 								NtPopulation::rand_cold_gaussian,
 								owner);
 					}

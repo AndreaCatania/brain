@@ -38,7 +38,7 @@ real_t brain::NtGenetic::compatibility(
 		bool someone_is_over(false);
 
 		if (g1_i < p_genome_1.get_link_count()) {
-			const LinkGene *link = p_genome_1.get_link(g1_i);
+			const NtLinkGene *link = p_genome_1.get_link(g1_i);
 			if (innovation == link->innovation_number) {
 				g1_has_innovation = true;
 				g1_weights_sum += link->weight;
@@ -49,7 +49,7 @@ real_t brain::NtGenetic::compatibility(
 		}
 
 		if (g2_i < p_genome_2.get_link_count()) {
-			const LinkGene *link = p_genome_2.get_link(g2_i);
+			const NtLinkGene *link = p_genome_2.get_link(g2_i);
 			if (innovation == link->innovation_number) {
 				g2_has_innovation = true;
 				g2_weights_sum += link->weight;

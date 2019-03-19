@@ -306,10 +306,12 @@ private:
 	 * connected to the input
 	 *
 	 * @param p_neuron
+	 * @param r_cache is usedinternally to detect if there are loops
 	 * @return
-	 *
 	 */
-	bool is_fully_linked_to_input(Neuron *p_neuron) const;
+	bool is_fully_linked_to_input(
+			Neuron *p_neuron,
+			std::vector<NeuronId> &r_cache) const;
 
 	/**
 	 * @brief check_ready

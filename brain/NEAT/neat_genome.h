@@ -9,15 +9,15 @@ typedef real_t (*map_real_2_ptr)(real_t p_arg_1, void *p_data);
 namespace brain {
 
 /**
- * @brief The Gene struct is the base type of each gene
+ * @brief The NtGene struct is the base type of each gene
  */
-struct Gene {
+struct NtGene {
 };
 
 /**
- * @brief The NeuronGene struct stores all information abount neurons
+ * @brief The NtNeuronGene struct stores all information abount neurons
  */
-struct NeuronGene : public Gene {
+struct NtNeuronGene : public NtGene {
 
 	/**
 	 * @brief The NeuronGeneType enum indicate the type of the neuron gene
@@ -29,11 +29,11 @@ struct NeuronGene : public Gene {
 	};
 
 	/**
-	 * @brief NeuronGene constructor
+	 * @brief NtNeuronGene constructor
 	 * @param p_id
 	 * @param p_type
 	 */
-	NeuronGene(uint32_t p_id, NeuronGeneType p_type);
+	NtNeuronGene(uint32_t p_id, NeuronGeneType p_type);
 
 	/**
 	 * @brief id of the neuron, it's also the index in the neuron_genes vector
@@ -44,13 +44,23 @@ struct NeuronGene : public Gene {
 	 * @brief type is used to store the type of the neuron gene
 	 */
 	NeuronGeneType type;
+
+	/**
+	 * @brief incoming_links is the vector with the ID of the incoming links
+	 */
+	std::vector<int> incoming_links;
+
+	/**
+	 * @brief outcoming_links is the vector with the ID of the outcoming links
+	 */
+	std::vector<int> outcoming_links;
 };
 
 /**
- * @brief The LinkGene struct is used to correctly connect two neurons
+ * @brief The NtLinkGene struct is used to correctly connect two neurons
  * Also the link can be deactivated.
  */
-struct LinkGene : public Gene {
+struct NtLinkGene : public NtGene {
 
 	/**
 	 * @brief LinkGene constructor
@@ -62,7 +72,7 @@ struct LinkGene : public Gene {
 	 * @param p_recurrent
 	 * @param p_innovation_number
 	 */
-	LinkGene(
+	NtLinkGene(
 			uint32_t p_id,
 			bool p_active,
 			uint32_t p_parent_neuron_id,
@@ -118,7 +128,7 @@ struct LinkGene : public Gene {
  * This is necessary in order to assign the correct innovation number to a
  * mutation.
  */
-struct Innovation {
+struct NtInnovation {
 
 	/**
 	 * @brief The InnovationType enum
@@ -168,13 +178,13 @@ class NtGenome {
 	 * phenotype.
 	 * The order is important
 	 */
-	std::vector<NeuronGene> neuron_genes;
+	std::vector<NtNeuronGene> neuron_genes;
 
 	/**
 	 * @brief link_genes stores all linkage information used to create the
 	 * Neural Network structure
 	 */
-	std::vector<LinkGene> link_genes;
+	std::vector<NtLinkGene> link_genes;
 
 public:
 	/**
@@ -201,7 +211,7 @@ public:
 	 * @return the id of the added neuron
 	 */
 	uint32_t add_neuron(
-			NeuronGene::NeuronGeneType p_type);
+			NtNeuronGene::NeuronGeneType p_type);
 
 	/**
 	 * @brief add_link add an active link gene between two neuron to the genome
@@ -230,7 +240,7 @@ public:
 	 * @param p_i
 	 * @return
 	 */
-	const LinkGene *get_link(int p_i) const;
+	const NtLinkGene *get_link(int p_i) const;
 
 	/**
 	 * @brief active_link active a link
@@ -258,14 +268,14 @@ public:
 	 * @brief map_link_weights map the weights
 	 * @param p_map_func
 	 */
-	void map_link_weights(map_real_1 p_map_func);
+	void mudate_link_weights(map_real_1 p_map_func);
 
 	/**
 	 * @brief map_link_weights map the weights
 	 * @param p_map_func
 	 * @param p_data is passed directly to the map_func
 	 */
-	void map_link_weights(map_real_2_ptr p_map_func, void *p_data);
+	void mudate_link_weights(map_real_2_ptr p_map_func, void *p_data);
 
 	/**
 	 * @brief add a random link between nodes, depending on the spwn recurrent
@@ -275,9 +285,21 @@ public:
 	 * @param r_current_innovation_number shared innovation number that is updated in acse of new innovation
 	 * @return returns true if the genome is mutated
 	 */
-	bool add_random_link(
+	bool mutate_add_random_link(
 			real_t p_spawn_recurrent_threshold,
-			std::vector<Innovation> &r_innovations,
+			std::vector<NtInnovation> &r_innovations,
+			uint32_t &r_current_innovation_number);
+
+	/**
+	 * @brief mutate_add_random_neuron will add a neuron in between two neurons,
+	 * the link that connect them get broken, and another two get born to connect
+	 * this new neuron
+	 * @param r_innovations
+	 * @param r_current_innovation_number
+	 * @return
+	 */
+	bool mutate_add_random_neuron(
+			std::vector<NtInnovation> &r_innovations,
 			uint32_t &r_current_innovation_number);
 
 	/**
@@ -304,6 +326,56 @@ public:
 	 * @return
 	 */
 	uint32_t get_innovation_number() const;
+
+	/**
+	 * @brief is_link_recurrent is used to know if a link should be
+	 * recurrent or not, this can be used even before the real existence of the
+	 * link.
+	 * @param p_parent_neuron_id
+	 * @param p_child_neuron_id
+	 * @return
+	 */
+	bool is_link_recurrent(
+			NeuronId p_parent_neuron_id,
+			NeuronId p_child_neuron_id) const;
+
+private:
+	/**
+	 * @brief _recursive_is_link_recurrent is a function that really operate the
+	 * is_link_recurrent work.
+	 *
+	 * This function require some strange inputs, from the prospective of user,
+	 * for this reason is wrapped by the is_link_recurrent.
+	 *
+	 * NOTE: The scope of this function is to make sure to not get stuck if
+	 * there is a loop in the structure.
+	 *
+	 * @param p_parent_neuron_id
+	 * @param p_middle_neuron_id
+	 * @param p_child_neuron_id
+	 * @return
+	 */
+	bool _recursive_is_link_recurrent(
+			NeuronId p_parent_neuron_id,
+			NeuronId p_middle_neuron_id,
+			NeuronId p_child_neuron_id) const;
+
+	/**
+	 * @brief find_innovation is an utility function that search the innovation
+	 * inside the passed array and return a pointer to the innovation or null
+	 * @param p_innovations
+	 * @param p_innovation_type
+	 * @param p_parent_neuron_id
+	 * @param p_child_neuron_id
+	 * @param p_is_recurrent
+	 * @return
+	 */
+	static NtInnovation *find_innovation(
+			std::vector<NtInnovation> &p_innovations,
+			NtInnovation::InnovationType p_innovation_type,
+			NeuronId p_parent_neuron_id,
+			NeuronId p_child_neuron_id,
+			bool p_is_recurrent);
 };
 
 } // namespace brain

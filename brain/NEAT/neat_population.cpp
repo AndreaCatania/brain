@@ -28,7 +28,7 @@ brain::NtPopulation::NtPopulation(
 		NtGenome &new_organism_genome = o->get_genome_mutable();
 		p_ancestor_genome.duplicate_in(new_organism_genome);
 
-		new_organism_genome.map_link_weights(
+		new_organism_genome.mudate_link_weights(
 				rand_gaussian,
 				static_cast<void *>(this));
 	}
@@ -66,7 +66,7 @@ bool brain::NtPopulation::epoch_advance() {
 	++epoch;
 
 	// Used to store all innovation of next epoch
-	std::vector<Innovation> innovations;
+	std::vector<NtInnovation> innovations;
 	innovations.reserve(20);
 
 	/// Step 1. Compute organisms fitness
