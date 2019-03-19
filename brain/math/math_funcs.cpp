@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,38 +32,27 @@
 
 #include "brain/error_macros.h"
 
-pcg32_random_t brain::Math::default_pcg = { 12047754176567800795ULL, PCG_DEFAULT_INC_64 };
+brain::RandomPCG brain::Math::default_rand(RandomPCG::DEFAULT_SEED, RandomPCG::DEFAULT_INC);
 
 #define PHI 0x9e3779b9
 
-// TODO: we should eventually expose pcg.inc too
 uint32_t brain::Math::rand_from_seed(uint64_t *seed) {
-	pcg32_random_t pcg = { *seed, PCG_DEFAULT_INC_64 };
-	const uint32_t r = pcg32_random_r(&pcg);
-	*seed = pcg.state;
+	RandomPCG rng = RandomPCG(*seed, RandomPCG::DEFAULT_INC);
+	uint32_t r = rng.rand();
+	*seed = rng.get_seed();
 	return r;
 }
 
-real_t brain::Math::rand_from_seed(real_t p_range, uint64_t *seed) {
-	pcg32_random_t pcg = { *seed, PCG_DEFAULT_INC_64 };
-	const uint32_t r = pcg32_random_r(&pcg);
-	*seed = pcg.state;
-	const double ret = (double)r / (double)RANDOM_MAX;
-	return ret * (p_range * 2) - p_range;
-}
-
 void brain::Math::seed(uint64_t x) {
-	default_pcg.state = x;
+	default_rand.seed(x);
 }
 
 void brain::Math::randomize() {
-	//seed(OS::get_singleton()->get_ticks_usec() * default_pcg.state + PCG_DEFAULT_INC_64);
-	ERR_EXPLAIN("Please implement this function");
-	ERR_FAIL();
+	default_rand.randomize();
 }
 
 uint32_t brain::Math::rand() {
-	return pcg32_random_r(&default_pcg);
+	return default_rand.rand();
 }
 
 int brain::Math::step_decimals(double p_step) {
@@ -179,13 +168,9 @@ uint32_t brain::Math::larger_prime(uint32_t p_val) {
 }
 
 double brain::Math::random(double from, double to) {
-	unsigned int r = brain::Math::rand();
-	double ret = (double)r / (double)RANDOM_MAX;
-	return (ret) * (to - from) + from;
+	return default_rand.random(from, to);
 }
 
 float brain::Math::random(float from, float to) {
-	unsigned int r = brain::Math::rand();
-	float ret = (float)r / (float)RANDOM_MAX;
-	return (ret) * (to - from) + from;
+	return default_rand.random(from, to);
 }
