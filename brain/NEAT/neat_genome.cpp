@@ -326,6 +326,101 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	return true;
 }
 
+bool brain::NtGenome::mate_multipoint(
+		const NtGenome &p_mum,
+		real_t p_mum_fitness,
+		const NtGenome &p_daddy,
+		real_t p_daddy_fitness) {
+
+	neuron_genes.clear();
+	link_genes.clear();
+
+	const NtGenome *bigger = &p_mum; // Most innovated
+	const NtGenome *smaller = &p_daddy; // less_innovated
+	bool is_bigger_better = p_mum_fitness > p_daddy_fitness;
+
+	if (bigger->get_innovation_number() < smaller->get_innovation_number()) {
+		bigger = &p_daddy;
+		smaller = &p_mum;
+		is_bigger_better = !is_bigger_better;
+	}
+
+	// Add all the neurons of the best genome in the same order
+	if (is_bigger_better) {
+		for (auto it = bigger->neuron_genes.begin(); it != bigger->neuron_genes.end(); ++it) {
+			add_neuron(it->type);
+		}
+	} else {
+		for (auto it = smaller->neuron_genes.begin(); it != smaller->neuron_genes.end(); ++it) {
+			add_neuron(it->type);
+		}
+	}
+
+	const int bigger_in_num = bigger->get_innovation_number();
+	auto b_it = bigger->link_genes.begin();
+	auto s_it = smaller->link_genes.begin();
+
+	for (int i = 0; i <= bigger_in_num; ++i) {
+
+		auto b_genome = bigger->link_genes.end();
+		auto s_genome = smaller->link_genes.end();
+
+		if (b_it != bigger->link_genes.end() && b_it->innovation_number == i) {
+			b_genome = b_it++;
+		}
+		if (s_it != smaller->link_genes.end() && s_it->innovation_number == i) {
+			s_genome = s_it++;
+		}
+
+		const NtLinkGene *gene_to_add(nullptr);
+
+		if (b_genome != bigger->link_genes.end() &&
+				s_genome != smaller->link_genes.end()) {
+
+			// Both have this innovation, select one randomly
+
+			if (Math::randd() < 0.5) {
+				gene_to_add = &*b_genome;
+			} else {
+				gene_to_add = &*s_genome;
+			}
+
+		} else if (b_genome != bigger->link_genes.end()) {
+			// Only the bigger genome has this innovation
+
+			if (is_bigger_better) {
+
+				gene_to_add = &*b_genome;
+			}
+
+		} else if (s_genome != smaller->link_genes.end()) {
+			// Only the smaller genome has this innovation
+
+			if (!is_bigger_better) {
+
+				gene_to_add = &*s_genome;
+			}
+
+		} else {
+			// Nobody have this genome
+		}
+
+		if (!gene_to_add)
+			continue;
+
+		uint32_t id = add_link(
+				gene_to_add->parent_neuron_id,
+				gene_to_add->child_neuron_id,
+				gene_to_add->weight,
+				gene_to_add->recurrent,
+				gene_to_add->innovation_number);
+
+		if (!gene_to_add->active) {
+			suppress_link(id);
+		}
+	}
+}
+
 void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) const {
 
 	r_brain_area.clear();

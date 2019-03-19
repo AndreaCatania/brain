@@ -303,6 +303,27 @@ public:
 			uint32_t &r_current_innovation_number);
 
 	/**
+	 * @brief mate_multipoint will delete all genes of the current genome
+	 * and will spawn new genes from the mating between mum and daddy genomes.
+	 *
+	 * The multipoint mating, will choose randomly from one or another parent
+	 * all the genes with the same innovation number, and will choose to pick
+	 * or refiuse a gene that is present only to a certain parent depending on
+	 * the fitness and a probability threshold.
+	 *
+	 * @param p_mum
+	 * @param p_mum_fitness
+	 * @param p_daddy
+	 * @param p_daddy_fitness
+	 * @return
+	 */
+	bool mate_multipoint(
+			const NtGenome &p_mum,
+			real_t p_mum_fitness,
+			const NtGenome &p_daddy,
+			real_t p_daddy_fitness);
+
+	/**
 	 * @brief generate_neural_network is used to generate the phenotype using
 	 * the description of this Genome.
 	 *
