@@ -24,7 +24,7 @@ struct NtPopulationSettings {
 	 * delta during the weight changing. Check the Gaussian random to understand
 	 * better its use.
 	 */
-	real_t learning_deviation = 1.f;
+	real_t learning_deviation = 0.75f;
 
 	/**
 	 * @brief genetic_compatibility_threshold is used to determine the species
@@ -39,7 +39,7 @@ struct NtPopulationSettings {
 	 *
 	 * So a too huge or too small threshold can make the niching process to fail.
 	 */
-	real_t genetic_compatibility_threshold = 0.3f;
+	real_t genetic_compatibility_threshold = 0.5f;
 
 	/**
 	 * @brief genetic_disjoints_significance is used during the genetic comparison
@@ -104,6 +104,42 @@ struct NtPopulationSettings {
 	 * thus the taken decision is affected by the previous datas.
 	 */
 	real_t genetic_spawn_recurrent_link_threshold = 0.35;
+
+	/**
+	 * @brief genetic_mate_prob is used to define the probability for
+	 * a genome to mate with another one, instead to mutate.
+	 */
+	real_t genetic_mate_prob = 0.5;
+
+	/**
+	 * @brief genetic_mate_inside_species_threshold is used to controll where the
+	 * other parent (dad) should be taken within the same species of the mom or
+	 * outside.
+	 */
+	real_t genetic_mate_inside_species_threshold = 0.5;
+
+	/**
+	 * @brief genetic_mating_* are used to decide what type of crossover operation
+	 * should occur more often.
+	 *
+	 * These parameters will be normalized (If all are the same they will have
+	 * the same probability)
+	 */
+	real_t genetic_mating_multipoint_threshold = 0.4;
+	real_t genetic_mating_multipoint_avg_threshold = 0.4;
+	real_t genetic_mating_singlepoint_threshold = 0.2;
+
+	/**
+	 * @brief genetic_mutate_* are used to decide what type of mutation should
+	 * occur more often.
+	 *
+	 * These parameters will be normalized (If all are the same they will have
+	 * the same probability)
+	 */
+	real_t genetic_mutate_add_link_porb = 0.3;
+	real_t genetic_mutate_add_node_prob = 0.15;
+	real_t genetic_mutate_link_weight_prob = 0.5;
+	real_t genetic_mutate_toggle_link_enable_prob = 0.05;
 
 	/**
 	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
@@ -310,6 +346,13 @@ public:
 	 */
 	bool epoch_advance();
 
+	/**
+	 * @brief get_best_personal_fitness returns the best personal fitness ever
+	 * used to track the population performances
+	 * @return
+	 */
+	real_t get_best_personal_fitness() const;
+
 private:
 	/**
 	 * @brief speciate splits all organisms in species depending on its
@@ -393,6 +436,15 @@ private:
 	 * @brief remove_organism_from_species remove the organism from the assigned specie
 	 */
 	void remove_organism_from_species(NtOrganism *p_organism);
+
+	/**
+	 * @brief get_rand_champion returns the organism champion from a random species
+	 * except the one passed through parameter.
+	 *
+	 * @param p_except_species if null no exception
+	 * @return
+	 */
+	NtOrganism *get_rand_champion(const NtSpecies *p_except_species) const;
 
 private:
 	/**

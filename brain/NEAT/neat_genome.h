@@ -63,6 +63,11 @@ struct NtNeuronGene : public NtGene {
 struct NtLinkGene : public NtGene {
 
 	/**
+	 * @brief Void constructor
+	 */
+	NtLinkGene();
+
+	/**
 	 * @brief LinkGene constructor
 	 * @param p_id
 	 * @param p_active
@@ -268,14 +273,21 @@ public:
 	 * @brief map_link_weights map the weights
 	 * @param p_map_func
 	 */
-	void mudate_link_weights(map_real_1 p_map_func);
+	void mutate_link_weights(map_real_1 p_map_func);
 
 	/**
 	 * @brief map_link_weights map the weights
 	 * @param p_map_func
 	 * @param p_data is passed directly to the map_func
 	 */
-	void mudate_link_weights(map_real_2_ptr p_map_func, void *p_data);
+	void mutate_link_weights(map_real_2_ptr p_map_func, void *p_data);
+
+	/**
+	 * @brief mutate_link_toggle_activation take a random link and toggle its
+	 * activation status
+	 * @return
+	 */
+	bool mutate_link_toggle_activation();
 
 	/**
 	 * @brief add a random link between nodes, depending on the spwn recurrent
@@ -302,26 +314,47 @@ public:
 			std::vector<NtInnovation> &r_innovations,
 			uint32_t &r_current_innovation_number);
 
+	/// Cross over operations ---V
+	/// https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm)
 	/**
 	 * @brief mate_multipoint will delete all genes of the current genome
-	 * and will spawn new genes from the mating between mum and daddy genomes.
+	 * and will spawn new genes from the mating between mom and daddy genomes.
 	 *
 	 * The multipoint mating, will choose randomly from one or another parent
 	 * all the genes with the same innovation number, and will choose to pick
 	 * or refiuse a gene that is present only to a certain parent depending on
 	 * the fitness and a probability threshold.
 	 *
-	 * @param p_mum
-	 * @param p_mum_fitness
+	 * When the p_average is true instead to choose one or the other the weights
+	 * of the genes with the same innovation number get averaged.
+	 *
+	 * @param p_mom
+	 * @param p_mom_fitness
 	 * @param p_daddy
 	 * @param p_daddy_fitness
+	 * @param p_average
 	 * @return
 	 */
 	bool mate_multipoint(
-			const NtGenome &p_mum,
-			real_t p_mum_fitness,
+			const NtGenome &p_mom,
+			real_t p_mom_fitness,
 			const NtGenome &p_daddy,
-			real_t p_daddy_fitness);
+			real_t p_daddy_fitness,
+			bool p_average);
+
+	/**
+	 * @brief mate_singlepoint will choose a random point inside the smaller
+	 * genome and will perform a cut in both genomes then
+	 * they will crossed.
+	 * The cutted gene instead get averaged.
+	 *
+	 * @param p_mom
+	 * @param p_daddy
+	 * @return
+	 */
+	bool mate_singlepoint(
+			const NtGenome &p_mom,
+			const NtGenome &p_daddy);
 
 	/**
 	 * @brief generate_neural_network is used to generate the phenotype using

@@ -208,8 +208,9 @@ void brain::SharpBrainArea::guess(
 	}
 }
 
-bool brain::SharpBrainArea::is_fully_linked_to_input(
+bool brain::SharpBrainArea::are_links_walkable(
 		Neuron *p_neuron,
+		bool p_error_on_broken_link,
 		std::vector<NeuronId> &r_cache) const {
 
 	// This happens only to the input layer
@@ -239,9 +240,11 @@ bool brain::SharpBrainArea::is_fully_linked_to_input(
 			ERR_FAIL_V(false);
 		}
 
-		if (!is_fully_linked_to_input(p_it->neuron, r_cache)) {
-			ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
-			ERR_FAIL_V(false);
+		if (!are_links_walkable(p_it->neuron, p_error_on_broken_link, r_cache)) {
+			if (p_error_on_broken_link) {
+				ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
+				ERR_FAIL_V(false);
+			}
 		}
 	}
 
@@ -266,7 +269,7 @@ void brain::SharpBrainArea::check_ready() {
 
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
-		if (!is_fully_linked_to_input(&neurons[*o_it], cache))
+		if (!are_links_walkable(&neurons[*o_it], false, cache))
 			return;
 	}
 

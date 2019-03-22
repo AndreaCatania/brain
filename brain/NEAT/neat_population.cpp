@@ -28,7 +28,7 @@ brain::NtPopulation::NtPopulation(
 		NtGenome &new_organism_genome = o->get_genome_mutable();
 		p_ancestor_genome.duplicate_in(new_organism_genome);
 
-		new_organism_genome.mudate_link_weights(
+		new_organism_genome.mutate_link_weights(
 				rand_gaussian,
 				static_cast<void *>(this));
 	}
@@ -67,7 +67,8 @@ bool brain::NtPopulation::epoch_advance() {
 
 	// Used to store all innovation of next epoch
 	std::vector<NtInnovation> innovations;
-	innovations.reserve(20);
+	innovations.reserve(population_size); // 1 innovation per organism, should
+	//be enough
 
 	/// Step 1. Compute organisms fitness
 	for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
@@ -117,7 +118,7 @@ bool brain::NtPopulation::epoch_advance() {
 					best_species = *it;
 				}
 			}
-			best_species->set_offspring_count(biggest_offsprings++);
+			best_species->set_offspring_count(++biggest_offsprings);
 			++total_expected_offsprings;
 
 			/// When the total_expected still below
@@ -258,11 +259,11 @@ bool brain::NtPopulation::epoch_advance() {
 
 				const int assignment = i <= 1 ? stolen_one_fifth : stolen_one_tenth;
 
-				(*it)->set_champion_offspring_count(
-						(*it)->get_champion_offspring_count() + assignment);
-
 				(*it)->set_offspring_count(
 						(*it)->get_offspring_count() + assignment);
+
+				(*it)->set_champion_offspring_count(
+						(*it)->get_champion_offspring_count() + assignment);
 
 				stolen_cribs -= assignment;
 				++i;
@@ -297,13 +298,14 @@ bool brain::NtPopulation::epoch_advance() {
 
 						if (Math::randf() <= roulet_threshold) {
 
-							(*it)->set_champion_offspring_count(
-									(*it)->get_champion_offspring_count() + 1);
-
 							(*it)->set_offspring_count(
 									(*it)->get_offspring_count() + 1);
 
+							(*it)->set_champion_offspring_count(
+									(*it)->get_champion_offspring_count() + 1);
+
 							--stolen_cribs;
+							break;
 						}
 					}
 
@@ -317,14 +319,17 @@ bool brain::NtPopulation::epoch_advance() {
 		// Assign all the remaining stolen cribs to the bast species even if it
 		// is going to die
 		if (stolen_cribs > 0) {
-			best_species->set_champion_offspring_count(
-					best_species->get_champion_offspring_count() + stolen_cribs);
 
 			best_species->set_offspring_count(
 					best_species->get_offspring_count() + stolen_cribs);
 
+			best_species->set_champion_offspring_count(
+					best_species->get_champion_offspring_count() + stolen_cribs);
+
 			stolen_cribs = 0;
 		}
+
+		ERR_FAIL_COND_V(stolen_cribs != 0, false);
 	}
 
 	/// Step 7. Reproduction phase.
@@ -360,12 +365,15 @@ bool brain::NtPopulation::epoch_advance() {
 			std::find(species.begin(), species.end(), best_species);
 	if (best_species_iterator == species.end()) {
 
-		ERR_EXPLAIN("For some reason the best species died. This could be a bug!");
-		ERR_FAIL_V(false);
+		WARN_PRINTS("IMPORTANT For some reason the best species died. Is there a bug somewhere?");
 	}
 
 	// Finally Done!
 	return true;
+}
+
+real_t brain::NtPopulation::get_best_personal_fitness() const {
+	return best_personal_fitness;
 }
 
 void brain::NtPopulation::speciate() {
@@ -515,6 +523,39 @@ void brain::NtPopulation::remove_organism_from_species(NtOrganism *p_organism) {
 		return;
 	p_organism->get_species()->remove_organism(p_organism);
 	p_organism->set_species(nullptr);
+}
+
+brain::NtOrganism *brain::NtPopulation::get_rand_champion(
+		const NtSpecies *p_except_species) const {
+
+	if (!species.size())
+		return nullptr;
+
+	if (p_except_species && species.size() == 1)
+		return nullptr;
+
+	const int rand_index =
+			static_cast<int>(Math::random(0, species.size() - 1) + 0.5);
+
+	NtSpecies *rand_species(nullptr);
+	if (species[rand_index] != p_except_species) {
+		rand_species = species[rand_index];
+	} else {
+		// This is the case when the random index point the exception
+		// to fix this, remove or add 1 to the index
+		if (rand_index + 1 >= species.size()) {
+			// Can't add 1, subtract
+			rand_species = species[rand_index - 1];
+		} else {
+			// Can add 1, add
+			rand_species = species[rand_index + 1];
+		}
+	}
+
+	if (!rand_species)
+		return nullptr; // No species available
+
+	return rand_species->get_champion();
 }
 
 real_t brain::NtPopulation::rand_gaussian(real_t p_x, void *p_data) {

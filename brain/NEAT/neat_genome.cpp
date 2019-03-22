@@ -7,6 +7,8 @@ brain::NtNeuronGene::NtNeuronGene(uint32_t p_id, NeuronGeneType p_type) :
 		id(p_id),
 		type(p_type) {}
 
+brain::NtLinkGene::NtLinkGene() {}
+
 brain::NtLinkGene::NtLinkGene(
 		uint32_t p_id,
 		bool p_active,
@@ -130,16 +132,30 @@ uint32_t brain::NtGenome::find_link(
 	return -1;
 }
 
-void brain::NtGenome::mudate_link_weights(map_real_1 p_map_func) {
+void brain::NtGenome::mutate_link_weights(map_real_1 p_map_func) {
+
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		it->weight = p_map_func(it->weight);
 	}
 }
 
-void brain::NtGenome::mudate_link_weights(map_real_2_ptr p_map_func, void *p_data) {
+void brain::NtGenome::mutate_link_weights(map_real_2_ptr p_map_func, void *p_data) {
+
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		it->weight = p_map_func(it->weight, p_data);
 	}
+}
+
+bool brain::NtGenome::mutate_link_toggle_activation() {
+
+	if (!link_genes.size())
+		return false;
+
+	NtLinkGene &lg =
+			link_genes[static_cast<int>(Math::random(0, link_genes.size() - 1) + 0.5)];
+	lg.active = !lg.active;
+
+	return true;
 }
 
 bool brain::NtGenome::mutate_add_random_link(
@@ -245,27 +261,29 @@ bool brain::NtGenome::mutate_add_random_neuron(
 
 	/// Step 1. Find the link to split
 
-	std::vector<NtLinkGene *> active_links;
+	std::vector<int> active_links;
 	active_links.reserve(link_genes.size());
 
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		if (!it->active)
 			continue;
 
-		active_links.push_back(&*it);
+		active_links.push_back(it->id);
 	}
 
-	NtLinkGene *link_to_split = nullptr;
+	bool found = false;
+	NtLinkGene link_to_split;
 
 	if (active_links.size() < 15) {
 		// When the genome is small, bias the search to the older connections
 
-		for (int tries = 0; tries < 3 && !link_to_split; ++tries) {
+		for (int tries = 0; tries < 3 && !found; ++tries) {
 			/// Iterate in reverse so all active older links will have more
 			/// probability to get split
 			for (auto it = active_links.rbegin(); it != active_links.rend(); ++it) {
 				if (Math::randd() < 0.3f) {
-					link_to_split = *it;
+					link_to_split = link_genes[*it];
+					found = true;
 					break;
 				}
 			}
@@ -273,18 +291,21 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	} else {
 
 		// Take one random link with normal distribution
-		link_to_split = active_links[static_cast<int>(
+		const int link_id = active_links[static_cast<int>(
 				Math::random(0.f, active_links.size() - 1.f) + 0.5f)];
+
+		link_to_split = link_genes[link_id];
+		found = true;
 	}
 
-	if (!link_to_split)
+	if (!found)
 		return false; // No link to split
 
 	NtInnovation *innovation = find_innovation(
 			r_innovations,
 			NtInnovation::INNOVATION_NODE,
-			link_to_split->parent_neuron_id,
-			link_to_split->child_neuron_id,
+			link_to_split.parent_neuron_id,
+			link_to_split.child_neuron_id,
 			false);
 
 	uint32_t in_link_innovation_number;
@@ -300,26 +321,26 @@ bool brain::NtGenome::mutate_add_random_neuron(
 
 		r_innovations.push_back(
 				{ NtInnovation::INNOVATION_NODE,
-						link_to_split->parent_neuron_id,
-						link_to_split->child_neuron_id,
+						link_to_split.parent_neuron_id,
+						link_to_split.child_neuron_id,
 						false, // <-- doesn't matter in this case
 						in_link_innovation_number });
 	}
 
-	suppress_link(link_to_split->id);
+	suppress_link(link_to_split.id);
 	const uint32_t new_neuron_id = add_neuron(NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
 
 	add_link(
-			link_to_split->parent_neuron_id,
+			link_to_split.parent_neuron_id,
 			new_neuron_id,
 			1.f,
-			link_to_split->recurrent,
+			link_to_split.recurrent,
 			in_link_innovation_number);
 
 	add_link(
 			new_neuron_id,
-			link_to_split->child_neuron_id,
-			link_to_split->weight,
+			link_to_split.child_neuron_id,
+			link_to_split.weight,
 			false,
 			out_link_innovation_number);
 
@@ -327,98 +348,212 @@ bool brain::NtGenome::mutate_add_random_neuron(
 }
 
 bool brain::NtGenome::mate_multipoint(
-		const NtGenome &p_mum,
-		real_t p_mum_fitness,
+		const NtGenome &p_mom,
+		real_t p_mom_fitness,
 		const NtGenome &p_daddy,
-		real_t p_daddy_fitness) {
+		real_t p_daddy_fitness,
+		bool p_average) {
 
 	neuron_genes.clear();
 	link_genes.clear();
 
-	const NtGenome *bigger = &p_mum; // Most innovated
-	const NtGenome *smaller = &p_daddy; // less_innovated
-	bool is_bigger_better = p_mum_fitness > p_daddy_fitness;
+	const NtGenome *innovative = &p_mom; // Most innovated
+	const NtGenome *obsolete = &p_daddy; // less_innovated
+	bool is_innovative_fitter = p_mom_fitness > p_daddy_fitness;
 
-	if (bigger->get_innovation_number() < smaller->get_innovation_number()) {
-		bigger = &p_daddy;
-		smaller = &p_mum;
-		is_bigger_better = !is_bigger_better;
+	if (innovative->get_innovation_number() < obsolete->get_innovation_number()) {
+		innovative = &p_daddy;
+		obsolete = &p_mom;
+		is_innovative_fitter = !is_innovative_fitter;
 	}
 
 	// Add all the neurons of the best genome in the same order
-	if (is_bigger_better) {
-		for (auto it = bigger->neuron_genes.begin(); it != bigger->neuron_genes.end(); ++it) {
+	if (is_innovative_fitter) {
+		for (auto it = innovative->neuron_genes.begin(); it != innovative->neuron_genes.end(); ++it) {
 			add_neuron(it->type);
 		}
 	} else {
-		for (auto it = smaller->neuron_genes.begin(); it != smaller->neuron_genes.end(); ++it) {
+		for (auto it = obsolete->neuron_genes.begin(); it != obsolete->neuron_genes.end(); ++it) {
 			add_neuron(it->type);
 		}
 	}
 
-	const int bigger_in_num = bigger->get_innovation_number();
-	auto b_it = bigger->link_genes.begin();
-	auto s_it = smaller->link_genes.begin();
+	const int bigger_in_num = innovative->get_innovation_number();
+	auto it_inn = innovative->link_genes.begin();
+	auto it_obs = obsolete->link_genes.begin();
 
 	for (int i = 0; i <= bigger_in_num; ++i) {
 
-		auto b_genome = bigger->link_genes.end();
-		auto s_genome = smaller->link_genes.end();
+		auto genome_inn = innovative->link_genes.end();
+		auto genome_obs = obsolete->link_genes.end();
 
-		if (b_it != bigger->link_genes.end() && b_it->innovation_number == i) {
-			b_genome = b_it++;
+		if (it_inn != innovative->link_genes.end() && it_inn->innovation_number == i) {
+			genome_inn = it_inn++;
 		}
-		if (s_it != smaller->link_genes.end() && s_it->innovation_number == i) {
-			s_genome = s_it++;
+		if (it_obs != obsolete->link_genes.end() && it_obs->innovation_number == i) {
+			genome_obs = it_obs++;
 		}
 
-		const NtLinkGene *gene_to_add(nullptr);
+		bool want_to_add = false;
+		NtLinkGene gene_to_add;
 
-		if (b_genome != bigger->link_genes.end() &&
-				s_genome != smaller->link_genes.end()) {
+		if (genome_inn != innovative->link_genes.end() &&
+				genome_obs != obsolete->link_genes.end()) {
 
 			// Both have this innovation, select one randomly
 
-			if (Math::randd() < 0.5) {
-				gene_to_add = &*b_genome;
-			} else {
-				gene_to_add = &*s_genome;
-			}
+			if (p_average) {
+				gene_to_add = *genome_inn;
+				gene_to_add.weight = (genome_inn->weight + genome_obs->weight) * 0.5;
 
-		} else if (b_genome != bigger->link_genes.end()) {
+				if (Math::randd() < 0.5) {
+					gene_to_add.active = genome_inn->active;
+				} else {
+					gene_to_add.active = genome_obs->active;
+				}
+
+			} else {
+				if (Math::randd() < 0.5) {
+					gene_to_add = *genome_inn;
+				} else {
+					gene_to_add = *genome_obs;
+				}
+			}
+			want_to_add = true;
+
+		} else if (genome_inn != innovative->link_genes.end()) {
 			// Only the bigger genome has this innovation
 
-			if (is_bigger_better) {
+			if (is_innovative_fitter) {
 
-				gene_to_add = &*b_genome;
+				gene_to_add = *genome_inn;
+				want_to_add = true;
 			}
 
-		} else if (s_genome != smaller->link_genes.end()) {
+		} else if (genome_obs != obsolete->link_genes.end()) {
 			// Only the smaller genome has this innovation
 
-			if (!is_bigger_better) {
+			if (!is_innovative_fitter) {
 
-				gene_to_add = &*s_genome;
+				gene_to_add = *genome_obs;
+				want_to_add = true;
 			}
 
 		} else {
 			// Nobody have this genome
 		}
 
-		if (!gene_to_add)
+		if (!want_to_add)
 			continue;
 
 		uint32_t id = add_link(
-				gene_to_add->parent_neuron_id,
-				gene_to_add->child_neuron_id,
-				gene_to_add->weight,
-				gene_to_add->recurrent,
-				gene_to_add->innovation_number);
+				gene_to_add.parent_neuron_id,
+				gene_to_add.child_neuron_id,
+				gene_to_add.weight,
+				gene_to_add.recurrent,
+				gene_to_add.innovation_number);
 
-		if (!gene_to_add->active) {
+		if (!gene_to_add.active) {
 			suppress_link(id);
 		}
 	}
+}
+
+bool brain::NtGenome::mate_singlepoint(
+		const NtGenome &p_mom,
+		const NtGenome &p_daddy) {
+
+	neuron_genes.clear();
+	link_genes.clear();
+
+	const NtGenome *bigger = &p_mom;
+	const NtGenome *smaller = &p_daddy;
+
+	if (p_mom.get_link_count() < p_daddy.get_link_count()) {
+		bigger = &p_daddy;
+		smaller = &p_mom;
+	}
+
+	// Just copy all neurons of the bigger genome since at the end we will take
+	// all links from the bigger one and fore sure will be used all neurons
+	for (auto it = bigger->neuron_genes.begin(); it != bigger->neuron_genes.end(); ++it) {
+		add_neuron(it->type);
+	}
+
+	const int cross_gene_small = static_cast<int>(Math::random(0, smaller->get_link_count() - 1) + 0.5);
+
+	// Find the cut on the bigger genome by checking the innovation number in order to
+	// avoid adding two times a gene
+	int cross_gene_big(0);
+	{
+		const uint32_t innovation_number_to_search =
+				smaller->get_link(cross_gene_small)->innovation_number;
+
+		for (auto it = bigger->link_genes.begin(); it != bigger->link_genes.end(); ++it) {
+			if (innovation_number_to_search == it->innovation_number) {
+				break;
+			}
+			++cross_gene_big;
+		}
+	}
+
+	// Copy genes from the smaller genome
+	for (int i(0); i < cross_gene_small; ++i) {
+		const NtLinkGene &link = smaller->link_genes[i];
+		uint32_t id = add_link(
+				link.parent_neuron_id,
+				link.child_neuron_id,
+				link.weight,
+				link.recurrent,
+				link.innovation_number);
+
+		if (!link.active) {
+			suppress_link(id);
+		}
+	}
+
+	// Average the cross gene from the two genome
+	{
+		NtLinkGene link = bigger->link_genes[cross_gene_big];
+		const NtLinkGene &s = smaller->link_genes[cross_gene_small];
+
+		ERR_FAIL_COND_V(link.innovation_number != s.innovation_number, false);
+
+		link.weight += s.weight;
+		link.weight *= 0.5;
+
+		if (link.active != s.active) {
+			link.active = Math::randd() < 0.5f;
+		}
+
+		uint32_t id = add_link(
+				link.parent_neuron_id,
+				link.child_neuron_id,
+				link.weight,
+				link.recurrent,
+				link.innovation_number);
+
+		if (!link.active) {
+			suppress_link(id);
+		}
+	}
+
+	// Copy the genes from the bigger genome
+	for (int i(cross_gene_big + 1); i < bigger->get_link_count(); ++i) {
+		const NtLinkGene &link = bigger->link_genes[i];
+		uint32_t id = add_link(
+				link.parent_neuron_id,
+				link.child_neuron_id,
+				link.weight,
+				link.recurrent,
+				link.innovation_number);
+
+		if (!link.active) {
+			suppress_link(id);
+		}
+	}
+
+	return true;
 }
 
 void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) const {

@@ -247,7 +247,8 @@ public:
 	 * @param r_innovations Is the shared list of innovations that happens
 	 * in the other species during this epoch transition
 	 */
-	void reproduce(std::vector<NtInnovation> &r_innovations);
+	void reproduce(
+			std::vector<NtInnovation> &r_innovations);
 
 	/**
 	 * @brief kill all its old organisms

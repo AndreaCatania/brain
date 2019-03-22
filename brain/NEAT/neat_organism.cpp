@@ -12,7 +12,9 @@ brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		is_dirty_brain_area(true),
 		middle_fitness_sum(0.f),
 		middle_fitness_count(0),
-		fitness(0) {
+		fitness(0.f),
+		personal_fitness(0.f),
+		expected_offspring(0.f) {
 }
 
 brain::NtOrganism::~NtOrganism() {

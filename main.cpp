@@ -167,6 +167,7 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
+	settings.genetic_mate_prob = 0;
 
 	/// Step 1. Population creation
 	brain::NtPopulation population(
@@ -174,14 +175,14 @@ void test_NEAT_XOR() {
 			100 /*population size*/,
 			settings);
 
-	const int epoch_max(20);
+	const int epoch_max(100);
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 
 		/// Step 2. Population testing and evaluation
-		for (int i = population.get_population_size() - 1; 0 <= i; --i) {
+		for (int i = 0; i < population.get_population_size(); ++i) {
 			const brain::SharpBrainArea *brain_area = population.organism_get_network(i);
 			brain::Matrix result;
-			for (int k(inputs.size() - 1); 0 <= k; --k) {
+			for (int k(0); k < inputs.size(); ++k) {
 				brain_area->guess(inputs[k], result);
 				real_t error = result.get(0, 0) - expected[k].get(0, 0);
 				population.organism_add_fitness(i, 1.f - ABS(error));
@@ -190,8 +191,13 @@ void test_NEAT_XOR() {
 
 		/// Step 3. advance the epoch
 		const bool success = population.epoch_advance();
-		if (!success)
+		if (!success) {
+			print_line("Stopping prematurely: " + brain::itos(epoch));
 			break;
+		}
+
+		print_line("\nEpoch: " + brain::itos(epoch));
+		print_line("Pop best fitness: " + brain::rtos(population.get_best_personal_fitness()));
 	}
 
 	// TODO get the population champion and test it.
@@ -204,6 +210,7 @@ int main() {
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
+	/*
 	brain::Math::randomize();
 
 	brain::NtGenome genome;
@@ -214,15 +221,15 @@ int main() {
 	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
 	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
 	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_OUTPUT);
-	genome.add_link(0, 1, 1, false, 1);
-	genome.add_link(1, 2, 2, false, 2);
-	genome.add_link(2, 6, 3, false, 3);
-	genome.add_link(3, 4, 4, false, 4);
-	genome.add_link(4, 5, 5, false, 5);
-	genome.add_link(5, 6, 6, false, 6);
-	genome.add_link(2, 5, 1, false, 7);
-	genome.add_link(5, 1, 7, true, 8);
-	genome.add_link(6, 6, 2, true, 9);
+	genome.add_link(0, 1, brain::Math::randd(), false, 1);
+	genome.add_link(1, 2, brain::Math::randd(), false, 2);
+	genome.add_link(2, 6, brain::Math::randd(), false, 3);
+	genome.add_link(3, 4, brain::Math::randd(), false, 4);
+	genome.add_link(4, 5, brain::Math::randd(), false, 5);
+	genome.add_link(5, 6, brain::Math::randd(), false, 6);
+	genome.add_link(2, 5, brain::Math::randd(), false, 7);
+	genome.add_link(5, 1, brain::Math::randd(), true, 8);
+	genome.add_link(6, 6, brain::Math::randd(), true, 9);
 
 	brain::NtGenome genome2;
 	genome.duplicate_in(genome2);
@@ -239,11 +246,20 @@ int main() {
 			inn);
 
 	brain::NtGenome genome3;
-	genome3.mate_multipoint(genome, 0.4, genome2, 2);
+	//genome3.mate_multipoint(genome, 0.4, genome2, 2, true);
+	genome3.mate_singlepoint(genome, genome2);
+
+	brain::SharpBrainArea a;
+	genome3.generate_neural_network(a);
+
+	real_t b[] = { 1, 0 };
+	brain::Matrix res;
+	a.guess(brain::Matrix(2, 1, b), res);
 
 	int bre_ak = 0;
+	*/
 
-	//test_NEAT_XOR();
+	test_NEAT_XOR();
 	//test_uniform_ba_XOR();
 
 	return 0;

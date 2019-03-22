@@ -9,10 +9,14 @@
 brain::NtSpecies::NtSpecies(NtPopulation *p_owner, uint32_t current_epoch) :
 		owner(p_owner),
 		born_epoch(current_epoch),
+		age(0),
 		champion(nullptr),
+		average_fitness(0),
 		higher_fitness_ever(0),
 		age_of_last_improvement(0),
-		offspring_count(0) {
+		stagnant_epochs(0),
+		offspring_count(0),
+		champion_offspring_count(0) {
 }
 
 brain::NtSpecies::~NtSpecies() {
@@ -175,7 +179,8 @@ int brain::NtSpecies::compute_offspring(double &r_remaining) {
 	return offspring_count;
 }
 
-void brain::NtSpecies::reproduce(std::vector<NtInnovation> &r_innovations) {
+void brain::NtSpecies::reproduce(
+		std::vector<NtInnovation> &r_innovations) {
 
 	ERR_FAIL_COND(organisms.size() == 0);
 	ERR_FAIL_COND(champion_offspring_count > offspring_count);
@@ -189,14 +194,14 @@ void brain::NtSpecies::reproduce(std::vector<NtInnovation> &r_innovations) {
 	if (!offspring_count)
 		return; // Nothing to do
 
-	organisms.reserve(organisms.size() + offspring_count);
+	bool is_champion_cloned = false;
+	const NtOrganism *champion = *organisms.begin();
 
 	/// Step 1. reproduce the champion offsprings
 	/// The last offspring is a perfect clone
 	{
 		offspring_count -= champion_offspring_count;
 
-		const NtOrganism *champion = *organisms.begin();
 		while (champion_offspring_count > 0) {
 
 			NtOrganism *child = owner->create_organism();
@@ -206,9 +211,9 @@ void brain::NtSpecies::reproduce(std::vector<NtInnovation> &r_innovations) {
 			if (champion_offspring_count > 1) {
 				if (Math::randd() < 0.8) {
 
-					// Happens often
+					// Happens more often
 					// Mutate link weights
-					child->get_genome_mutable().mudate_link_weights(
+					child->get_genome_mutable().mutate_link_weights(
 							NtPopulation::rand_gaussian,
 							owner);
 				} else {
@@ -226,28 +231,170 @@ void brain::NtSpecies::reproduce(std::vector<NtInnovation> &r_innovations) {
 						// Almost never happens
 						// Was not possible to add a link, so mutates
 						// the weights with completelly new weights
-						child->get_genome_mutable().mudate_link_weights(
+						child->get_genome_mutable().mutate_link_weights(
 								NtPopulation::rand_cold_gaussian,
 								owner);
 					}
 				}
 
-			} /*else
-				exact copy*/
+			} else {
+				// Just an exact copy of the champion
+				is_champion_cloned = true;
+			}
 
 			--champion_offspring_count;
 		}
 	}
 
-	/// Step 2. Normal reproduction
-	while (offspring_count > 0) {
+	/// Step 2. Check if the champion deserve a clone
+	if (!is_champion_cloned && 4 < offspring_count) {
+		is_champion_cloned = true;
 
-		// TODO reproduce
+		NtOrganism *child = owner->create_organism();
+		champion->get_genome().duplicate_in(child->get_genome_mutable());
 
 		--offspring_count;
 	}
 
-	/// Step 3. check phase.
+	/// Step 3. Normal reproduction
+
+	const int organisms_last_index(organisms.size() - 1);
+
+	const real_t mating_mutate_prob = owner->settings.genetic_mate_prob;
+	const real_t mating_multipoint_prob = owner->settings.genetic_mating_multipoint_threshold;
+	const real_t mating_multipoint_avg_prob = owner->settings.genetic_mating_multipoint_avg_threshold;
+	const real_t mating_singlepoint_prob = owner->settings.genetic_mating_singlepoint_threshold;
+	const real_t mutate_add_link_prob = owner->settings.genetic_mutate_add_link_porb;
+	const real_t mutate_add_node_prob = owner->settings.genetic_mutate_add_node_prob;
+	const real_t mutate_link_weight_prob = owner->settings.genetic_mutate_link_weight_prob;
+	const real_t mutate_toggle_link_enable_prob = owner->settings.genetic_mutate_toggle_link_enable_prob;
+
+	// Create ranges
+	const real_t mating_tot =
+			mating_multipoint_prob +
+			mating_multipoint_avg_prob +
+			mating_singlepoint_prob;
+
+	const real_t m_m_range = mating_multipoint_prob / mating_tot;
+	const real_t m_m_a_range = (mating_multipoint_avg_prob / mating_tot) + m_m_range;
+
+	const real_t mutate_tot =
+			mutate_add_link_prob +
+			mutate_add_node_prob +
+			mutate_link_weight_prob +
+			mutate_toggle_link_enable_prob;
+
+	const real_t m_a_l_range = mutate_add_link_prob / mutate_tot;
+	const real_t m_a_n_range = (mutate_add_node_prob / mutate_tot) + m_a_l_range;
+	const real_t m_l_w_range = (mutate_link_weight_prob / mutate_tot) + m_a_n_range;
+
+	while (offspring_count > 0) {
+
+		NtOrganism *child = owner->create_organism();
+		ERR_FAIL_COND(!child);
+
+		const int mom_index = static_cast<int>(Math::random(0, organisms_last_index) + 0.5);
+		NtOrganism *mom = organisms[mom_index];
+
+		bool state = false;
+
+		if (Math::randd() < mating_mutate_prob && organisms_last_index > 0) {
+
+			// Mate
+
+			NtOrganism *dad = nullptr;
+
+			if (Math::randd() >= owner->settings.genetic_mate_inside_species_threshold) {
+				// Select the champion of a random species to be the dad
+				dad = owner->get_rand_champion(this);
+			}
+
+			if (!dad) {
+				/// This can occurs even if the champion is taken randomly from
+				/// outside the species, with this I'm sure that the dad is nevel
+				/// null
+
+				// Select the dad from the same species
+				const int dad_index = static_cast<int>(Math::random(0, organisms_last_index) + 0.5);
+				dad = organisms[dad_index];
+			}
+
+			const real_t r(Math::randd());
+			if (r < m_m_range) {
+
+				// Multipoint mating
+				state = child->get_genome_mutable().mate_multipoint(
+						mom->get_genome(),
+						mom->get_personal_fitness(),
+						dad->get_genome(),
+						dad->get_personal_fitness(),
+						false);
+
+			} else if (r < m_m_a_range) {
+
+				// Multipoint Average mating
+				state = child->get_genome_mutable().mate_multipoint(
+						mom->get_genome(),
+						mom->get_personal_fitness(),
+						dad->get_genome(),
+						dad->get_personal_fitness(),
+						true);
+
+			} else {
+
+				// Singlepoint mating
+				state = child->get_genome_mutable().mate_singlepoint(
+						mom->get_genome(),
+						dad->get_genome());
+			}
+
+		} else {
+
+			// Mutate
+
+			mom->get_genome().duplicate_in(child->get_genome_mutable());
+
+			const real_t r(Math::randd());
+			if (r < m_a_l_range) {
+
+				// Mutate add link
+				state = child->get_genome_mutable().mutate_add_random_link(
+						owner->settings.genetic_spawn_recurrent_link_threshold,
+						r_innovations,
+						owner->innovation_number);
+
+			} else if (r < m_a_n_range) {
+
+				// Mutate add neuron
+				state = child->get_genome_mutable().mutate_add_random_neuron(
+						r_innovations,
+						owner->innovation_number);
+
+			} else if (r < m_l_w_range) {
+
+				// Mutate link weight
+				child->get_genome_mutable().mutate_link_weights(
+						NtPopulation::rand_gaussian,
+						owner);
+				state = true;
+			} else {
+
+				// Mutate toggle link enabled
+				state = child->get_genome_mutable().mutate_link_toggle_activation();
+			}
+		}
+
+		if (!state) {
+			// This could happen since Sometimes is not possible to mutate the
+			// organism
+			// TODO just put something there to track this
+			// WARN_PRINTS("Somthing went wrong during the organism reproduction.");
+		}
+
+		--offspring_count;
+	}
+
+	/// Step 4. check phase.
 	ERR_FAIL_COND(champion_offspring_count != 0);
 	ERR_FAIL_COND(offspring_count != 0);
 }
