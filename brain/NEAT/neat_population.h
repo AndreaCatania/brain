@@ -244,6 +244,8 @@ class NtPopulation {
 	/**
 	 * @brief innovation_number is an incremental number that is used to
 	 * mark and so track all changes to the organism genome.
+	 *
+	 * This is the last innovation number assigned
 	 */
 	uint32_t innovation_number;
 
