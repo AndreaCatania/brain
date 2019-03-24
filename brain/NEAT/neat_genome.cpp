@@ -219,7 +219,7 @@ bool brain::NtGenome::mutate_add_random_link(
 		return false;
 
 	// Search if this innovation already exist
-	NtInnovation *innovation = find_innovation(
+	int innovation_index = find_innovation(
 			r_innovations,
 			NtInnovation::INNOVATION_LINK,
 			parent_neuron_id,
@@ -228,9 +228,9 @@ bool brain::NtGenome::mutate_add_random_link(
 
 	uint32_t innovation_num;
 
-	if (innovation) {
+	if (0 <= innovation_index) {
 		// This mutation is not an innovation
-		innovation_num = innovation->innovation_number;
+		innovation_num = r_innovations[innovation_index].innovation_number;
 
 	} else {
 
@@ -301,7 +301,7 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	if (!found)
 		return false; // No link to split
 
-	NtInnovation *innovation = find_innovation(
+	int innovation_index = find_innovation(
 			r_innovations,
 			NtInnovation::INNOVATION_NODE,
 			link_to_split.parent_neuron_id,
@@ -311,9 +311,9 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	uint32_t in_link_innovation_number;
 	uint32_t out_link_innovation_number;
 
-	if (innovation) {
-		in_link_innovation_number = innovation->innovation_number;
-		out_link_innovation_number = innovation->innovation_number + 1;
+	if (0 <= innovation_index) {
+		in_link_innovation_number = r_innovations[innovation_index].innovation_number;
+		out_link_innovation_number = in_link_innovation_number + 1;
 	} else {
 		// Novel innovation
 		in_link_innovation_number = ++r_current_innovation_number;
@@ -684,7 +684,7 @@ bool brain::NtGenome::_recursive_is_link_recurrent(
 	return false;
 }
 
-brain::NtInnovation *brain::NtGenome::find_innovation(
+int brain::NtGenome::find_innovation(
 		std::vector<NtInnovation> &p_innovations,
 		NtInnovation::InnovationType p_innovation_type,
 		NeuronId p_parent_neuron_id,
@@ -707,8 +707,8 @@ brain::NtInnovation *brain::NtGenome::find_innovation(
 				continue;
 		}
 
-		return &*it;
+		return it - p_innovations.begin();
 	}
 
-	return nullptr;
+	return -1;
 }

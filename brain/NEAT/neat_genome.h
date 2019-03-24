@@ -416,7 +416,7 @@ private:
 
 	/**
 	 * @brief find_innovation is an utility function that search the innovation
-	 * inside the passed array and return a pointer to the innovation or null
+	 * inside the passed array and return the index to the innovation or -1
 	 * @param p_innovations
 	 * @param p_innovation_type
 	 * @param p_parent_neuron_id
@@ -424,7 +424,7 @@ private:
 	 * @param p_is_recurrent
 	 * @return
 	 */
-	static NtInnovation *find_innovation(
+	static int find_innovation(
 			std::vector<NtInnovation> &p_innovations,
 			NtInnovation::InnovationType p_innovation_type,
 			NeuronId p_parent_neuron_id,
