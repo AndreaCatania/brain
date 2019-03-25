@@ -213,7 +213,7 @@ void brain::NtSpecies::reproduce(
 
 					// Happens more often
 					// Mutate link weights
-					child->get_genome_mutable().mutate_link_weights(
+					child->get_genome_mutable().mutate_all_link_weights(
 							NtPopulation::rand_gaussian,
 							owner);
 				} else {
@@ -222,7 +222,7 @@ void brain::NtSpecies::reproduce(
 					// Add a link
 					const bool add_link_status =
 							child->get_genome_mutable().mutate_add_random_link(
-									owner->settings.genetic_spawn_recurrent_link_threshold,
+									owner->settings.genetic_mutate_add_link_recurrent_prob,
 									r_innovations,
 									owner->innovation_number);
 
@@ -231,7 +231,7 @@ void brain::NtSpecies::reproduce(
 						// Almost never happens
 						// Was not possible to add a link, so mutates
 						// the weights with completelly new weights
-						child->get_genome_mutable().mutate_link_weights(
+						child->get_genome_mutable().mutate_all_link_weights(
 								NtPopulation::rand_cold_gaussian,
 								owner);
 					}
@@ -260,10 +260,10 @@ void brain::NtSpecies::reproduce(
 
 	const int organisms_last_index(organisms.size() - 1);
 
-	const real_t mating_mutate_prob = owner->settings.genetic_mate_prob;
-	const real_t mating_multipoint_prob = owner->settings.genetic_mating_multipoint_threshold;
-	const real_t mating_multipoint_avg_prob = owner->settings.genetic_mating_multipoint_avg_threshold;
-	const real_t mating_singlepoint_prob = owner->settings.genetic_mating_singlepoint_threshold;
+	const real_t mating_prob = owner->settings.genetic_mate_prob;
+	const real_t mating_multipoint_prob = owner->settings.genetic_mate_multipoint_threshold;
+	const real_t mating_multipoint_avg_prob = owner->settings.genetic_mate_multipoint_avg_threshold;
+	const real_t mating_singlepoint_prob = owner->settings.genetic_mate_singlepoint_threshold;
 	const real_t mutate_add_link_prob = owner->settings.genetic_mutate_add_link_porb;
 	const real_t mutate_add_node_prob = owner->settings.genetic_mutate_add_node_prob;
 	const real_t mutate_link_weight_prob = owner->settings.genetic_mutate_link_weight_prob;
@@ -298,7 +298,7 @@ void brain::NtSpecies::reproduce(
 
 		bool state = false;
 
-		if (Math::randd() < mating_mutate_prob && organisms_last_index > 0) {
+		if (Math::randd() < mating_prob && organisms_last_index > 0) {
 
 			// Mate
 
@@ -359,7 +359,7 @@ void brain::NtSpecies::reproduce(
 
 				// Mutate add link
 				state = child->get_genome_mutable().mutate_add_random_link(
-						owner->settings.genetic_spawn_recurrent_link_threshold,
+						owner->settings.genetic_mutate_add_link_recurrent_prob,
 						r_innovations,
 						owner->innovation_number);
 
@@ -373,14 +373,15 @@ void brain::NtSpecies::reproduce(
 			} else if (r < m_l_w_range) {
 
 				// Mutate link weight
-				child->get_genome_mutable().mutate_link_weights(
+				child->get_genome_mutable().mutate_random_link_weight(
 						NtPopulation::rand_gaussian,
 						owner);
 				state = true;
 			} else {
 
 				// Mutate toggle link enabled
-				state = child->get_genome_mutable().mutate_link_toggle_activation();
+				child->get_genome_mutable().mutate_random_link_toggle_activation();
+				state = true;
 			}
 		}
 

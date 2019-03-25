@@ -132,30 +132,36 @@ uint32_t brain::NtGenome::find_link(
 	return -1;
 }
 
-void brain::NtGenome::mutate_link_weights(map_real_1 p_map_func) {
+void brain::NtGenome::mutate_all_link_weights(map_real_1 p_map_func) {
 
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		it->weight = p_map_func(it->weight);
 	}
 }
 
-void brain::NtGenome::mutate_link_weights(map_real_2_ptr p_map_func, void *p_data) {
+void brain::NtGenome::mutate_all_link_weights(map_real_2_ptr p_map_func, void *p_data) {
 
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		it->weight = p_map_func(it->weight, p_data);
 	}
 }
 
-bool brain::NtGenome::mutate_link_toggle_activation() {
+void brain::NtGenome::mutate_random_link_weight(map_real_2_ptr p_map_func, void *p_data) {
 
-	if (!link_genes.size())
-		return false;
+	ERR_FAIL_COND(!link_genes.size());
+
+	NtLinkGene &lg =
+			link_genes[static_cast<int>(Math::random(0, link_genes.size() - 1) + 0.5)];
+	lg.weight = p_map_func(lg.weight, p_data);
+}
+
+void brain::NtGenome::mutate_random_link_toggle_activation() {
+
+	ERR_FAIL_COND(!link_genes.size());
 
 	NtLinkGene &lg =
 			link_genes[static_cast<int>(Math::random(0, link_genes.size() - 1) + 0.5)];
 	lg.active = !lg.active;
-
-	return true;
 }
 
 bool brain::NtGenome::mutate_add_random_link(
@@ -184,10 +190,11 @@ bool brain::NtGenome::mutate_add_random_link(
 
 	for (int tries = 0; tries < max_tries; ++tries) {
 
+		// Spawn a recurrent link
 		if (spawn_recurrent && Math::randd() < 0.35) {
-			/// Spawn a self recurrent link
-			/// Even without this a self recurrent can occur for this reason
-			/// the possibility set is not so high. (35%)
+			// Spawn a self recurrent link
+			/// Since a self recurrent can spawn by taking everything randomly
+			/// a 35% of chance seems fine to me
 			parent_neuron_id =
 					non_input_neurons[(int)(Math::random(0, non_input_neurons_last_index) + 0.5f)];
 
@@ -195,8 +202,9 @@ bool brain::NtGenome::mutate_add_random_link(
 
 		} else {
 
+			// Take everything randomly
 			parent_neuron_id =
-					neuron_genes[(int)(Math::random(0, neurons_last_index - 1) + 0.5f)].id;
+					neuron_genes[(int)(Math::random(0, neurons_last_index) + 0.5f)].id;
 
 			child_neuron_id =
 					non_input_neurons[(int)(Math::random(0, non_input_neurons_last_index) + 0.5f)];
@@ -485,17 +493,26 @@ bool brain::NtGenome::mate_singlepoint(
 	// Find the cut on the bigger genome by checking the innovation number in order to
 	// avoid adding two times a gene
 	int cross_gene_big(0);
-	{
-		const uint32_t innovation_number_to_search =
-				smaller->get_link(cross_gene_small)->innovation_number;
+	bool has_bigger_innov_num(false);
+	const uint32_t innovation_number_to_search =
+			smaller->get_link(cross_gene_small)->innovation_number;
 
-		for (auto it = bigger->link_genes.begin(); it != bigger->link_genes.end(); ++it) {
-			if (innovation_number_to_search == it->innovation_number) {
-				break;
-			}
-			++cross_gene_big;
+	for (auto it = bigger->link_genes.begin(); it != bigger->link_genes.end(); ++it) {
+		if (innovation_number_to_search == it->innovation_number) {
+			has_bigger_innov_num = true;
+			break;
+		} else if (innovation_number_to_search < it->innovation_number) {
+			// The innovation number is not in this genome
+			// So decrease and make sure that this gene can be taken
+			// during the split
+			--cross_gene_big;
+			has_bigger_innov_num = true;
+			break;
 		}
+		++cross_gene_big;
 	}
+
+	ERR_FAIL_COND_V(!has_bigger_innov_num, false);
 
 	// Copy genes from the smaller genome
 	for (int i(0); i < cross_gene_small; ++i) {
@@ -512,29 +529,45 @@ bool brain::NtGenome::mate_singlepoint(
 		}
 	}
 
-	// Average the cross gene from the two genome
 	{
-		NtLinkGene link = bigger->link_genes[cross_gene_big];
-		const NtLinkGene &s = smaller->link_genes[cross_gene_small];
+		NtLinkGene link = smaller->link_genes[cross_gene_small];
+		const NtLinkGene &s = bigger->link_genes[cross_gene_big];
 
-		ERR_FAIL_COND_V(link.innovation_number != s.innovation_number, false);
+		if (link.innovation_number == s.innovation_number) {
+			// Average the cross gene from the two genome
 
-		link.weight += s.weight;
-		link.weight *= 0.5;
+			link.weight += s.weight;
+			link.weight *= 0.5;
 
-		if (link.active != s.active) {
-			link.active = Math::randd() < 0.5f;
-		}
+			if (link.active != s.active) {
+				link.active = Math::randd() < 0.5f;
+			}
 
-		uint32_t id = add_link(
-				link.parent_neuron_id,
-				link.child_neuron_id,
-				link.weight,
-				link.recurrent,
-				link.innovation_number);
+			uint32_t id = add_link(
+					link.parent_neuron_id,
+					link.child_neuron_id,
+					link.weight,
+					link.recurrent,
+					link.innovation_number);
 
-		if (!link.active) {
-			suppress_link(id);
+			if (!link.active) {
+				suppress_link(id);
+			}
+
+		} else {
+
+			// The innovation number is not found so just take the small
+
+			uint32_t id = add_link(
+					link.parent_neuron_id,
+					link.child_neuron_id,
+					link.weight,
+					link.recurrent,
+					link.innovation_number);
+
+			if (!link.active) {
+				suppress_link(id);
+			}
 		}
 	}
 

@@ -270,24 +270,30 @@ public:
 			uint32_t p_child_neuron_id);
 
 	/**
-	 * @brief map_link_weights map the weights
+	 * @brief mutate_all_link_weights map all weights
 	 * @param p_map_func
 	 */
-	void mutate_link_weights(map_real_1 p_map_func);
+	void mutate_all_link_weights(map_real_1 p_map_func);
 
 	/**
-	 * @brief map_link_weights map the weights
+	 * @brief mutate_all_link_weights map all weights
 	 * @param p_map_func
 	 * @param p_data is passed directly to the map_func
 	 */
-	void mutate_link_weights(map_real_2_ptr p_map_func, void *p_data);
+	void mutate_all_link_weights(map_real_2_ptr p_map_func, void *p_data);
 
 	/**
-	 * @brief mutate_link_toggle_activation take a random link and toggle its
-	 * activation status
-	 * @return
+	 * @brief Mutates the link of just one random weight
+	 * @param p_map_func
+	 * @param p_data
 	 */
-	bool mutate_link_toggle_activation();
+	void mutate_random_link_weight(map_real_2_ptr p_map_func, void *p_data);
+
+	/**
+	 * @brief mutate_random_link_toggle_activation take a random link and toggle its
+	 * activation status
+	 */
+	void mutate_random_link_toggle_activation();
 
 	/**
 	 * @brief add a random link between nodes, depending on the spwn recurrent

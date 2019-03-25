@@ -167,7 +167,30 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_mate_prob = 0;
+	settings.learning_deviation = 0.5;
+	settings.genetic_compatibility_threshold = 0.1;
+	settings.genetic_weights_significance = 0.4;
+
+	settings.genetic_mutate_add_link_porb = 0.3;
+	settings.genetic_mutate_add_node_prob = 0.01;
+	settings.genetic_mutate_link_weight_prob = 0.95;
+	settings.genetic_mutate_toggle_link_enable_prob = 0.01;
+
+	//settings.genetic_mate_prob = 0.5;
+	//settings.genetic_mate_multipoint_threshold = 0;
+	//settings.genetic_mate_multipoint_avg_threshold = 0;
+	//settings.genetic_mate_singlepoint_threshold = 1;
+	//settings.genetic_mutate_add_link_porb = 1;
+	//settings.genetic_mutate_add_link_recurrent_prob = 1;
+	//settings.genetic_mutate_add_node_prob = 0.0;
+	//settings.genetic_mutate_link_weight_prob = 0;
+	//settings.genetic_mutate_toggle_link_enable_prob = 0;
+
+	settings.fitness_exponent = 4;
+	settings.species_youngness_multiplier = 5;
+	settings.cribs_stealing = 0;
+	settings.cribs_stealing_protection_age_threshold = 10;
+	settings.cribs_stealing_limit = 5;
 
 	/// Step 1. Population creation
 	brain::NtPopulation population(
@@ -176,16 +199,28 @@ void test_NEAT_XOR() {
 			settings);
 
 	const int epoch_max(100);
-	for (int epoch(0); epoch < epoch_max; ++epoch) {
+	//for (int epoch(0); epoch < epoch_max; ++epoch) {
+	for (int epoch(0); true; ++epoch) {
 
 		/// Step 2. Population testing and evaluation
 		for (int i = 0; i < population.get_population_size(); ++i) {
 			const brain::SharpBrainArea *brain_area = population.organism_get_network(i);
 			brain::Matrix result;
+			real_t te(0);
 			for (int k(0); k < inputs.size(); ++k) {
 				brain_area->guess(inputs[k], result);
 				real_t error = result.get(0, 0) - expected[k].get(0, 0);
+				te += ABS(error);
 				population.organism_add_fitness(i, 1.f - ABS(error));
+			}
+
+			if (te <= 0.01) {
+				for (int k(0); k < inputs.size(); ++k) {
+					brain_area->guess(inputs[k], result);
+					real_t error = result.get(0, 0) - expected[k].get(0, 0);
+					int a = 0;
+				}
+				break;
 			}
 		}
 

@@ -28,7 +28,7 @@ brain::NtPopulation::NtPopulation(
 		NtGenome &new_organism_genome = o->get_genome_mutable();
 		p_ancestor_genome.duplicate_in(new_organism_genome);
 
-		new_organism_genome.mutate_link_weights(
+		new_organism_genome.mutate_all_link_weights(
 				rand_gaussian,
 				static_cast<void *>(this));
 	}
@@ -64,11 +64,6 @@ void brain::NtPopulation::organism_add_fitness(uint32_t p_organism_i, real_t p_f
 bool brain::NtPopulation::epoch_advance() {
 
 	++epoch;
-
-	// Used to store all innovation of next epoch
-	std::vector<NtInnovation> innovations;
-	innovations.reserve(population_size); // 1 innovation per organism, should
-	//be enough
 
 	/// Step 1. Compute organisms fitness
 	for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
@@ -203,7 +198,7 @@ bool brain::NtPopulation::epoch_advance() {
 
 		epoch_last_improvement = epoch;
 
-	} else if (settings.population_cribs_stealing) {
+	} else if (settings.cribs_stealing) {
 
 		/// Stole the cribs from the worst species
 		/// Then reassign it following this criterias:
@@ -215,17 +210,17 @@ bool brain::NtPopulation::epoch_advance() {
 		int stolen_cribs(0);
 
 		// Iterates from the botton and skip the champion species
-		for (auto it = ordered_species.end() - 1; it != ordered_species.begin(); --it) {
+		for (auto it = ordered_species.rbegin(); it != ordered_species.rend(); ++it) {
 			NtSpecies *s = *it;
-			if (s->get_age() > settings.species_stealing_protection_age_threshold &&
-					s->get_offspring_count() > settings.species_stealing_limit) {
+			if (s->get_age() > settings.cribs_stealing_protection_age_threshold &&
+					s->get_offspring_count() > settings.cribs_stealing_limit) {
 
 				// Steal from this species most possible
 				const int possible_booty = s->get_offspring_count() -
-										   settings.species_stealing_limit -
+										   settings.cribs_stealing_limit -
 										   stolen_cribs;
 
-				const int wanted_booty = settings.population_cribs_stealing -
+				const int wanted_booty = settings.cribs_stealing -
 										 stolen_cribs;
 
 				const int booty = MIN(possible_booty, wanted_booty);
@@ -233,8 +228,8 @@ bool brain::NtPopulation::epoch_advance() {
 				s->set_offspring_count(s->get_offspring_count() - booty);
 				stolen_cribs += booty;
 
-				ERR_FAIL_COND_V(stolen_cribs > settings.population_cribs_stealing, false);
-				if (stolen_cribs == settings.population_cribs_stealing) {
+				ERR_FAIL_COND_V(stolen_cribs > settings.cribs_stealing, false);
+				if (stolen_cribs == settings.cribs_stealing) {
 					break;
 				}
 			}

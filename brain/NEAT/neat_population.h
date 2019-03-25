@@ -24,7 +24,7 @@ struct NtPopulationSettings {
 	 * delta during the weight changing. Check the Gaussian random to understand
 	 * better its use.
 	 */
-	real_t learning_deviation = 0.75f;
+	real_t learning_deviation = 0.2f;
 
 	/**
 	 * @brief genetic_compatibility_threshold is used to determine the species
@@ -93,19 +93,6 @@ struct NtPopulationSettings {
 	real_t genetic_weights_significance = 0.4f;
 
 	/**
-	 * @brief genetic_spawn_recurrent_link_threshold goes from 0 to 1 and is used
-	 * to determinates the probability to spawn a recurrent link instead of a
-	 * regular one.
-	 *
-	 * The reccurrent links are links that move the data in the opposite direction
-	 * (Right to Left), due to this characteristics these links returns the value
-	 * of the previous iterations.
-	 * This means that these links are useful to remember the previous datas and
-	 * thus the taken decision is affected by the previous datas.
-	 */
-	real_t genetic_spawn_recurrent_link_threshold = 0.35;
-
-	/**
 	 * @brief genetic_mate_prob is used to define the probability for
 	 * a genome to mate with another one, instead to mutate.
 	 */
@@ -125,9 +112,9 @@ struct NtPopulationSettings {
 	 * These parameters will be normalized (If all are the same they will have
 	 * the same probability)
 	 */
-	real_t genetic_mating_multipoint_threshold = 0.4;
-	real_t genetic_mating_multipoint_avg_threshold = 0.4;
-	real_t genetic_mating_singlepoint_threshold = 0.2;
+	real_t genetic_mate_multipoint_threshold = 0.4;
+	real_t genetic_mate_multipoint_avg_threshold = 0.4;
+	real_t genetic_mate_singlepoint_threshold = 0.2;
 
 	/**
 	 * @brief genetic_mutate_* are used to decide what type of mutation should
@@ -140,6 +127,19 @@ struct NtPopulationSettings {
 	real_t genetic_mutate_add_node_prob = 0.15;
 	real_t genetic_mutate_link_weight_prob = 0.5;
 	real_t genetic_mutate_toggle_link_enable_prob = 0.05;
+
+	/**
+	 * @brief genetic_spawn_recurrent_link_threshold goes from 0 to 1 and is used
+	 * to determinates the probability to spawn a recurrent link instead of a
+	 * regular one.
+	 *
+	 * The reccurrent links are links that move the data in the opposite direction
+	 * (Right to Left), due to this characteristics these links returns the value
+	 * of the previous iterations.
+	 * This means that these links are useful to remember the previous datas and
+	 * thus the taken decision is affected by the previous datas.
+	 */
+	real_t genetic_mutate_add_link_recurrent_prob = 0.35;
 
 	/**
 	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
@@ -182,26 +182,6 @@ struct NtPopulationSettings {
 	real_t species_survival_ratio = 0.5f;
 
 	/**
-	 * @brief species_stealing_protection_age_threshold is used to protect the
-	 * species from stealing even if they perform low until they pass this threshold
-	 */
-	int species_stealing_protection_age_threshold = 5;
-
-	/**
-	 * @brief species_stealing_limit is used to stop the stealing when they get
-	 * below this value.
-	 * In thi way is possible to protect the specie from the death due to the
-	 * stealing.
-	 */
-	int species_stealing_limit = 2;
-
-	/**
-	 * @brief population_stagnant_age_thresold is used to detect if the population
-	 * become stagnant and is not able to improve more.
-	 */
-	int population_stagnant_age_thresold = 15;
-
-	/**
 	 * @brief population_cribs_stealing is used to define how much cribs should be
 	 * stealed from the worst species.
 	 *
@@ -218,7 +198,27 @@ struct NtPopulationSettings {
 	 * Also the assigned cribs will be used to create some clones of the species
 	 * champion, where the most part will have only the weight mutated
 	 */
-	int population_cribs_stealing = 10;
+	int cribs_stealing = 10;
+
+	/**
+	 * @brief population_cribs_stealing_limit is used to stop the stealing when they get
+	 * below this value.
+	 * In thi way is possible to protect the specie from the death due to the
+	 * stealing.
+	 */
+	int cribs_stealing_limit = 5;
+
+	/**
+	 * @brief species_stealing_protection_age_threshold is used to protect the
+	 * species from stealing even if they perform low until they pass this threshold
+	 */
+	int cribs_stealing_protection_age_threshold = 10;
+
+	/**
+	 * @brief population_stagnant_age_thresold is used to detect if the population
+	 * become stagnant and is not able to improve more.
+	 */
+	int population_stagnant_age_thresold = 15;
 };
 
 /**
@@ -288,6 +288,11 @@ class NtPopulation {
 	 * the epochs and so understand if the population is stagnant.
 	 */
 	int epoch_last_improvement;
+
+	/**
+	 * @brief innovations list of innovations
+	 */
+	std::vector<NtInnovation> innovations;
 
 public:
 	/**
