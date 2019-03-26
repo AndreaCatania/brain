@@ -87,7 +87,7 @@ struct NtLinkGene : public NtGene {
 			uint32_t p_innovation_number);
 
 	/**
-	 * @brief id of the link, it's also the index in the link_genes vector
+	 * @brief self id of the link, it's also the index in the link_genes vector
 	 */
 	uint32_t id;
 
@@ -190,6 +190,11 @@ class NtGenome {
 	 * Neural Network structure
 	 */
 	std::vector<NtLinkGene> link_genes;
+
+	/**
+	 * @brief biggest_innovation_number
+	 */
+	uint32_t biggest_innovation_number;
 
 public:
 	/**
@@ -382,7 +387,19 @@ public:
 	void duplicate_in(NtGenome &p_genome) const;
 
 	/**
-	 * @brief get_innovation_number returns the innovation number of the last gene
+	 * @brief sort_genes using the innovation number
+	 */
+	void sort_genes();
+
+	/**
+	 * @brief check_innovation_numbers returns true if the genes are ordered
+	 * by innovation number
+	 * @return
+	 */
+	bool check_innovation_numbers() const;
+
+	/**
+	 * @brief get_innovation_number returns the biggest innovation number
 	 * @return
 	 */
 	uint32_t get_innovation_number() const;
@@ -439,3 +456,5 @@ private:
 };
 
 } // namespace brain
+
+extern bool gene_innovation_comparator(brain::NtLinkGene &p_1, brain::NtLinkGene &p_2);

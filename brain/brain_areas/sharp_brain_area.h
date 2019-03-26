@@ -78,11 +78,14 @@ struct Neuron {
 	 */
 	mutable uint32_t execution_id;
 
+	// TODO remove this please
+	SharpBrainArea *o;
+
 	/**
 	 * @brief Neuron constructor
 	 * @param p_id
 	 */
-	Neuron(NeuronId p_id);
+	Neuron(SharpBrainArea *p, NeuronId p_id);
 
 	/**
 	 * @brief prepare_internal_memory is used to initialize the internal memory
@@ -187,10 +190,11 @@ class SharpBrainArea : public brain::BrainArea {
 	bool ready;
 
 public:
+	class NtOrganism *o;
 	/**
 	 * @brief SharpBrainArea constructor
 	 */
-	SharpBrainArea();
+	SharpBrainArea(class NtOrganism *p);
 
 	/**
 	 * @brief add_neuron

@@ -29,7 +29,8 @@ real_t brain::Neuron::get_recurrent(uint32_t p_execution_id) const {
 	return execution_id == p_execution_id ? recurrent : cached_value;
 }
 
-brain::Neuron::Neuron(NeuronId p_id) :
+brain::Neuron::Neuron(SharpBrainArea *p, NeuronId p_id) :
+		o(p),
 		id(p_id),
 		cached_value(0),
 		recurrent(0),
@@ -66,14 +67,17 @@ void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
 	parents[p_parent_index].weight = p_weight;
 }
 
-brain::SharpBrainArea::SharpBrainArea() :
+#include "brain/NEAT/neat_organism.h"
+
+brain::SharpBrainArea::SharpBrainArea(NtOrganism *p) :
+		o(p),
 		brain::BrainArea(brain::BRAIN_AREA_TYPE_SHARP),
 		execution_id(0),
 		ready(false) {}
 
 brain::NeuronId brain::SharpBrainArea::add_neuron() {
 	const NeuronId id(neurons.size());
-	neurons.push_back(Neuron(id));
+	neurons.push_back(Neuron(this, id));
 	ready = false;
 	return id;
 }
@@ -222,6 +226,9 @@ bool brain::SharpBrainArea::are_links_walkable(
 
 	r_cache.push_back(p_neuron->id);
 
+	bool failed = false;
+	std::string explain;
+
 	// This check if this neuron in the hidden layer is fully connected to input
 	for (auto p_it = p_neuron->parents.begin();
 			p_it != p_neuron->parents.end();
@@ -231,19 +238,24 @@ bool brain::SharpBrainArea::are_links_walkable(
 			continue;
 
 		if (r_cache.end() != std::find(r_cache.begin(), r_cache.end(), p_it->neuron_id)) {
-			std::string s("Just detected a loop in the network. between these neurons:");
+			explain = "Just detected a loop in the network. between these " + itos(reinterpret_cast<uint64_t>(this)) + " neurons:";
 			for (auto it = r_cache.begin(); it != r_cache.end(); ++it) {
-				s += "\n" + itos(*it);
+				explain += "\n" + itos(*it);
 			}
 
-			ERR_EXPLAIN(s);
-			ERR_FAIL_V(false);
+			failed = true;
+			break;
 		}
 
 		if (!are_links_walkable(p_it->neuron, p_error_on_broken_link, r_cache)) {
 			if (p_error_on_broken_link) {
-				ERR_EXPLAIN("The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id));
-				ERR_FAIL_V(false);
+				explain = "The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id);
+				failed = true;
+				break;
+			} else {
+				// Already loggeed, just report it up
+				failed = true;
+				break;
 			}
 		}
 	}
@@ -251,6 +263,15 @@ bool brain::SharpBrainArea::are_links_walkable(
 	auto it = std::find(r_cache.begin(), r_cache.end(), p_neuron->id);
 	ERR_FAIL_COND_V(it == r_cache.end(), false);
 	r_cache.erase(it);
+
+	if (failed) {
+		if (explain == "") {
+			// Alreayd logged
+			return false;
+		}
+		ERR_EXPLAIN(explain);
+		ERR_FAIL_V(false);
+	}
 
 	return true;
 }

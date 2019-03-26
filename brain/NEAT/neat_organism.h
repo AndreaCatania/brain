@@ -80,6 +80,9 @@ class NtOrganism {
 	real_t expected_offspring;
 
 public:
+	// TODO remove this
+	std::string log;
+
 	/**
 	 * @brief NtOrganism constructor
 	 */

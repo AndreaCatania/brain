@@ -171,7 +171,7 @@ void test_NEAT_XOR() {
 	settings.genetic_compatibility_threshold = 0.1;
 	settings.genetic_weights_significance = 0.4;
 
-	settings.genetic_mutate_add_link_porb = 0.3;
+	settings.genetic_mutate_add_link_porb = 0.3; // <-- TODO put 0.03
 	settings.genetic_mutate_add_node_prob = 0.01;
 	settings.genetic_mutate_link_weight_prob = 0.95;
 	settings.genetic_mutate_toggle_link_enable_prob = 0.01;

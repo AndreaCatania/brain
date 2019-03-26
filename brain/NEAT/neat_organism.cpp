@@ -14,7 +14,9 @@ brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		middle_fitness_count(0),
 		fitness(0.f),
 		personal_fitness(0.f),
-		expected_offspring(0.f) {
+		expected_offspring(0.f),
+		log(""),
+		brain_area(this) {
 }
 
 brain::NtOrganism::~NtOrganism() {

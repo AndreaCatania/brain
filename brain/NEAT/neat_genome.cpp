@@ -2,6 +2,7 @@
 
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
+#include <algorithm>
 
 brain::NtNeuronGene::NtNeuronGene(uint32_t p_id, NeuronGeneType p_type) :
 		id(p_id),
@@ -25,7 +26,8 @@ brain::NtLinkGene::NtLinkGene(
 		recurrent(p_recurrent),
 		innovation_number(p_innovation_number) {}
 
-brain::NtGenome::NtGenome() {}
+brain::NtGenome::NtGenome() :
+		biggest_innovation_number(0) {}
 
 brain::NtGenome::NtGenome(
 		int p_input_count,
@@ -53,7 +55,7 @@ brain::NtGenome::NtGenome(
 					p_input_count + o_i, // Output neurons are after inputs neurons
 					p_randomize_weights ? Math::random(-1, 1) : 1,
 					false /* Recurrent */,
-					innovation_number++);
+					++innovation_number);
 		}
 	}
 }
@@ -79,6 +81,7 @@ uint32_t brain::NtGenome::add_link(
 	ERR_FAIL_INDEX_V(p_parent_neuron_id, neuron_genes.size(), 0);
 	ERR_FAIL_INDEX_V(p_child_neuron_id, neuron_genes.size(), 0);
 	ERR_FAIL_COND_V(0 > find_link(p_parent_neuron_id, p_child_neuron_id), 0);
+	ERR_FAIL_COND_V(biggest_innovation_number >= p_innovation_number, 0);
 
 	const uint32_t id(link_genes.size());
 
@@ -94,6 +97,8 @@ uint32_t brain::NtGenome::add_link(
 
 	neuron_genes[p_parent_neuron_id].outcoming_links.push_back(id);
 	neuron_genes[p_child_neuron_id].incoming_links.push_back(id);
+
+	biggest_innovation_number = p_innovation_number;
 
 	return id;
 }
@@ -260,6 +265,7 @@ bool brain::NtGenome::mutate_add_random_link(
 			spawn_recurrent,
 			innovation_num);
 
+	sort_genes();
 	return true;
 }
 
@@ -352,6 +358,7 @@ bool brain::NtGenome::mutate_add_random_neuron(
 			false,
 			out_link_innovation_number);
 
+	sort_genes();
 	return true;
 }
 
@@ -408,9 +415,9 @@ bool brain::NtGenome::mate_multipoint(
 		if (genome_inn != innovative->link_genes.end() &&
 				genome_obs != obsolete->link_genes.end()) {
 
-			// Both have this innovation, select one randomly
-
 			if (p_average) {
+				// Both have this innovation, average them
+
 				gene_to_add = *genome_inn;
 				gene_to_add.weight = (genome_inn->weight + genome_obs->weight) * 0.5;
 
@@ -421,6 +428,7 @@ bool brain::NtGenome::mate_multipoint(
 				}
 
 			} else {
+				// Both have this innovation, select one randomly
 				if (Math::randd() < 0.5) {
 					gene_to_add = *genome_inn;
 				} else {
@@ -646,10 +654,52 @@ void brain::NtGenome::duplicate_in(NtGenome &p_genome) const {
 	}
 }
 
+void brain::NtGenome::sort_genes() {
+
+	std::sort(link_genes.begin(), link_genes.end(), gene_innovation_comparator);
+
+	// Update the ids and creates the map of old ids
+
+	std::vector<int> id_map;
+	id_map.resize(link_genes.size());
+
+	int new_id(0);
+	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
+		id_map[it->id] = new_id;
+		it->id = new_id;
+		++new_id;
+	}
+
+	// Now update the neuron links
+	for (auto it = neuron_genes.begin(); it != neuron_genes.end(); ++it) {
+		for (auto it_inc = it->incoming_links.begin(); it_inc != it->incoming_links.end(); ++it_inc) {
+			*it_inc = id_map[*it_inc];
+		}
+		for (auto it_out = it->outcoming_links.begin(); it_out != it->outcoming_links.end(); ++it_out) {
+			*it_out = id_map[*it_out];
+		}
+	}
+}
+
+bool brain::NtGenome::check_innovation_numbers() const {
+	if (1 >= link_genes.size()) {
+		return true;
+	}
+
+	uint32_t increment(link_genes.begin()->innovation_number);
+
+	for (auto it = link_genes.begin() + 1; it != link_genes.end(); ++it) {
+		if (increment < it->innovation_number) {
+			increment = it->innovation_number;
+		} else {
+			return false;
+		}
+	}
+	return true;
+}
+
 uint32_t brain::NtGenome::get_innovation_number() const {
-	const int last_gene = link_genes.size() - 1;
-	ERR_FAIL_INDEX_V(last_gene, link_genes.size(), -1);
-	return link_genes[last_gene].innovation_number;
+	return biggest_innovation_number;
 }
 
 bool brain::NtGenome::is_link_recurrent(
@@ -669,8 +719,9 @@ bool brain::NtGenome::is_link_recurrent(
 
 		const int link_id = *it;
 
+		// Skip if recurrent
 		if (link_genes[link_id].recurrent)
-			continue; // Skip recurrent
+			continue;
 
 		if (_recursive_is_link_recurrent(
 					p_parent_neuron_id,
@@ -688,9 +739,8 @@ bool brain::NtGenome::_recursive_is_link_recurrent(
 		NeuronId p_child_neuron_id) const {
 
 	if (p_parent_neuron_id == p_middle_neuron_id) {
-		// When this happen a connection loop is detected
-		ERR_EXPLAIN("A connection loop is detected in the Genome, Something is wrong.");
-		ERR_FAIL_V(false);
+		// When this happen a connection loop is detected, so
+		return true;
 	}
 
 	if (p_middle_neuron_id == p_child_neuron_id)
@@ -704,8 +754,9 @@ bool brain::NtGenome::_recursive_is_link_recurrent(
 
 		const int link_id = *it;
 
+		// Skip if recurrent
 		if (link_genes[link_id].recurrent)
-			continue; // Skip recurrent
+			continue;
 
 		if (_recursive_is_link_recurrent(
 					p_parent_neuron_id,
@@ -744,4 +795,8 @@ int brain::NtGenome::find_innovation(
 	}
 
 	return -1;
+}
+
+bool gene_innovation_comparator(brain::NtLinkGene &p_1, brain::NtLinkGene &p_2) {
+	return p_1.innovation_number < p_2.innovation_number;
 }
