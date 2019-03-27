@@ -215,14 +215,18 @@ void brain::SharpBrainArea::guess(
 bool brain::SharpBrainArea::are_links_walkable(
 		Neuron *p_neuron,
 		bool p_error_on_broken_link,
+		bool p_error_on_dead_branches,
 		std::vector<NeuronId> &r_cache) const {
 
 	// This happens only to the input layer
 	if (is_neuron_input(p_neuron->id))
 		return true;
 
-	if (!p_neuron->parents.size())
-		return false;
+	// Check dead branches
+	if (p_error_on_dead_branches) {
+		ERR_FAIL_COND_V(!p_neuron->parents.size(), false);
+	} else if (!p_neuron->parents.size())
+		return true;
 
 	r_cache.push_back(p_neuron->id);
 
@@ -247,7 +251,12 @@ bool brain::SharpBrainArea::are_links_walkable(
 			break;
 		}
 
-		if (!are_links_walkable(p_it->neuron, p_error_on_broken_link, r_cache)) {
+		if (!are_links_walkable(
+					p_it->neuron,
+					p_error_on_broken_link,
+					p_error_on_dead_branches,
+					r_cache)) {
+
 			if (p_error_on_broken_link) {
 				explain = "The neuron is not fully connected to the input. Neuron ID: " + brain::itos(p_it->neuron->id);
 				failed = true;
@@ -290,7 +299,7 @@ void brain::SharpBrainArea::check_ready() {
 
 	// Check if the output neurons are fully connected to the inputs
 	for (auto o_it = outputs.begin(); o_it != outputs.end(); ++o_it) {
-		if (!are_links_walkable(&neurons[*o_it], false, cache))
+		if (!are_links_walkable(&neurons[*o_it], false, false, cache))
 			return;
 	}
 

@@ -312,12 +312,15 @@ private:
 	 * @param p_neuron
 	 * @param p_error_on_broken_link if true this function returns false when
 	 * the inputs are not fully connected to the output
+	 * @param p_error_on_dead_branches when this is set to true all the neurons
+	 * must be fully connected to the output
 	 * @param r_cache is usedinternally to detect if there are loops
 	 * @return
 	 */
 	bool are_links_walkable(
 			Neuron *p_neuron,
 			bool p_error_on_broken_link,
+			bool p_error_on_dead_branches,
 			std::vector<NeuronId> &r_cache) const;
 
 	/**

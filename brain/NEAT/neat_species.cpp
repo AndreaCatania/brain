@@ -12,7 +12,7 @@ brain::NtSpecies::NtSpecies(NtPopulation *p_owner, uint32_t current_epoch) :
 		age(0),
 		champion(nullptr),
 		average_fitness(0),
-		higher_fitness_ever(0),
+		higher_personal_fitness_ever(0),
 		age_of_last_improvement(0),
 		stagnant_epochs(0),
 		offspring_count(0),
@@ -142,14 +142,14 @@ void brain::NtSpecies::adjust_fitness(
 	// Sort organisms, more fit first
 	std::sort(organisms.begin(), organisms.end(), organism_fitness_comparator);
 
-	// Check if the species get an improvement
-	if (higher_fitness_ever < organisms[0]->get_fitness()) {
-		higher_fitness_ever = organisms[0]->get_fitness();
-		reset_age_of_last_improvement();
-	}
-
 	// Get champion
 	champion = organisms[0];
+
+	// Check if the species get an improvement
+	if (higher_personal_fitness_ever < champion->get_personal_fitness()) {
+		higher_personal_fitness_ever = champion->get_personal_fitness();
+		reset_age_of_last_improvement();
+	}
 
 	// Calculates the survival
 	uint32_t survival_count = organisms.size() * p_survival_ratio;
@@ -382,9 +382,19 @@ void brain::NtSpecies::reproduce(
 
 				child->log += "\nMUTATE mutate weight";
 				// Mutate link weight
-				child->get_genome_mutable().mutate_random_link_weight(
-						NtPopulation::rand_gaussian,
-						owner);
+				if (Math::randd() < owner->settings.genetic_mutate_link_weight_uniform_prob) {
+
+					// TODO use all or random???
+					child->get_genome_mutable().mutate_all_link_weights(
+							NtPopulation::rand_gaussian,
+							owner);
+				} else {
+
+					// TODO use all or random???
+					child->get_genome_mutable().mutate_all_link_weights(
+							NtPopulation::rand_cold_gaussian,
+							owner);
+				}
 				state = true;
 			} else {
 
@@ -402,7 +412,8 @@ void brain::NtSpecies::reproduce(
 			// WARN_PRINTS("Somthing went wrong during the organism reproduction.");
 		}
 
-		DEBUG_ONLY(ERR_FAIL_COND(!child->get_genome().check_innovation_numbers()));
+		if (!child->get_genome().check_innovation_numbers())
+			DEBUG_ONLY(ERR_FAIL_COND(!child->get_genome().check_innovation_numbers()));
 
 		--offspring_count;
 	}

@@ -123,10 +123,11 @@ struct NtPopulationSettings {
 	 * These parameters will be normalized (If all are the same they will have
 	 * the same probability)
 	 */
-	real_t genetic_mutate_add_link_porb = 0.3;
-	real_t genetic_mutate_add_node_prob = 0.15;
-	real_t genetic_mutate_link_weight_prob = 0.5;
-	real_t genetic_mutate_toggle_link_enable_prob = 0.05;
+	real_t genetic_mutate_add_link_porb = 0.03;
+	real_t genetic_mutate_add_node_prob = 0.015;
+	real_t genetic_mutate_link_weight_prob = 0.95;
+	real_t genetic_mutate_link_weight_uniform_prob = 0.9;
+	real_t genetic_mutate_toggle_link_enable_prob = 0.005;
 
 	/**
 	 * @brief genetic_spawn_recurrent_link_threshold goes from 0 to 1 and is used
@@ -139,7 +140,7 @@ struct NtPopulationSettings {
 	 * This means that these links are useful to remember the previous datas and
 	 * thus the taken decision is affected by the previous datas.
 	 */
-	real_t genetic_mutate_add_link_recurrent_prob = 0.35;
+	real_t genetic_mutate_add_link_recurrent_prob = 0.25;
 
 	/**
 	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
@@ -160,13 +161,13 @@ struct NtPopulationSettings {
 	 * @brief species_youngness_multiplier the fitness multiplier applied to the
 	 * young species
 	 */
-	real_t species_youngness_multiplier = 3.0f;
+	real_t species_youngness_multiplier = 2.f;
 
 	/**
 	 * @brief species_stagnant_age_threshold the ages without improvements
 	 * to consider a species stagnant
 	 */
-	int species_stagnant_age_threshold = 10;
+	int species_stagnant_age_threshold = 15;
 
 	/**
 	 * @brief species_stagnant_multiplier the penalty multiplier applied to the
@@ -201,18 +202,18 @@ struct NtPopulationSettings {
 	int cribs_stealing = 10;
 
 	/**
-	 * @brief population_cribs_stealing_limit is used to stop the stealing when they get
+	 * @brief cribs_stealing_limit is used to stop the stealing when they get
 	 * below this value.
 	 * In thi way is possible to protect the specie from the death due to the
 	 * stealing.
 	 */
-	int cribs_stealing_limit = 5;
+	int cribs_stealing_limit = 2;
 
 	/**
 	 * @brief species_stealing_protection_age_threshold is used to protect the
 	 * species from stealing even if they perform low until they pass this threshold
 	 */
-	int cribs_stealing_protection_age_threshold = 10;
+	int cribs_stealing_protection_age_threshold = 3;
 
 	/**
 	 * @brief population_stagnant_age_thresold is used to detect if the population

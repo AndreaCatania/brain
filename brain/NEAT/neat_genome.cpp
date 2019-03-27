@@ -81,7 +81,6 @@ uint32_t brain::NtGenome::add_link(
 	ERR_FAIL_INDEX_V(p_parent_neuron_id, neuron_genes.size(), 0);
 	ERR_FAIL_INDEX_V(p_child_neuron_id, neuron_genes.size(), 0);
 	ERR_FAIL_COND_V(0 > find_link(p_parent_neuron_id, p_child_neuron_id), 0);
-	ERR_FAIL_COND_V(biggest_innovation_number >= p_innovation_number, 0);
 
 	const uint32_t id(link_genes.size());
 
@@ -98,7 +97,8 @@ uint32_t brain::NtGenome::add_link(
 	neuron_genes[p_parent_neuron_id].outcoming_links.push_back(id);
 	neuron_genes[p_child_neuron_id].incoming_links.push_back(id);
 
-	biggest_innovation_number = p_innovation_number;
+	if (biggest_innovation_number < p_innovation_number)
+		biggest_innovation_number = p_innovation_number;
 
 	return id;
 }
@@ -237,7 +237,8 @@ bool brain::NtGenome::mutate_add_random_link(
 			NtInnovation::INNOVATION_LINK,
 			parent_neuron_id,
 			child_neuron_id,
-			spawn_recurrent);
+			spawn_recurrent,
+			0);
 
 	uint32_t innovation_num;
 
@@ -247,15 +248,20 @@ bool brain::NtGenome::mutate_add_random_link(
 
 	} else {
 
+		// TODO please add a function that returns this
+		// in this way is not secure enough
 		// This is a novel innovation
 		innovation_num = ++r_current_innovation_number;
 
+		// TODO Please add a function to handle this properly,
+		// in this way is error prone
 		r_innovations.push_back(
 				{ NtInnovation::INNOVATION_LINK,
 						parent_neuron_id,
 						child_neuron_id,
 						spawn_recurrent,
-						innovation_num });
+						innovation_num,
+						0 });
 	}
 
 	add_link(
@@ -315,12 +321,16 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	if (!found)
 		return false; // No link to split
 
+	const uint32_t new_neuron_id = add_neuron(NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
+
+	// TODO please handle this properly
 	int innovation_index = find_innovation(
 			r_innovations,
 			NtInnovation::INNOVATION_NODE,
 			link_to_split.parent_neuron_id,
 			link_to_split.child_neuron_id,
-			false);
+			false,
+			new_neuron_id);
 
 	uint32_t in_link_innovation_number;
 	uint32_t out_link_innovation_number;
@@ -329,20 +339,22 @@ bool brain::NtGenome::mutate_add_random_neuron(
 		in_link_innovation_number = r_innovations[innovation_index].innovation_number;
 		out_link_innovation_number = in_link_innovation_number + 1;
 	} else {
+		// TODO please add a function that returns the next innovation num
 		// Novel innovation
 		in_link_innovation_number = ++r_current_innovation_number;
 		out_link_innovation_number = ++r_current_innovation_number;
 
+		// TODO pelase handle this properly
 		r_innovations.push_back(
 				{ NtInnovation::INNOVATION_NODE,
 						link_to_split.parent_neuron_id,
 						link_to_split.child_neuron_id,
 						false, // <-- doesn't matter in this case
-						in_link_innovation_number });
+						in_link_innovation_number,
+						new_neuron_id });
 	}
 
 	suppress_link(link_to_split.id);
-	const uint32_t new_neuron_id = add_neuron(NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
 
 	add_link(
 			link_to_split.parent_neuron_id,
@@ -369,8 +381,7 @@ bool brain::NtGenome::mate_multipoint(
 		real_t p_daddy_fitness,
 		bool p_average) {
 
-	neuron_genes.clear();
-	link_genes.clear();
+	clear();
 
 	const NtGenome *innovative = &p_mom; // Most innovated
 	const NtGenome *obsolete = &p_daddy; // less_innovated
@@ -479,8 +490,7 @@ bool brain::NtGenome::mate_singlepoint(
 		const NtGenome &p_mom,
 		const NtGenome &p_daddy) {
 
-	neuron_genes.clear();
-	link_genes.clear();
+	clear();
 
 	const NtGenome *bigger = &p_mom;
 	const NtGenome *smaller = &p_daddy;
@@ -632,6 +642,7 @@ void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) cons
 void brain::NtGenome::clear() {
 	neuron_genes.clear();
 	link_genes.clear();
+	biggest_innovation_number = 0;
 }
 
 void brain::NtGenome::duplicate_in(NtGenome &p_genome) const {
@@ -652,6 +663,9 @@ void brain::NtGenome::duplicate_in(NtGenome &p_genome) const {
 
 		p_genome.link_genes.push_back(*it);
 	}
+
+	// Copy all other datas
+	p_genome.biggest_innovation_number = biggest_innovation_number;
 }
 
 void brain::NtGenome::sort_genes() {
@@ -773,7 +787,8 @@ int brain::NtGenome::find_innovation(
 		NtInnovation::InnovationType p_innovation_type,
 		NeuronId p_parent_neuron_id,
 		NeuronId p_child_neuron_id,
-		bool p_is_recurrent) {
+		bool p_is_recurrent,
+		uint32_t p_neuron_id) {
 
 	for (auto it = p_innovations.begin(); it != p_innovations.end(); ++it) {
 
@@ -788,6 +803,9 @@ int brain::NtGenome::find_innovation(
 
 		if (p_innovation_type == NtInnovation::INNOVATION_LINK) {
 			if (it->is_recurrent != p_is_recurrent)
+				continue;
+		} else {
+			if (it->neuron_id != p_neuron_id)
 				continue;
 		}
 

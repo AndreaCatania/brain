@@ -71,8 +71,7 @@ void brain::NtOrganism::clear_middle_fitness() {
 void brain::NtOrganism::compute_final_fitness(real_t p_exponent) {
 	ERR_FAIL_COND(!middle_fitness_count);
 	ERR_FAIL_COND(p_exponent <= 0.f);
-	// 1 + is used to put the value always above 1 and avoid to have little numbers
-	personal_fitness = Math::pow(1 + middle_fitness_sum / middle_fitness_count, p_exponent);
+	personal_fitness = Math::pow(middle_fitness_sum / middle_fitness_count, p_exponent);
 	fitness = personal_fitness;
 }
 

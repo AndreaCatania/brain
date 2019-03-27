@@ -11,11 +11,12 @@ real_t brain::NtGenetic::compatibility(
 		real_t p_excesses_significance,
 		real_t p_weights_significance) {
 
-	ERR_FAIL_COND_V(!p_genome_1.get_link_count(), -1);
+	if (!p_genome_1.get_link_count()) // TODO remove this
+		ERR_FAIL_COND_V(!p_genome_1.get_link_count(), -1);
 	ERR_FAIL_COND_V(!p_genome_2.get_link_count(), -1);
 
-	uint32_t D(0);
-	uint32_t E(0);
+	real_t D(0);
+	real_t E(0);
 
 	// Find smallest and bigger genome
 
@@ -63,19 +64,25 @@ real_t brain::NtGenetic::compatibility(
 
 			if (!someone_is_over) {
 				// This discrepancy is a disjoint
-				++D;
+				D += 1;
 			} else {
 				// This discrepancy is a excess
-				++E;
+				E += 1;
 			}
 		}
 	}
 
-	real_t W = Math::abs((g1_weights_sum / p_genome_1.get_link_count()) -
-						 (g2_weights_sum / p_genome_2.get_link_count()));
+	real_t W = Math::abs(Math::abs((g1_weights_sum / p_genome_1.get_link_count())) -
+						 Math::abs((g2_weights_sum / p_genome_2.get_link_count())));
 
+	/// The research says that for smaller genome the normalization is not necessary
+	/// and can be set 1.
+	/// Setting N=1 gives the possibility to controll the compatibility
+	/// in a better way.
+	/// For this reason I'm putting 1 even for bigger genome
 	// Count genes of the bigger genome
-	uint32_t N(MAX(p_genome_1.get_link_count(), p_genome_2.get_link_count()));
+	//real_t N(MAX(p_genome_1.get_link_count(), p_genome_2.get_link_count()));
+	real_t N(1);
 
 	const real_t cD(p_disjoints_significance);
 	const real_t cE(p_excesses_significance);

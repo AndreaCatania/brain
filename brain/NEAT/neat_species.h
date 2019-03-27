@@ -57,10 +57,10 @@ class NtSpecies {
 	real_t average_fitness;
 
 	/**
-	 * @brief higher_fitness_ever store the higher fitness ever registerd for
-	 * this species
+	 * @brief higher_fitness_ever store the higher personal fitness ever
+	 * registerd for this species.
 	 */
-	real_t higher_fitness_ever;
+	real_t higher_personal_fitness_ever;
 
 	/**
 	 * @brief age_of_last_improvement is the age when the higher_fitness_ever is

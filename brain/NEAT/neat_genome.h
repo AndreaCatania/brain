@@ -167,6 +167,11 @@ struct NtInnovation {
 	 * @brief The innovation number of this innovation
 	 */
 	uint32_t innovation_number;
+
+	/**
+	 * @brief neuron_id used only with INNOVATION_NODE
+	 */
+	uint32_t neuron_id;
 };
 
 /**
@@ -437,7 +442,7 @@ private:
 			NeuronId p_middle_neuron_id,
 			NeuronId p_child_neuron_id) const;
 
-	/**
+	/** TODO please handle this properly
 	 * @brief find_innovation is an utility function that search the innovation
 	 * inside the passed array and return the index to the innovation or -1
 	 * @param p_innovations
@@ -445,6 +450,7 @@ private:
 	 * @param p_parent_neuron_id
 	 * @param p_child_neuron_id
 	 * @param p_is_recurrent
+	 * @param p_neuron_id
 	 * @return
 	 */
 	static int find_innovation(
@@ -452,7 +458,8 @@ private:
 			NtInnovation::InnovationType p_innovation_type,
 			NeuronId p_parent_neuron_id,
 			NeuronId p_child_neuron_id,
-			bool p_is_recurrent);
+			bool p_is_recurrent,
+			uint32_t p_neuron_id);
 };
 
 } // namespace brain
