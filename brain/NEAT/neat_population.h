@@ -286,6 +286,11 @@ class NtPopulation {
 	 */
 	std::vector<NtInnovation> innovations;
 
+	/**
+	 * @brief champion_genome This is the champion genome of the past epoch.
+	 */
+	NtGenome champion_genome;
+
 public:
 	/**
 	 * @brief NtPopulation construct the population by spawning each member
@@ -352,6 +357,12 @@ public:
 	 * @return
 	 */
 	real_t get_best_personal_fitness() const;
+
+	/**
+	 * @brief Returns the champion neural network
+	 * @param r_brain_area
+	 */
+	void get_champion_network(brain::SharpBrainArea &r_brain_area);
 
 private:
 	/**

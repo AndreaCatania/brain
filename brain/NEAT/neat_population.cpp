@@ -65,10 +65,19 @@ bool brain::NtPopulation::epoch_advance() {
 
 	++epoch;
 
-	/// Step 1. Compute organisms fitness
-	//for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
-	//
-	//}
+	/// Step 1. Take the best organism and make a copy of its genome
+	NtOrganism *population_champion;
+	{
+		real_t bp(0);
+		for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
+			if (bp < (*it_o)->get_personal_fitness()) {
+				population_champion = *it_o;
+				bp = population_champion->get_personal_fitness();
+			}
+		}
+	}
+	ERR_FAIL_COND_V(!population_champion, false);
+	population_champion->get_genome().duplicate_in(champion_genome);
 
 	/// Step 2. Compute species average fitness, then adjust it
 	for (auto it_s = species.begin(); it_s != species.end(); ++it_s) {
@@ -90,8 +99,6 @@ bool brain::NtPopulation::epoch_advance() {
 			species_fitness_comparator);
 
 	NtSpecies *best_species = *ordered_species.begin();
-	NtOrganism *population_champion = best_species->get_champion();
-	ERR_FAIL_COND_V(!population_champion, false);
 
 	/// Stage 3. calculates average population fitness
 	real_t total_fitness(0);
@@ -325,6 +332,7 @@ bool brain::NtPopulation::epoch_advance() {
 
 	// Prepares the organism pool to repopulate
 	organisms.clear();
+	population_champion = nullptr;
 
 	// Make the fittest organism reproduct
 	for (auto it = species.begin(); it != species.end(); ++it) {
@@ -338,7 +346,6 @@ bool brain::NtPopulation::epoch_advance() {
 	for (auto it = species.begin(); it != species.end(); ++it) {
 		(*it)->kill_old_organisms();
 	}
-	population_champion = nullptr;
 
 	// Make rid of void species
 	kill_void_species();
@@ -362,6 +369,12 @@ bool brain::NtPopulation::epoch_advance() {
 
 real_t brain::NtPopulation::get_best_personal_fitness() const {
 	return best_personal_fitness;
+}
+
+void brain::NtPopulation::get_champion_network(
+		brain::SharpBrainArea &r_brain_area) {
+
+	champion_genome.generate_neural_network(r_brain_area);
 }
 
 void brain::NtPopulation::speciate() {
