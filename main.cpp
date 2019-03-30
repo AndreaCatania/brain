@@ -167,10 +167,9 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_mate_singlepoint_threshold = 0.f;
+	settings.genetic_mate_singlepoint_threshold = 0.f; // TODO fix this please
 	settings.genetic_compatibility_threshold = 2.1;
 	settings.genetic_weights_significance = 0.1;
-	//settings.genetic_mutate_add_link_recurrent_prob = 0.f;
 
 	/// Step 1. Population creation
 	brain::NtPopulation population(
@@ -181,6 +180,20 @@ void test_NEAT_XOR() {
 	const int epoch_max(100);
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 		//for (int epoch(0); true; ++epoch) {
+
+		// Shuffle is required to avoid create a pattern
+		{
+			uint32_t seed = time(nullptr);
+			std::shuffle(
+					inputs.begin(),
+					inputs.end(),
+					std::default_random_engine(seed));
+
+			std::shuffle(
+					expected.begin(),
+					expected.end(),
+					std::default_random_engine(seed));
+		}
 
 		/// Step 2. Population testing and evaluation
 		for (int i = 0; i < population.get_population_size(); ++i) {
