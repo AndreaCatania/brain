@@ -138,30 +138,17 @@ public:
 	NtSpecies *get_species() const;
 
 	/**
-	 * @brief add_middle_fitness add middle fitness.
-	 * This function allow to submit the fitness per guess, in this way
-	 * By storying the performances history is possible to evaluete it better
-	 * during the epoch advancing
+	 * @brief This function allow to submit the evaluation depending on the guess
+	 * result.
+	 *
+	 * This function doesn't accept below 0.001
+	 *
 	 * @param p_fitness
 	 */
-	void add_middle_fitness(real_t p_fitness);
+	void set_evaluation(real_t p_fitness);
 
 	/**
-	 * @brief clear_middle_fitness reset the fitness_sum and fitness_count
-	 */
-	void clear_middle_fitness();
-
-	/**
-	 * @brief compute_final_fitness is where the fitness is finally computed
-	 * The exponent parameter is used to increase the fitness exponentially and
-	 * so differentiate more the organisms performances.
-	 * Just pass 1 if you don't want to increase it exponentially
-	 * @param p_exponent
-	 */
-	void compute_final_fitness(real_t p_exponent);
-
-	/**
-	 * @brief set_fitness set the fitness
+	 * @brief set internal fitness
 	 * @param p_fitness
 	 */
 	void set_fitness(real_t p_fitness);

@@ -118,14 +118,14 @@ void brain::NtSpecies::adjust_fitness(
 		// Still young, give it more chances to do wrong things
 		for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 			NtOrganism *o = (*it);
-			o->set_fitness(o->get_fitness() * p_youngness_multiplier);
+			o->set_fitness(o->get_personal_fitness() * p_youngness_multiplier);
 		}
 	} else if (stagnant_epochs > p_stagnant_age_threshold) {
 
 		// This is not young and also it's stagnant penalize brutally
 		for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 			NtOrganism *o = (*it);
-			o->set_fitness(o->get_fitness() * p_stagnant_multiplier);
+			o->set_fitness(o->get_personal_fitness() * p_stagnant_multiplier);
 		}
 	}
 

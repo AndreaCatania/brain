@@ -143,15 +143,6 @@ struct NtPopulationSettings {
 	real_t genetic_mutate_add_link_recurrent_prob = 0.1f;
 
 	/**
-	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
-	 * differentiate more the organisms when the fitness increase.
-	 *
-	 * This is useful because in some situations when the network is already optimized
-	 * the fitness gain is low even if there are some benefits that is worth to notice.
-	 */
-	real_t fitness_exponent = 2.f;
-
-	/**
 	 * @brief species_youngness_age_threshold the ages within a species is considered
 	 * young and so is protected
 	 */
@@ -339,11 +330,12 @@ public:
 	const SharpBrainArea *organism_get_network(uint32_t p_organism_i) const;
 
 	/**
-	 * @brief organism_add_fitness is used to tell how this organism is doing well
+	 * @brief organism_set_fitness is used to tell how this organism is doing.
+	 * Higher mean better
 	 * @param p_organism_i
 	 * @param p_fitness
 	 */
-	void organism_add_fitness(uint32_t p_organism_i, real_t p_fitness) const;
+	void organism_set_fitness(uint32_t p_organism_i, real_t p_fitness) const;
 
 	/**
 	 * @brief epoch_advance is who make possible the turnover of the population.

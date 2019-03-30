@@ -58,25 +58,13 @@ brain::NtSpecies *brain::NtOrganism::get_species() const {
 	return species;
 }
 
-void brain::NtOrganism::add_middle_fitness(real_t p_fitness) {
-	middle_fitness_sum += MAX(p_fitness, CMP_EPSILON);
-	++middle_fitness_count;
-}
-
-void brain::NtOrganism::clear_middle_fitness() {
-	middle_fitness_sum = 0;
-	middle_fitness_count = 0;
-}
-
-void brain::NtOrganism::compute_final_fitness(real_t p_exponent) {
-	ERR_FAIL_COND(!middle_fitness_count);
-	ERR_FAIL_COND(p_exponent <= 0.f);
-	personal_fitness = Math::pow(middle_fitness_sum / middle_fitness_count, p_exponent);
+void brain::NtOrganism::set_evaluation(real_t p_fitness) {
+	personal_fitness = MAX(p_fitness, CMP_EPSILON);
 	fitness = personal_fitness;
 }
 
 void brain::NtOrganism::set_fitness(real_t p_fitness) {
-	fitness = MAX(p_fitness, CMP_EPSILON);
+	fitness = p_fitness;
 }
 
 real_t brain::NtOrganism::get_fitness() const {

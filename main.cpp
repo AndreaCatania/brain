@@ -190,20 +190,24 @@ void test_NEAT_XOR() {
 				brain_area->guess(inputs[k], result);
 				real_t error = result.get(0, 0) - expected[k].get(0, 0);
 				error = ABS(error);
-				if (error < 0.5) {
+				if (error < 0.3) {
 					++acceptable_result;
 				}
 				total_error += error;
 			}
 
-			real_t fitness = (real_t(inputs.size()) - total_error) / inputs.size();
-			if (acceptable_result != inputs.size()) {
-
-				population.organism_add_fitness(i, fitness);
-			} else {
-
-				population.organism_add_fitness(i, brain::Math::pow(fitness, 7));
+			real_t fitness = 1.f - (total_error / inputs.size());
+			population.organism_set_fitness(i, fitness);
+			if (fitness > 1.2) { // TODO remove this:
+				int a = 0;
 			}
+			//if (acceptable_result != inputs.size()) {
+			//
+			//	population.organism_set_fitness(i, fitness);
+			//} else {
+			//
+			//	population.organism_set_fitness(i, brain::Math::pow(fitness, 7));
+			//}
 
 			if (total_error <= 0.01) {
 				for (int k(0); k < inputs.size(); ++k) {
