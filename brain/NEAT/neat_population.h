@@ -152,7 +152,7 @@ struct NtPopulationSettings {
 	 * @brief species_youngness_multiplier the fitness multiplier applied to the
 	 * young species
 	 */
-	real_t species_youngness_multiplier = 2.f;
+	real_t species_youngness_multiplier = 1.3f;
 
 	/**
 	 * @brief species_stagnant_age_threshold the ages without improvements
@@ -340,7 +340,9 @@ public:
 	 * @param p_organism_i
 	 * @param p_fitness
 	 */
-	void organism_set_fitness(uint32_t p_organism_i, real_t p_fitness) const;
+	void organism_set_fitness(
+			uint32_t p_organism_i,
+			real_t p_fitness) const;
 
 	/**
 	 * @brief epoch_advance is who make possible the turnover of the population.

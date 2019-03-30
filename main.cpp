@@ -168,7 +168,9 @@ void test_NEAT_XOR() {
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
 	settings.genetic_mate_singlepoint_threshold = 0.f;
-	//genetic_mutate_add_link_recurrent_prob
+	settings.genetic_compatibility_threshold = 2.1;
+	settings.genetic_weights_significance = 0.1;
+	//settings.genetic_mutate_add_link_recurrent_prob = 0.f;
 
 	/// Step 1. Population creation
 	brain::NtPopulation population(
@@ -197,25 +199,19 @@ void test_NEAT_XOR() {
 			}
 
 			real_t fitness = 1.f - (total_error / inputs.size());
-			population.organism_set_fitness(i, fitness);
-			if (acceptable_result != inputs.size()) {
 
-				population.organism_set_fitness(i, fitness);
-			} else {
+			population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
 
-				// Give a bonus to all organisms that are able to guess
-				// all situations
-				population.organism_set_fitness(i, fitness + 1);
-			}
+			if (false)
+				if (acceptable_result != inputs.size()) {
 
-			if (total_error <= 0.01) {
-				for (int k(0); k < inputs.size(); ++k) {
-					brain_area->guess(inputs[k], result);
-					real_t error = result.get(0, 0) - expected[k].get(0, 0);
-					int a = 0;
+					population.organism_set_fitness(i, fitness);
+				} else {
+
+					// Give a bonus to all organisms that are able to guess
+					// all situations
+					population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
 				}
-				break;
-			}
 		}
 
 		/// Step 3. advance the epoch
