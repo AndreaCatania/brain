@@ -451,15 +451,15 @@ private:
 	 * NOTE: The scope of this function is to make sure to not get stuck if
 	 * there is a loop in the structure.
 	 *
-	 * @param p_parent_neuron_id
 	 * @param p_middle_neuron_id
 	 * @param p_child_neuron_id
+	 * @param r_cache
 	 * @return
 	 */
 	bool _recursive_is_link_recurrent(
 			NeuronId p_parent_neuron_id,
-			NeuronId p_middle_neuron_id,
-			NeuronId p_child_neuron_id) const;
+			NeuronId p_child_neuron_id,
+			std::vector<NeuronId> &r_cache) const;
 
 	/** TODO please handle this properly
 	 * @brief find_innovation is an utility function that search the innovation
