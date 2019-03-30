@@ -167,25 +167,8 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.learning_deviation = 1;
-	settings.genetic_compatibility_threshold = 3;
-	settings.genetic_weights_significance = 0.4;
-
-	settings.genetic_mate_prob = 0.2f;
-	settings.genetic_mate_inside_species_threshold = 0.8;
-	settings.genetic_mate_multipoint_threshold = 0.4;
-	settings.genetic_mate_multipoint_avg_threshold = 0.4;
-	settings.genetic_mate_singlepoint_threshold = 0;
-	settings.genetic_mutate_add_link_porb = 0.1;
-	settings.genetic_mutate_add_node_prob = 0.05;
-	settings.genetic_mutate_link_weight_prob = 0.8;
-	settings.genetic_mutate_toggle_link_enable_prob = 0.05;
-
-	settings.fitness_exponent = 1;
-	settings.species_youngness_multiplier = 1.5;
-	settings.cribs_stealing = 20;
-	settings.cribs_stealing_protection_age_threshold = 3;
-	settings.cribs_stealing_limit = 2;
+	settings.genetic_mate_singlepoint_threshold = 0.f;
+	//genetic_mutate_add_link_recurrent_prob
 
 	/// Step 1. Population creation
 	brain::NtPopulation population(

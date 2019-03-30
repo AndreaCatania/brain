@@ -24,7 +24,7 @@ struct NtPopulationSettings {
 	 * delta during the weight changing. Check the Gaussian random to understand
 	 * better its use.
 	 */
-	real_t learning_deviation = 0.2f;
+	real_t learning_deviation = 1.f;
 
 	/**
 	 * @brief genetic_compatibility_threshold is used to determine the species
@@ -39,7 +39,7 @@ struct NtPopulationSettings {
 	 *
 	 * So a too huge or too small threshold can make the niching process to fail.
 	 */
-	real_t genetic_compatibility_threshold = 0.5f;
+	real_t genetic_compatibility_threshold = 3.f;
 
 	/**
 	 * @brief genetic_disjoints_significance is used during the genetic comparison
@@ -96,14 +96,14 @@ struct NtPopulationSettings {
 	 * @brief genetic_mate_prob is used to define the probability for
 	 * a genome to mate with another one, instead to mutate.
 	 */
-	real_t genetic_mate_prob = 0.5;
+	real_t genetic_mate_prob = 0.3f;
 
 	/**
 	 * @brief genetic_mate_inside_species_threshold is used to controll where the
 	 * other parent (dad) should be taken within the same species of the mom or
 	 * outside.
 	 */
-	real_t genetic_mate_inside_species_threshold = 0.5;
+	real_t genetic_mate_inside_species_threshold = 0.8f;
 
 	/**
 	 * @brief genetic_mating_* are used to decide what type of crossover operation
@@ -123,11 +123,11 @@ struct NtPopulationSettings {
 	 * These parameters will be normalized (If all are the same they will have
 	 * the same probability)
 	 */
-	real_t genetic_mutate_add_link_porb = 0.03;
-	real_t genetic_mutate_add_node_prob = 0.015;
-	real_t genetic_mutate_link_weight_prob = 0.95;
-	real_t genetic_mutate_link_weight_uniform_prob = 0.9;
-	real_t genetic_mutate_toggle_link_enable_prob = 0.005;
+	real_t genetic_mutate_add_link_porb = 0.1f;
+	real_t genetic_mutate_add_node_prob = 0.05f;
+	real_t genetic_mutate_link_weight_prob = 0.8f;
+	real_t genetic_mutate_link_weight_uniform_prob = 0.9f; // 10% of use Cold gaussian
+	real_t genetic_mutate_toggle_link_enable_prob = 0.05f;
 
 	/**
 	 * @brief genetic_spawn_recurrent_link_threshold goes from 0 to 1 and is used
@@ -140,7 +140,7 @@ struct NtPopulationSettings {
 	 * This means that these links are useful to remember the previous datas and
 	 * thus the taken decision is affected by the previous datas.
 	 */
-	real_t genetic_mutate_add_link_recurrent_prob = 0.25;
+	real_t genetic_mutate_add_link_recurrent_prob = 0.1f;
 
 	/**
 	 * @brief fitness_exponent is used to scale the fitness exponentially and thus
@@ -199,7 +199,7 @@ struct NtPopulationSettings {
 	 * Also the assigned cribs will be used to create some clones of the species
 	 * champion, where the most part will have only the weight mutated
 	 */
-	int cribs_stealing = 10;
+	int cribs_stealing = 20;
 
 	/**
 	 * @brief cribs_stealing_limit is used to stop the stealing when they get
