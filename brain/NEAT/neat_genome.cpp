@@ -124,14 +124,33 @@ void brain::NtGenome::suppress_link(uint32_t p_link_id) {
 	link_genes[p_link_id].active = false;
 }
 
+bool brain::NtGenome::has_neuron(uint32_t p_neuron_id) const {
+	return 0 <= p_neuron_id && p_neuron_id < neuron_genes.size();
+}
+
 uint32_t brain::NtGenome::find_link(
 		uint32_t p_parent_neuron_id,
-		uint32_t p_child_neuron_id) {
+		uint32_t p_child_neuron_id) const {
 
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
 		if (p_parent_neuron_id == it->parent_neuron_id)
 			if (p_child_neuron_id == it->child_neuron_id)
 				return it->id;
+	}
+
+	return -1;
+}
+
+uint32_t brain::NtGenome::find_link(
+		uint32_t p_parent_neuron_id,
+		uint32_t p_child_neuron_id,
+		bool p_recurrent) const {
+
+	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {
+		if (p_parent_neuron_id == it->parent_neuron_id)
+			if (p_child_neuron_id == it->child_neuron_id)
+				if (p_recurrent == it->recurrent)
+					return it->id;
 	}
 
 	return -1;
@@ -500,41 +519,20 @@ bool brain::NtGenome::mate_singlepoint(
 		smaller = &p_mom;
 	}
 
-	// Just copy all neurons of the bigger genome since at the end we will take
-	// all links from the bigger one and fore sure will be used all neurons
-	for (auto it = bigger->neuron_genes.begin(); it != bigger->neuron_genes.end(); ++it) {
-		add_neuron(it->type);
-	}
-
-	const int cross_gene_small = static_cast<int>(Math::random(0, smaller->get_link_count() - 1) + 0.5);
-
-	// Find the cut on the bigger genome by checking the innovation number in order to
-	// avoid adding two times a gene
-	int cross_gene_big(0);
-	bool has_bigger_innov_num(false);
-	const uint32_t innovation_number_to_search =
-			smaller->get_link(cross_gene_small)->innovation_number;
-
-	for (auto it = bigger->link_genes.begin(); it != bigger->link_genes.end(); ++it) {
-		if (innovation_number_to_search == it->innovation_number) {
-			has_bigger_innov_num = true;
-			break;
-		} else if (innovation_number_to_search < it->innovation_number) {
-			// The innovation number is not in this genome
-			// So decrease and make sure that this gene can be taken
-			// during the split
-			--cross_gene_big;
-			has_bigger_innov_num = true;
-			break;
-		}
-		++cross_gene_big;
-	}
-
-	ERR_FAIL_COND_V(!has_bigger_innov_num, false);
+	const int cross_point = static_cast<int>(Math::random(0, smaller->get_link_count() - 1) + 0.5);
 
 	// Copy genes from the smaller genome
-	for (int i(0); i < cross_gene_small; ++i) {
+	for (int i(0); i < cross_point; ++i) {
 		const NtLinkGene &link = smaller->link_genes[i];
+
+		// Copy the neurons from the parent
+		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
+			add_neuron(smaller->neuron_genes[x].type);
+		}
+		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
+			add_neuron(smaller->neuron_genes[x].type);
+		}
+
 		uint32_t id = add_link(
 				link.parent_neuron_id,
 				link.child_neuron_id,
@@ -547,9 +545,10 @@ bool brain::NtGenome::mate_singlepoint(
 		}
 	}
 
+	int last_innovation_number(-1);
 	{
-		NtLinkGene link = smaller->link_genes[cross_gene_small];
-		const NtLinkGene &s = bigger->link_genes[cross_gene_big];
+		NtLinkGene link = smaller->link_genes[cross_point];
+		const NtLinkGene &s = bigger->link_genes[cross_point];
 
 		if (link.innovation_number == s.innovation_number) {
 			// Average the cross gene from the two genome
@@ -560,38 +559,60 @@ bool brain::NtGenome::mate_singlepoint(
 			if (link.active != s.active) {
 				link.active = Math::randd() < 0.5f;
 			}
-
-			uint32_t id = add_link(
-					link.parent_neuron_id,
-					link.child_neuron_id,
-					link.weight,
-					link.recurrent,
-					link.innovation_number);
-
-			if (!link.active) {
-				suppress_link(id);
-			}
-
-		} else {
-
-			// The innovation number is not found so just take the small
-
-			uint32_t id = add_link(
-					link.parent_neuron_id,
-					link.child_neuron_id,
-					link.weight,
-					link.recurrent,
-					link.innovation_number);
-
-			if (!link.active) {
-				suppress_link(id);
-			}
 		}
+
+		// Copy the neurons from the parent
+		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
+			add_neuron(smaller->neuron_genes[x].type);
+		}
+		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
+			add_neuron(smaller->neuron_genes[x].type);
+		}
+
+		uint32_t id = add_link(
+				link.parent_neuron_id,
+				link.child_neuron_id,
+				link.weight,
+				link.recurrent,
+				link.innovation_number);
+
+		if (!link.active) {
+			suppress_link(id);
+		}
+
+		last_innovation_number = link.innovation_number;
 	}
 
+	const int cross_point_bigger(cross_point + 1);
+	if (cross_point_bigger >= bigger->get_link_count())
+		return true; // Already done
+
 	// Copy the genes from the bigger genome
-	for (int i(cross_gene_big + 1); i < bigger->get_link_count(); ++i) {
+	for (int i(cross_point_bigger); i < bigger->get_link_count(); ++i) {
 		const NtLinkGene &link = bigger->link_genes[i];
+
+		if (link.innovation_number <= last_innovation_number)
+			continue; // Skip if the gene is not compatible
+
+		/// Why is necessary to check if the link exist?
+		///
+		/// The mutation add neuron can spawn the same mutation twice if the
+		/// network evolved the previous one.
+		/// When you mate a genomes against another one that received this mutation
+		/// could happen that the same linkage with different innovation number is added.
+		/// For this reason in this stage is necessary to check if the link alreay
+		/// exists.
+		if (-1 != find_link(link.parent_neuron_id, link.child_neuron_id, link.recurrent))
+			continue; // This link is already found so skip
+
+		// Copy the neurons from the parent
+		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
+			add_neuron(bigger->neuron_genes[x].type);
+		}
+		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
+			add_neuron(bigger->neuron_genes[x].type);
+		}
+
 		uint32_t id = add_link(
 				link.parent_neuron_id,
 				link.child_neuron_id,

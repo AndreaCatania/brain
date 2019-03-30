@@ -211,20 +211,20 @@ real_t brain::UniformBrainArea::learn(
 	return total_error.mapped(brain::Math::pow, 2).summation();
 }
 
-void brain::UniformBrainArea::guess(
+bool brain::UniformBrainArea::guess(
 		const Matrix &p_input,
 		Matrix &r_guess) const {
 
-	_guess(p_input, r_guess);
+	return _guess(p_input, r_guess);
 }
 
-void brain::UniformBrainArea::_guess(
+bool brain::UniformBrainArea::_guess(
 		const Matrix &p_input,
 		Matrix &r_guess,
 		LearningCache *p_cache) const {
 
-	ERR_FAIL_COND(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID));
-	ERR_FAIL_COND(p_input.get_column_count() != 1);
+	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID), false);
+	ERR_FAIL_COND_V(p_input.get_column_count() != 1, false);
 
 	if (p_cache)
 		p_cache->layers_output.resize(get_layer_count());
@@ -240,12 +240,14 @@ void brain::UniformBrainArea::_guess(
 		r_guess = (weights[i] * r_guess) + biases[i];
 
 		// Activation of next layer
-		DEBUG_ONLY(ERR_FAIL_COND(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX));
+		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX, false));
 		r_guess.map(activation_functions[activations[ACTIVATION_ID(i + 1)]]);
 	}
 
 	if (p_cache)
 		p_cache->layers_output[get_layer_count() - 1] = r_guess;
+
+	return true;
 }
 
 int brain::UniformBrainArea::get_buffer_metadata_size() const {

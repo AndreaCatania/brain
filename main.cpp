@@ -167,7 +167,7 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_mate_singlepoint_threshold = 0.f; // TODO fix this please
+	settings.genetic_mate_singlepoint_threshold = 1.f; // TODO fix this please
 	settings.genetic_compatibility_threshold = 2.1;
 	settings.genetic_weights_significance = 0.1;
 
@@ -202,13 +202,19 @@ void test_NEAT_XOR() {
 			int acceptable_result(0);
 			real_t total_error(0);
 			for (int k(0); k < inputs.size(); ++k) {
-				brain_area->guess(inputs[k], result);
-				real_t error = result.get(0, 0) - expected[k].get(0, 0);
-				error = ABS(error);
-				if (error < 0.49f) {
-					++acceptable_result;
+				if (brain_area->guess(inputs[k], result)) {
+
+					real_t error = result.get(0, 0) - expected[k].get(0, 0);
+					error = ABS(error);
+					if (error < 0.49f) {
+						++acceptable_result;
+					}
+					total_error += error;
+				} else {
+					// If the guess function fail, put max error in order to avoid
+					// that this organism can reproduce
+					total_error += 1;
 				}
-				total_error += error;
 			}
 
 			real_t fitness = 1.f - (total_error / inputs.size());
@@ -249,55 +255,6 @@ int main() {
 	brain::ErrorHandlerList *error_handler = new brain::ErrorHandlerList;
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
-
-	/*
-	brain::Math::randomize();
-
-	brain::NtGenome genome;
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_INPUT);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_INPUT);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
-	genome.add_neuron(brain::NtNeuronGene::NEURON_GENE_TYPE_OUTPUT);
-	genome.add_link(0, 1, brain::Math::randd(), false, 1);
-	genome.add_link(1, 2, brain::Math::randd(), false, 2);
-	genome.add_link(2, 6, brain::Math::randd(), false, 3);
-	genome.add_link(3, 4, brain::Math::randd(), false, 4);
-	genome.add_link(4, 5, brain::Math::randd(), false, 5);
-	genome.add_link(5, 6, brain::Math::randd(), false, 6);
-	genome.add_link(2, 5, brain::Math::randd(), false, 7);
-	genome.add_link(5, 1, brain::Math::randd(), true, 8);
-	genome.add_link(6, 6, brain::Math::randd(), true, 9);
-
-	brain::NtGenome genome2;
-	genome.duplicate_in(genome2);
-
-	std::vector<brain::NtInnovation> innovations;
-	uint32_t inn = 9;
-
-	genome2.mutate_add_random_neuron(
-			innovations,
-			inn);
-
-	genome2.mutate_add_random_neuron(
-			innovations,
-			inn);
-
-	brain::NtGenome genome3;
-	//genome3.mate_multipoint(genome, 0.4, genome2, 2, true);
-	genome3.mate_singlepoint(genome, genome2);
-
-	brain::SharpBrainArea a;
-	genome3.generate_neural_network(a);
-
-	real_t b[] = { 1, 0 };
-	brain::Matrix res;
-	a.guess(brain::Matrix(2, 1, b), res);
-
-	int bre_ak = 0;
-	*/
 
 	test_NEAT_XOR();
 	//test_uniform_ba_XOR();

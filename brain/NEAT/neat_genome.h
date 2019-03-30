@@ -270,6 +270,13 @@ public:
 	void suppress_link(uint32_t p_link_id);
 
 	/**
+	 * @brief has_neuron
+	 * @param p_neuron_id
+	 * @return
+	 */
+	bool has_neuron(uint32_t p_neuron_id) const;
+
+	/**
 	 * @brief find_link find the link if exist
 	 * @param p_parent_neuron_id
 	 * @param p_child_neuron_id
@@ -277,7 +284,19 @@ public:
 	 */
 	uint32_t find_link(
 			uint32_t p_parent_neuron_id,
-			uint32_t p_child_neuron_id);
+			uint32_t p_child_neuron_id) const;
+
+	/**
+	 * @brief find_link find the link if exist
+	 * @param p_parent_neuron_id
+	 * @param p_child_neuron_id
+	 * @param p_recurrent
+	 * @return -1 if the link doesn't exists otherwise the link id
+	 */
+	uint32_t find_link(
+			uint32_t p_parent_neuron_id,
+			uint32_t p_child_neuron_id,
+			bool p_recurrent) const;
 
 	/**
 	 * @brief mutate_all_link_weights map all weights

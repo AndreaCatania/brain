@@ -88,7 +88,7 @@ public:
 			real_t p_learn_rate,
 			LearningCache *p_cache);
 
-	virtual void guess(
+	virtual bool guess(
 			const Matrix &p_input,
 			Matrix &r_guess) const;
 
@@ -97,7 +97,7 @@ public:
 	 * @param p_input Input data
 	 * @param r_guess result
 	 */
-	void _guess(
+	bool _guess(
 			const Matrix &p_input,
 			Matrix &r_guess,
 			LearningCache *p_cache = nullptr) const;

@@ -101,7 +101,7 @@ public:
 	 *
 	 * Make a guess considering the inputs
 	*/
-	virtual void guess(
+	virtual bool guess(
 			const Matrix &p_input,
 			Matrix &r_guess) const = 0;
 };

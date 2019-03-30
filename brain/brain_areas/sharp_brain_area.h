@@ -300,7 +300,7 @@ public:
 	 *
 	 * May fail if the network is not connected
 	 */
-	virtual void guess(
+	virtual bool guess(
 			const Matrix &p_input,
 			Matrix &r_guess) const;
 

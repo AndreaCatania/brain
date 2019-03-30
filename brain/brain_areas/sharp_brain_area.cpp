@@ -127,7 +127,8 @@ void brain::SharpBrainArea::add_link(
 
 	Neuron *child = &*(neurons.begin() + p_neuron_child_id);
 
-	ERR_FAIL_COND(child->has_parent(p_neuron_parent_id));
+	if (child->has_parent(p_neuron_parent_id)) // TODO remove this
+		ERR_FAIL_COND(child->has_parent(p_neuron_parent_id));
 	ERR_FAIL_COND(!p_recurrent && p_neuron_parent_id == p_neuron_child_id);
 
 	child->add_parent(
@@ -182,7 +183,7 @@ uint32_t brain::SharpBrainArea::get_output_layer_size() const {
 	return outputs.size();
 }
 
-void brain::SharpBrainArea::guess(
+bool brain::SharpBrainArea::guess(
 		const Matrix &p_input,
 		Matrix &r_guess) const {
 
@@ -192,11 +193,11 @@ void brain::SharpBrainArea::guess(
 	if (!ready) {
 		SharpBrainArea *mutable_this = const_cast<SharpBrainArea *>(this);
 		mutable_this->check_ready();
-		ERR_FAIL_COND(!ready);
+		ERR_FAIL_COND_V(!ready, false);
 	}
 
-	ERR_FAIL_COND(p_input.get_row_count() != inputs.size());
-	ERR_FAIL_COND(p_input.get_column_count() != 1);
+	ERR_FAIL_COND_V(p_input.get_row_count() != inputs.size(), false);
+	ERR_FAIL_COND_V(p_input.get_column_count() != 1, false);
 
 	++execution_id;
 
@@ -210,6 +211,8 @@ void brain::SharpBrainArea::guess(
 		const real_t val = neurons[outputs[i]].get_value(execution_id);
 		r_guess.set(i, 0, val);
 	}
+
+	return true;
 }
 
 bool brain::SharpBrainArea::are_links_walkable(
