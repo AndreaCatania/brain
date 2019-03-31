@@ -744,29 +744,14 @@ bool brain::NtGenome::is_link_recurrent(
 	ERR_FAIL_INDEX_V(p_parent_neuron_id, neuron_genes.size(), false);
 	ERR_FAIL_INDEX_V(p_child_neuron_id, neuron_genes.size(), false);
 
-	std::vector<NeuronId> cache;
-
-	return _recursive_is_link_recurrent(
-			p_parent_neuron_id,
-			p_child_neuron_id,
-			cache);
-}
-
-bool brain::NtGenome::_recursive_is_link_recurrent(
-		NeuronId p_parent_neuron_id,
-		NeuronId p_child_neuron_id,
-		std::vector<NeuronId> &r_cache) const {
-
 	if (p_parent_neuron_id == p_child_neuron_id)
-		return true; // Recursion found
+		return true; // Linkage to itself is recurrent
 
-	// Set as visited
-	r_cache.push_back(p_child_neuron_id);
+	std::vector<NeuronId> cache;
 
 	// Try to find the p_child_neuron_id in backward (From incoming) to see if
 	// there's a dependency
-	const std::vector<int> &parent_inc =
-			neuron_genes[p_parent_neuron_id].incoming_links;
+	const std::vector<int> &parent_inc = neuron_genes[p_parent_neuron_id].incoming_links;
 	for (auto it = parent_inc.begin(); it != parent_inc.end(); ++it) {
 
 		const int link_id = *it;
@@ -775,20 +760,63 @@ bool brain::NtGenome::_recursive_is_link_recurrent(
 		if (link_genes[link_id].recurrent)
 			continue;
 
-		if (r_cache.end() != std::find(
-									 r_cache.begin(),
-									 r_cache.end(),
-									 link_genes[link_id].parent_neuron_id))
-			return true; // Loop detected
+		if (_recursive_is_link_recurrent(
+					p_parent_neuron_id,
+					link_genes[link_id].parent_neuron_id,
+					p_child_neuron_id,
+					cache))
+			return true;
+	}
+
+	return false;
+}
+
+bool brain::NtGenome::_recursive_is_link_recurrent(
+		NeuronId p_parent_neuron_id,
+		NeuronId p_middle_neuron_id,
+		NeuronId p_child_neuron_id,
+		std::vector<NeuronId> &r_cache) const {
+
+	if (p_parent_neuron_id == p_middle_neuron_id)
+		// When this happen a connection loop is detected, so
+		return true;
+
+	if (p_middle_neuron_id == p_child_neuron_id)
+		// Recursion found
+		return true;
+
+	/// This is necessary because could happen that we enter in a loop that doesn't
+	/// have neither the parent nor the child
+	if (r_cache.end() != std::find(
+								 r_cache.begin(),
+								 r_cache.end(),
+								 p_middle_neuron_id))
+		// Loop detected
+		return true;
+
+	r_cache.push_back(p_middle_neuron_id);
+
+	// Try to find the p_child_neuron_id in backward (From incoming) to see if
+	// there's a dependency
+	const std::vector<int> &parent_inc =
+			neuron_genes[p_middle_neuron_id].incoming_links;
+	for (auto it = parent_inc.begin(); it != parent_inc.end(); ++it) {
+
+		const int link_id = *it;
+
+		// Skip if recurrent
+		if (link_genes[link_id].recurrent)
+			continue;
 
 		if (_recursive_is_link_recurrent(
 					p_parent_neuron_id,
 					link_genes[link_id].parent_neuron_id,
+					p_child_neuron_id,
 					r_cache))
 			return true;
 	}
 
-	auto it = std::find(r_cache.begin(), r_cache.end(), p_child_neuron_id);
+	auto it = std::find(r_cache.begin(), r_cache.end(), p_middle_neuron_id);
 	ERR_FAIL_COND_V(it == r_cache.end(), false);
 	r_cache.erase(it);
 

@@ -458,6 +458,7 @@ private:
 	 */
 	bool _recursive_is_link_recurrent(
 			NeuronId p_parent_neuron_id,
+			NeuronId p_middle_neuron_id,
 			NeuronId p_child_neuron_id,
 			std::vector<NeuronId> &r_cache) const;
 

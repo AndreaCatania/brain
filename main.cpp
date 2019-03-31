@@ -167,7 +167,7 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_mate_singlepoint_threshold = 1.f; // TODO fix this please
+	settings.genetic_mate_singlepoint_threshold = 0.f; // TODO fix this please
 	settings.genetic_compatibility_threshold = 2.1;
 	settings.genetic_weights_significance = 0.1;
 
