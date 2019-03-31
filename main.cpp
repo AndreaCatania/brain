@@ -138,6 +138,7 @@ const uint32_t iterations = 1;
 
 void test_NEAT_XOR() {
 
+	/// Prepare datas
 	std::vector<brain::Matrix> inputs;
 	std::vector<brain::Matrix> expected;
 	{
@@ -165,18 +166,24 @@ void test_NEAT_XOR() {
 		expected.push_back(brain::Matrix(1, 1, b));
 	}
 
+	const int epoch_max(100);
+
+	/// Statistics
+	std::vector<brain::NtEpochStatistics> statistics;
+	statistics.reserve(epoch_max);
+
+	/// Population creation
+
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
 	settings.genetic_compatibility_threshold = 2.1;
 	settings.genetic_weights_significance = 0.1;
 
-	/// Step 1. Population creation
 	brain::NtPopulation population(
 			brain::NtGenome(3, 1, true),
 			150 /*population size*/,
 			settings);
 
-	const int epoch_max(100);
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 		//for (int epoch(0); true; ++epoch) {
 
@@ -234,13 +241,17 @@ void test_NEAT_XOR() {
 
 		/// Step 3. advance the epoch
 		const bool success = population.epoch_advance();
+
+		statistics.push_back(population.get_epoch_statistics());
+
 		if (!success) {
 			print_line("Stopping prematurely: " + brain::itos(epoch));
 			break;
 		}
 
-		print_line("\nEpoch: " + brain::itos(epoch));
-		print_line("Pop best fitness: " + brain::rtos(population.get_best_personal_fitness()));
+		print_line(population.get_epoch_statistics());
+		//print_line("\nEpoch: " + brain::itos(epoch));
+		//print_line("Pop best fitness: " + brain::rtos(population.get_best_personal_fitness()));
 	}
 
 	brain::SharpBrainArea ba(nullptr);

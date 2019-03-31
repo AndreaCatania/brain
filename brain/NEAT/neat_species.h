@@ -27,7 +27,13 @@ class NtSpecies {
 	/**
 	 * @brief owner of this specie
 	 */
-	NtPopulation *owner;
+	NtPopulation *const owner;
+
+	/**
+	 * @brief unique id to identify the specie.
+	 * Note: this is different index in the population array.
+	 */
+	const uint32_t id;
 
 	/**
 	 * @brief born_epoch the epoch when this species is born
@@ -93,12 +99,18 @@ public:
 	 * @param p_population
 	 * @param p_current_epoch
 	 */
-	NtSpecies(NtPopulation *p_population, uint32_t p_current_epoch);
+	NtSpecies(NtPopulation *p_population, uint32_t p_id, uint32_t p_current_epoch);
 
 	/**
 	 * @brief ~NtSpecies is a destructor
 	 */
 	~NtSpecies();
+
+	/**
+	 * @brief returns unique id
+	 * @return
+	 */
+	uint32_t get_id() const;
 
 	/**
 	 * @brief add_organism add new organism to this specie

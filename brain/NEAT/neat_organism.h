@@ -17,7 +17,13 @@ class NtOrganism {
 	/**
 	 * @brief owner is the population where this organism belong
 	 */
-	const NtPopulation *owner;
+	const NtPopulation *const owner;
+
+	/**
+	 * @brief Unique id to identify the organism
+	 * Note: this is not the index in the population array
+	 */
+	const uint32_t id;
 
 	/**
 	 * @brief specie where this organism belong. If null mean that it is not part
@@ -86,12 +92,18 @@ public:
 	/**
 	 * @brief NtOrganism constructor
 	 */
-	NtOrganism(const NtPopulation *p_owner);
+	NtOrganism(const NtPopulation *p_owner, uint32_t p_id);
 
 	/**
 	 * @brief NtOrganism Destructor
 	 */
 	~NtOrganism();
+
+	/**
+	 * @brief Get unique ID
+	 * @return
+	 */
+	uint32_t get_id() const;
 
 	/**
 	 * @brief get_genome_mutable give the possibility to mutate the

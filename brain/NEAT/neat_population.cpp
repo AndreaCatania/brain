@@ -13,6 +13,8 @@ brain::NtPopulation::NtPopulation(
 		NtPopulationSettings &p_settings) :
 		population_size(p_population_size),
 		settings(p_settings),
+		species_last_index(0),
+		organisms_last_index(0),
 		rand_generator(p_settings.seed),
 		gaussian_distribution(0, p_settings.learning_deviation),
 		epoch(1),
@@ -63,6 +65,9 @@ void brain::NtPopulation::organism_set_fitness(uint32_t p_organism_i, real_t p_f
 
 bool brain::NtPopulation::epoch_advance() {
 
+	statistics.clear();
+	statistics.epoch = epoch;
+
 	++epoch;
 
 	/// Step 1. Take the best organism and make a copy of its genome
@@ -79,7 +84,11 @@ bool brain::NtPopulation::epoch_advance() {
 	ERR_FAIL_COND_V(!population_champion, false);
 	population_champion->get_genome().duplicate_in(champion_genome);
 
+	statistics.pop_champion_id = population_champion->get_id();
+	statistics.pop_champion_fitness = population_champion->get_personal_fitness();
+
 	/// Step 2. Compute species average fitness, then adjust it
+	int ages_sum(0);
 	for (auto it_s = species.begin(); it_s != species.end(); ++it_s) {
 		(*it_s)->compute_average_fitness();
 		(*it_s)->adjust_fitness(
@@ -88,7 +97,12 @@ bool brain::NtPopulation::epoch_advance() {
 				settings.species_stagnant_age_threshold,
 				settings.species_stagnant_multiplier,
 				settings.species_survival_ratio);
+
+		ages_sum += (*it_s)->get_age();
 	}
+
+	statistics.species_count = species.size();
+	statistics.species_avg_ages = ages_sum / species.size();
 
 	std::vector<NtSpecies *> ordered_species(species.size());
 	std::copy(species.begin(), species.end(), ordered_species.begin());
@@ -100,12 +114,17 @@ bool brain::NtPopulation::epoch_advance() {
 
 	NtSpecies *best_species = *ordered_species.begin();
 
+	statistics.species_best_id = best_species->get_id();
+	statistics.species_best_age = best_species->get_age();
+
 	/// Stage 3. calculates average population fitness
 	real_t total_fitness(0);
 	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 		total_fitness += (*it)->get_fitness();
 	}
 	real_t population_average_fitness = total_fitness / population_size;
+
+	statistics.pop_avg_fitness = population_average_fitness;
 
 	/// Step 4. Calculates the number of offspring for each organism
 	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
@@ -144,6 +163,8 @@ bool brain::NtPopulation::epoch_advance() {
 		ERR_FAIL_COND_V(total_expected_offsprings != population_size, false);
 	}
 
+	statistics.species_best_offspring_pre_steal = best_species->get_offspring_count();
+
 	/// Step 6. Perform offspring re-assignment
 	/// This phase changes depending if the population is stagnant or not
 	/// When the pop is not stagnant and is allowed to stole cribs from
@@ -154,7 +175,11 @@ bool brain::NtPopulation::epoch_advance() {
 		epoch_last_improvement = epoch;
 	}
 
+	statistics.pop_epoch_last_improvement = epoch_last_improvement;
+
 	if (epoch - epoch_last_improvement > settings.population_stagnant_age_thresold) {
+
+		statistics.pop_is_stagnant = true;
 
 		/// The population is stagnant
 		/// So try to restart it from the best species
@@ -234,6 +259,8 @@ bool brain::NtPopulation::epoch_advance() {
 				}
 			}
 		}
+
+		statistics.pop_stolen_cribs = stolen_cribs;
 
 		// Assign stolen cribs to the first second and third species
 		const int stolen_one_fifth = stolen_cribs / 5;
@@ -327,6 +354,9 @@ bool brain::NtPopulation::epoch_advance() {
 		ERR_FAIL_COND_V(stolen_cribs != 0, false);
 	}
 
+	statistics.species_best_offspring = best_species->get_offspring_count();
+	statistics.species_best_champion_offspring = best_species->get_champion_offspring_count();
+
 	/// Step 7. Reproduction phase.
 	kill_organisms_marked_for_death();
 
@@ -360,8 +390,11 @@ bool brain::NtPopulation::epoch_advance() {
 			std::find(species.begin(), species.end(), best_species);
 	if (best_species_iterator == species.end()) {
 
+		statistics.species_best_is_died = true;
 		WARN_PRINTS("IMPORTANT For some reason the best species died. Is there a bug somewhere?");
 	}
+
+	statistics.is_epoch_advanced = true;
 
 	// Finally Done!
 	return true;
@@ -372,9 +405,13 @@ real_t brain::NtPopulation::get_best_personal_fitness() const {
 }
 
 void brain::NtPopulation::get_champion_network(
-		brain::SharpBrainArea &r_brain_area) {
+		brain::SharpBrainArea &r_brain_area) const {
 
 	champion_genome.generate_neural_network(r_brain_area);
+}
+
+const brain::NtEpochStatistics &brain::NtPopulation::get_epoch_statistics() const {
+	return statistics;
 }
 
 void brain::NtPopulation::speciate() {
@@ -433,7 +470,7 @@ void brain::NtPopulation::kill_void_species() {
 }
 
 brain::NtSpecies *brain::NtPopulation::create_species() {
-	NtSpecies *new_species = new NtSpecies(this, epoch);
+	NtSpecies *new_species = new NtSpecies(this, ++species_last_index, epoch);
 	species.push_back(new_species);
 	return new_species;
 }
@@ -466,7 +503,7 @@ void brain::NtPopulation::destroy_all_species() {
 
 brain::NtOrganism *brain::NtPopulation::create_organism() {
 	ERR_FAIL_COND_V(organisms.size() >= population_size, nullptr);
-	NtOrganism *o = new NtOrganism(this);
+	NtOrganism *o = new NtOrganism(this, ++organisms_last_index);
 	organisms.push_back(o);
 	return o;
 }

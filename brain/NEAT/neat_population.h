@@ -9,6 +9,146 @@ class NtSpecies;
 class NtOrganism;
 
 /**
+ * @brief The NtEpochStatistics struct is used to track the changes that the
+ * population doesn during a specific epoch
+ */
+struct NtEpochStatistics {
+
+	operator std::string() const {
+
+		return "{\"epoch\":" + itos(epoch) + "," +
+			   "\n\"is_epoch_advanced\":" + (is_epoch_advanced ? "true" : "false") + "," +
+			   "\n\"pop_champion_id\":" + itos(pop_champion_id) + "," +
+			   "\n\"pop_champion_fitness\":" + rtos(pop_champion_fitness) + "," +
+			   "\n\"species_count\":" + itos(species_count) + "," +
+			   "\n\"species_young_count\":" + itos(species_young_count) + "," +
+			   "\n\"species_stagnant_count\":" + itos(species_stagnant_count) + "," +
+			   "\n\"species_avg_ages\":" + itos(species_avg_ages) + "," +
+			   "\n\"species_best_id\":" + itos(species_best_id) + "," +
+			   "\n\"species_best_age\":" + itos(species_best_age) + "," +
+			   "\n\"species_best_offspring_pre_steal\":" + itos(species_best_offspring_pre_steal) + "," +
+			   "\n\"species_best_offspring\":" + itos(species_best_offspring) + "," +
+			   "\n\"species_best_champion_offspring\":" + itos(species_best_champion_offspring) + "," +
+			   "\n\"species_best_is_died\":" + (species_best_is_died ? "true" : "false") + "," +
+			   "\n\"pop_avg_fitness\":" + rtos(pop_avg_fitness) + "," +
+			   "\n\"pop_is_stagnant\":" + (pop_is_stagnant ? "true" : "false") + "," +
+			   "\n\"pop_epoch_last_improvement\":" + itos(pop_epoch_last_improvement) + "," +
+			   "\n\"pop_stolen_cribs\":" + itos(pop_stolen_cribs) + "}";
+	}
+
+	void clear() {
+		epoch = 0;
+		is_epoch_advanced = false;
+		pop_champion_id = 0;
+		pop_champion_fitness = 0.f;
+		species_count = 0;
+		species_young_count = 0;
+		species_stagnant_count = 0;
+		species_avg_ages = 0;
+		species_best_id = 0;
+		species_best_age = 0;
+		species_best_offspring_pre_steal = 0;
+		species_best_offspring = 0;
+		species_best_champion_offspring = 0;
+		species_best_is_died = false;
+		pop_avg_fitness = 0;
+		pop_is_stagnant = false;
+		pop_epoch_last_improvement = 0;
+		pop_stolen_cribs = 0;
+	}
+
+	/**
+	 * @brief The epoch when this statistic was recordered
+	 */
+	uint32_t epoch;
+
+	/**
+	 * @brief is_epoch_advanced
+	 */
+	bool is_epoch_advanced;
+
+	/**
+	 * @brief pop_champion_id
+	 */
+	uint32_t pop_champion_id;
+
+	/**
+	 * @brief Population champion personal fitness
+	 */
+	real_t pop_champion_fitness;
+
+	/**
+	 * @brief species_count
+	 */
+	int species_count;
+
+	/**
+	 * @brief species_young_count
+	 */
+	int species_young_count;
+
+	/**
+	 * @brief species_stagnant_count
+	 */
+	int species_stagnant_count;
+
+	/**
+	 * @brief species_avg_ages
+	 */
+	int species_avg_ages;
+
+	/**
+	 * @brief  The best species id
+	 */
+	uint32_t species_best_id;
+
+	/**
+	 * @brief The best species age
+	 */
+	uint32_t species_best_age;
+
+	/**
+	 * @brief species_best_offspring_pre_steal
+	 */
+	int species_best_offspring_pre_steal;
+
+	/**
+	 * @brief species_best_offspring
+	 */
+	int species_best_offspring;
+
+	/**
+	 * @brief species_best_champion_offspring
+	 */
+	int species_best_champion_offspring;
+
+	/**
+	 * @brief species_best_is_died
+	 */
+	bool species_best_is_died;
+
+	/**
+	 * @brief The organisms avg fitness (NOTE: Not personal fitness)
+	 */
+	real_t pop_avg_fitness;
+
+	/**
+	 * @brief pop_is_stagnant
+	 */
+	bool pop_is_stagnant;
+
+	/**
+	 * @brief pop_epoch_last_improvement
+	 */
+	uint32_t pop_epoch_last_improvement;
+
+	/**
+	 * @brief pop_stolen_cribs
+	 */
+	int pop_stolen_cribs;
+};
+
+/**
  * @brief The NtPopulationSettings struct is a utility structure used to initialize
  * easily the population settings.
  */
@@ -242,6 +382,16 @@ class NtPopulation {
 	uint32_t innovation_number;
 
 	/**
+	 * @brief species_last_index used to give a unique ID to the species
+	 */
+	uint32_t species_last_index;
+
+	/**
+	 * @brief organisms_last_index used to give a unique ID to the organisms
+	 */
+	uint32_t organisms_last_index;
+
+	/**
 	 * @brief rand_generator is used to generate a random number
 	 */
 	std::default_random_engine rand_generator;
@@ -290,6 +440,11 @@ class NtPopulation {
 	 * @brief champion_genome This is the champion genome of the past epoch.
 	 */
 	NtGenome champion_genome;
+
+	/**
+	 * @brief statistic Used to track what the epoch does
+	 */
+	NtEpochStatistics statistics;
 
 public:
 	/**
@@ -349,6 +504,7 @@ public:
 	 * In this function every organism die and get replaced with a new one of
 	 * new generation that is born with the base genes of the most fittest organisms
 	 * of the previous epoch.
+	 *
 	 * @return true if the advancing was successful
 	 */
 	bool epoch_advance();
@@ -364,7 +520,13 @@ public:
 	 * @brief Returns the champion neural network
 	 * @param r_brain_area
 	 */
-	void get_champion_network(brain::SharpBrainArea &r_brain_area);
+	void get_champion_network(brain::SharpBrainArea &r_brain_area) const;
+
+	/**
+	 * @brief Returns the statistics of the epoch travelling
+	 * @return
+	 */
+	const NtEpochStatistics &get_epoch_statistics() const;
 
 private:
 	/**

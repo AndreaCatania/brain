@@ -6,8 +6,12 @@
 #include "brain/math/math_funcs.h"
 #include <algorithm>
 
-brain::NtSpecies::NtSpecies(NtPopulation *p_owner, uint32_t current_epoch) :
+brain::NtSpecies::NtSpecies(
+		NtPopulation *p_owner,
+		uint32_t p_id,
+		uint32_t current_epoch) :
 		owner(p_owner),
+		id(p_id),
 		born_epoch(current_epoch),
 		age(0),
 		champion(nullptr),
@@ -21,6 +25,10 @@ brain::NtSpecies::NtSpecies(NtPopulation *p_owner, uint32_t current_epoch) :
 
 brain::NtSpecies::~NtSpecies() {
 	ERR_FAIL_COND(organisms.size());
+}
+
+uint32_t brain::NtSpecies::get_id() const {
+	return id;
 }
 
 void brain::NtSpecies::add_organism(NtOrganism *p_organism) {
@@ -115,12 +123,16 @@ void brain::NtSpecies::adjust_fitness(
 	// Computes forgiving and penalizations
 	if (age <= p_youngness_age_threshold) {
 
+		owner->statistics.species_young_count++;
+
 		// Still young, give it more chances to do wrong things
 		for (auto it = organisms.begin(); it != organisms.end(); ++it) {
 			NtOrganism *o = (*it);
 			o->set_fitness(o->get_personal_fitness() * p_youngness_multiplier);
 		}
 	} else if (stagnant_epochs > p_stagnant_age_threshold) {
+
+		owner->statistics.species_stagnant_count++;
 
 		// This is not young and also it's stagnant penalize brutally
 		for (auto it = organisms.begin(); it != organisms.end(); ++it) {

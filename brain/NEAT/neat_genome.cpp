@@ -444,9 +444,9 @@ bool brain::NtGenome::mate_multipoint(
 
 		if (genome_inn != innovative->link_genes.end() &&
 				genome_obs != obsolete->link_genes.end()) {
-
+			// Both have this innovation
 			if (p_average) {
-				// Both have this innovation, average them
+				// average them
 
 				gene_to_add = *genome_inn;
 				gene_to_add.weight = (genome_inn->weight + genome_obs->weight) * 0.5;
@@ -458,7 +458,7 @@ bool brain::NtGenome::mate_multipoint(
 				}
 
 			} else {
-				// Both have this innovation, select one randomly
+				// select one randomly
 				if (Math::randd() < 0.5) {
 					gene_to_add = *genome_inn;
 				} else {
