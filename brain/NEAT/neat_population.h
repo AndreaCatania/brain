@@ -112,9 +112,9 @@ struct NtPopulationSettings {
 	 * These parameters will be normalized (If all are the same they will have
 	 * the same probability)
 	 */
-	real_t genetic_mate_multipoint_threshold = 0.4;
+	real_t genetic_mate_multipoint_threshold = 0.5;
 	real_t genetic_mate_multipoint_avg_threshold = 0.4;
-	real_t genetic_mate_singlepoint_threshold = 0.2;
+	real_t genetic_mate_singlepoint_threshold = 0.1;
 
 	/**
 	 * @brief genetic_mutate_* are used to decide what type of mutation should
