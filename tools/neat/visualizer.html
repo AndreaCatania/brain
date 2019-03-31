@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="./bootstrap.min.js"></script>
+	  	<link rel="stylesheet" href="./bootstrap.min.css"/>
+		
+		<script src="./jquery-3.3.1.slim.min.js"></script>
+
+		<script src="./Chart.min.js"></script>
+	  	<link rel="stylesheet" href="./Chart.min.css"/>
+	</head>
+	<body class="container-fluid">
+		<div class="row">
+			<div class="col">
+				<form>
+					<div class="form-group">
+					    <label for="statistics_inpt">Neat statistics to visualize</label>
+					    <textarea class="form-control" id="statistics_inpt" rows="1"></textarea>
+					</div>
+  					<button type="button" id="visualize_btn" class="btn btn-primary">Visualize</button>
+				</form>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				
+				<canvas id="chart" class="w-100"></canvas>
+				
+			</div>
+		</div>
+
+		
+	</body>
+	<script>
+
+		var point_radius = 0.75;
+
+		var chart = new Chart($('#chart')[0].getContext('2d'), {
+		    type: 'bar',
+		    data: {
+		        labels: [],
+		        datasets: [
+		        // Fitness section
+		        {
+		            label: 'Pop champion fitness',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'fitness',
+		            borderColor: 'rgba(255, 95, 0, 1)',
+		            borderWidth: 3,
+		            pointRadius: point_radius
+		        },
+		        {
+		            label: 'Species AVG fitness',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'fitness',
+		            borderColor: 'rgba(255, 117, 36, 1)',
+		            borderWidth: 3,
+		            pointRadius: point_radius
+		        },
+
+		        // Species counting
+		        {
+		            label: 'Species count',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(54, 247, 54, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Young Species',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(110, 234, 0, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Stagnant Species',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(83, 177, 0, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // id section
+		        {
+		            label: 'Best Species ID',
+		            fill: true,
+		            type: 'line',
+      				yAxisID: 'ids',
+		            backgroundColor: 'rgba(69, 86, 54, 0.1)',
+		            tension: 0,
+		            borderWidth: 0,
+		            pointRadius: point_radius
+		        },
+
+		        // Age
+		        {
+		            label: 'Best Species Age',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'age',
+		            borderColor: 'rgba(69, 86, 54, 0.4)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // offspring
+		        {
+		            label: 'Best Species offspring pre steal',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(46, 117, 248, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Best Species offspring',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(3, 52, 255, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Best Species champion offspring',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(29, 72, 250, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'pop stolen cribs',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(88, 121, 255, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // Epoch
+		        {
+		            label: 'Pop epoch last improvement',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'epoch',
+		            borderColor: 'rgba(49, 63, 118, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // Bools
+		        {
+		            label: 'Pop stagnant',
+		            fill: true,
+      				yAxisID: 'bools',
+		            backgroundColor: 
+		                'rgba(255, 0, 0, 0.5)'
+		            ,
+		            borderWidth: 0,
+		            pointRadius: 0
+		        },{
+		            label: 'Best species died',
+		            fill: true,
+      				yAxisID: 'bools',
+		            backgroundColor: 
+		                'rgba(213, 0, 11, 0.5)'
+		            ,
+		            borderWidth: 0,
+		            pointRadius: 0
+		        }]
+		    },
+		    options: {
+		    	responsive: true,
+    			maintainAspectRatio: false,
+		        scales: {
+		            yAxes: [{
+		            	id: "fitness",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "species_count",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "ids",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "age",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "offspring",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "epoch",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "bools",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            }]
+		        }
+		    }
+		});
+
+		$(document).on("click", "#visualize_btn", function(){
+			var val = $("#statistics_inpt").val();
+			var parsing_error = false
+			var statistics
+			try{
+				statistics = JSON.parse(val);
+			}catch(e){
+				alert("The provided datas are a valid JSON");
+				parsing_error = true
+			}
+			if(!parsing_error){
+				visualize_statistics(statistics);
+			}
+		});
+
+
+		function extrapolate(statistics, ele, prefix=0, postfix=0){
+			var arr = Array();
+			statistics.forEach(function(e){
+				arr.push(prefix + e[ele] + postfix);
+			});
+			return arr;
+		}
+
+		function visualize_statistics(statistics){
+			
+			chart.data.labels = extrapolate(statistics, "epoch", "#");
+
+			var id = 0;
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_champion_fitness");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_avg_fitness");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_count");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_young_count");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_stagnant_count");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_id");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_age");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_offspring_pre_steal");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_offspring");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_champion_offspring");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_stolen_cribs");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_epoch_last_improvement");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_is_stagnant");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_is_died");
+
+			chart.update();
+		}
+
+
+	</script>
+</html>

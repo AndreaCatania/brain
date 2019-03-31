@@ -249,9 +249,16 @@ void test_NEAT_XOR() {
 			break;
 		}
 
-		print_line(population.get_epoch_statistics());
-		//print_line("\nEpoch: " + brain::itos(epoch));
-		//print_line("Pop best fitness: " + brain::rtos(population.get_best_personal_fitness()));
+		print_line("\nEpoch: " + brain::itos(epoch));
+	}
+
+	{ // Print statistics
+		std::string s("");
+		for (auto it = statistics.begin(); it != statistics.end(); ++it) {
+			s += std::string(*it) + ",";
+		}
+		s.resize(s.size() - 1); // Remove last comma
+		print_line("[" + s + "]");
 	}
 
 	brain::SharpBrainArea ba(nullptr);
