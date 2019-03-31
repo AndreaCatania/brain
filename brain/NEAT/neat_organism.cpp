@@ -5,9 +5,8 @@
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
 
-brain::NtOrganism::NtOrganism(const NtPopulation *p_owner, const uint32_t p_id) :
+brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		owner(p_owner),
-		id(p_id),
 		species(nullptr),
 		marked_for_death(false),
 		is_dirty_brain_area(true),
@@ -24,10 +23,6 @@ brain::NtOrganism::~NtOrganism() {
 	if (species) {
 		ERR_PRINTS("The organism belongs to a species, remove this before destruct the organism");
 	}
-}
-
-uint32_t brain::NtOrganism::get_id() const {
-	return id;
 }
 
 brain::NtGenome &brain::NtOrganism::get_genome_mutable() {

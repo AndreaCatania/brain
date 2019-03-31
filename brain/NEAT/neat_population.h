@@ -18,7 +18,6 @@ struct NtEpochStatistics {
 
 		return "{\"epoch\":" + itos(epoch) + "," +
 			   "\n\"is_epoch_advanced\":" + (is_epoch_advanced ? "true" : "false") + "," +
-			   "\n\"pop_champion_id\":" + itos(pop_champion_id) + "," +
 			   "\n\"pop_champion_fitness\":" + rtos(pop_champion_fitness) + "," +
 			   "\n\"species_count\":" + itos(species_count) + "," +
 			   "\n\"species_young_count\":" + itos(species_young_count) + "," +
@@ -33,13 +32,21 @@ struct NtEpochStatistics {
 			   "\n\"pop_avg_fitness\":" + rtos(pop_avg_fitness) + "," +
 			   "\n\"pop_is_stagnant\":" + (pop_is_stagnant ? "true" : "false") + "," +
 			   "\n\"pop_epoch_last_improvement\":" + itos(pop_epoch_last_improvement) + "," +
-			   "\n\"pop_stolen_cribs\":" + itos(pop_stolen_cribs) + "}";
+			   "\n\"pop_stolen_cribs\":" + itos(pop_stolen_cribs) + "," +
+			   "\n\"reproduction_champion_mutate_weights\":" + rtos(reproduction_champion_mutate_weights) + "," +
+			   "\n\"reproduction_champion_add_random_link\":" + rtos(reproduction_champion_add_random_link) + "," +
+			   "\n\"reproduction_mate_multipoint\":" + rtos(reproduction_mate_multipoint) + "," +
+			   "\n\"reproduction_mate_multipoint_avg\":" + rtos(reproduction_mate_multipoint_avg) + "," +
+			   "\n\"reproduction_mate_singlepoint\":" + rtos(reproduction_mate_singlepoint) + "," +
+			   "\n\"reproduction_mutate_add_random_link\":" + rtos(reproduction_mutate_add_random_link) + "," +
+			   "\n\"reproduction_mutate_add_random_neuron\":" + rtos(reproduction_mutate_add_random_neuron) + "," +
+			   "\n\"reproduction_mutate_weights\":" + rtos(reproduction_mutate_weights) + "," +
+			   "\n\"reproduction_mutate_toggle_link_activation\":" + rtos(reproduction_mutate_toggle_link_activation) + "}";
 	}
 
 	void clear() {
 		epoch = 0;
 		is_epoch_advanced = false;
-		pop_champion_id = 0;
 		pop_champion_fitness = 0.f;
 		species_count = 0;
 		species_young_count = 0;
@@ -55,6 +62,15 @@ struct NtEpochStatistics {
 		pop_is_stagnant = false;
 		pop_epoch_last_improvement = 0;
 		pop_stolen_cribs = 0;
+		reproduction_champion_mutate_weights = 0;
+		reproduction_champion_add_random_link = 0;
+		reproduction_mate_multipoint = 0;
+		reproduction_mate_multipoint_avg = 0;
+		reproduction_mate_singlepoint = 0;
+		reproduction_mutate_add_random_link = 0;
+		reproduction_mutate_add_random_neuron = 0;
+		reproduction_mutate_weights = 0;
+		reproduction_mutate_toggle_link_activation = 0;
 	}
 
 	/**
@@ -66,11 +82,6 @@ struct NtEpochStatistics {
 	 * @brief is_epoch_advanced
 	 */
 	bool is_epoch_advanced;
-
-	/**
-	 * @brief pop_champion_id
-	 */
-	uint32_t pop_champion_id;
 
 	/**
 	 * @brief Population champion personal fitness
@@ -146,6 +157,51 @@ struct NtEpochStatistics {
 	 * @brief pop_stolen_cribs
 	 */
 	int pop_stolen_cribs;
+
+	/**
+	 * @brief reproduction_champion_mutate_weights
+	 */
+	int reproduction_champion_mutate_weights;
+
+	/**
+	 * @brief reproduction_champion_add_random_link
+	 */
+	int reproduction_champion_add_random_link;
+
+	/**
+	 * @brief reproduction_mate_multipoint
+	 */
+	int reproduction_mate_multipoint;
+
+	/**
+	 * @brief reproduction_mate_multipoint_avg
+	 */
+	int reproduction_mate_multipoint_avg;
+
+	/**
+	 * @brief reproduction_mate_singlepoint
+	 */
+	int reproduction_mate_singlepoint;
+
+	/**
+	 * @brief reproduction_mutate_add_random_link
+	 */
+	int reproduction_mutate_add_random_link;
+
+	/**
+	 * @brief reproduction_mutate_add_random_neuron
+	 */
+	int reproduction_mutate_add_random_neuron;
+
+	/**
+	 * @brief reproduction_mutate_weights
+	 */
+	int reproduction_mutate_weights;
+
+	/**
+	 * @brief reproduction_mutate_toggle_link_activation
+	 */
+	int reproduction_mutate_toggle_link_activation;
 };
 
 /**
@@ -385,11 +441,6 @@ class NtPopulation {
 	 * @brief species_last_index used to give a unique ID to the species
 	 */
 	uint32_t species_last_index;
-
-	/**
-	 * @brief organisms_last_index used to give a unique ID to the organisms
-	 */
-	uint32_t organisms_last_index;
 
 	/**
 	 * @brief rand_generator is used to generate a random number

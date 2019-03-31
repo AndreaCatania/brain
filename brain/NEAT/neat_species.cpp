@@ -223,10 +223,12 @@ void brain::NtSpecies::reproduce(
 			if (champion_offspring_count > 1) {
 				if (Math::randd() < 0.8) {
 
+					owner->statistics.reproduction_champion_mutate_weights++;
+
 					child->log += "\nCHAMPION MUTATE Add Weight";
 					// Happens more often
 					// Mutate link weights
-					child->get_genome_mutable().mutate_random_link_weight(
+					child->get_genome_mutable().mutate_all_link_weights(
 							NtPopulation::rand_gaussian,
 							owner);
 				} else {
@@ -242,12 +244,17 @@ void brain::NtSpecies::reproduce(
 
 					if (!add_link_status) {
 
+						owner->statistics.reproduction_champion_mutate_weights++;
+
 						// Almost never happens
 						// Was not possible to add a link, so mutates
 						// the weights with completelly new weights
-						child->get_genome_mutable().mutate_random_link_weight(
+						child->get_genome_mutable().mutate_all_link_weights(
 								NtPopulation::rand_cold_gaussian,
 								owner);
+					} else {
+
+						owner->statistics.reproduction_champion_add_random_link++;
 					}
 				}
 
@@ -336,6 +343,8 @@ void brain::NtSpecies::reproduce(
 			const real_t r(Math::randd());
 			if (r < m_m_range) {
 
+				owner->statistics.reproduction_mate_multipoint++;
+
 				child->log += "\nMATE multipoint";
 
 				// Multipoint mating
@@ -348,6 +357,8 @@ void brain::NtSpecies::reproduce(
 
 			} else if (r < m_m_a_range) {
 
+				owner->statistics.reproduction_mate_multipoint_avg++;
+
 				child->log += "\nMATE multipoint avg";
 				// Multipoint Average mating
 				state = child->get_genome_mutable().mate_multipoint(
@@ -358,6 +369,8 @@ void brain::NtSpecies::reproduce(
 						true);
 
 			} else {
+
+				owner->statistics.reproduction_mate_singlepoint++;
 
 				child->log += "\nMATE singlepoint";
 				// Singlepoint mating
@@ -375,6 +388,8 @@ void brain::NtSpecies::reproduce(
 			const real_t r(Math::randd());
 			if (r < m_a_l_range) {
 
+				owner->statistics.reproduction_mutate_add_random_link++;
+
 				child->log += "\nMUTATE add link";
 				// Mutate add link
 				state = child->get_genome_mutable().mutate_add_random_link(
@@ -384,6 +399,8 @@ void brain::NtSpecies::reproduce(
 
 			} else if (r < m_a_n_range) {
 
+				owner->statistics.reproduction_mutate_add_random_neuron++;
+
 				child->log += "\nMUTATE add neuron";
 				// Mutate add neuron
 				state = child->get_genome_mutable().mutate_add_random_neuron(
@@ -391,6 +408,8 @@ void brain::NtSpecies::reproduce(
 						owner->innovation_number);
 
 			} else if (r < m_l_w_range) {
+
+				owner->statistics.reproduction_mutate_weights++;
 
 				child->log += "\nMUTATE mutate weight";
 				// Mutate link weight
@@ -409,6 +428,8 @@ void brain::NtSpecies::reproduce(
 				}
 				state = true;
 			} else {
+
+				owner->statistics.reproduction_mutate_toggle_link_activation++;
 
 				child->log += "\nMUTATE toggle link activation";
 				// Mutate toggle link enabled
