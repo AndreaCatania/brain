@@ -64,6 +64,7 @@
 		        // Species counting
 		        {
 		            label: 'Species count',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'species_count',
@@ -72,6 +73,7 @@
 		            pointRadius: point_radius
 		        },{
 		            label: 'Young Species',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'species_count',
@@ -80,6 +82,7 @@
 		            pointRadius: point_radius
 		        },{
 		            label: 'Stagnant Species',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'species_count',
@@ -91,6 +94,7 @@
 		        // id section
 		        {
 		            label: 'Best Species ID',
+		            hidden: true,
 		            fill: true,
 		            type: 'line',
       				yAxisID: 'ids',
@@ -103,6 +107,7 @@
 		        // Age
 		        {
 		            label: 'Best Species Age',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'age',
@@ -114,6 +119,7 @@
 		        // offspring
 		        {
 		            label: 'Best Species offspring pre steal',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'offspring',
@@ -122,6 +128,7 @@
 		            pointRadius: point_radius
 		        },{
 		            label: 'Best Species offspring',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'offspring',
@@ -130,6 +137,7 @@
 		            pointRadius: point_radius
 		        },{
 		            label: 'Best Species champion offspring',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'offspring',
@@ -138,6 +146,7 @@
 		            pointRadius: point_radius
 		        },{
 		            label: 'pop stolen cribs',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'offspring',
@@ -149,6 +158,7 @@
 		        // Epoch
 		        {
 		            label: 'Pop epoch last improvement',
+		            hidden: true,
 		            fill: false,
 		            type: 'line',
       				yAxisID: 'epoch',
@@ -160,22 +170,104 @@
 		        // Bools
 		        {
 		            label: 'Pop stagnant',
+		            hidden: true,
 		            fill: true,
       				yAxisID: 'bools',
-		            backgroundColor: 
-		                'rgba(255, 0, 0, 0.5)'
-		            ,
+		            backgroundColor: 'rgba(255, 0, 0, 0.4)',
 		            borderWidth: 0,
 		            pointRadius: 0
 		        },{
 		            label: 'Best species died',
+		            hidden: true,
 		            fill: true,
       				yAxisID: 'bools',
-		            backgroundColor: 
-		                'rgba(213, 0, 11, 0.5)'
-		            ,
+		            backgroundColor: 'rgba(171, 100, 0, 0.4)',
 		            borderWidth: 0,
 		            pointRadius: 0
+		        },
+
+				// Reproduction
+		        {
+		            label: 'Champion mutate weights',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 213, 8, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Champion add random link',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 222, 62, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate multipoint',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(77.6, 0, 36.9, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate multipoint avg',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(66.7, 0, 31.4, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate singlepoint',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 27, 135, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate add random link',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(91, 0, 123, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate add random neuron',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(130, 0, 177, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate weights',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(72.5, 0, 98.4, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate toggle link activation',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(84, 0, 114, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
 		        }]
 		    },
 		    options: {
@@ -252,6 +344,16 @@
 		                    beginAtZero: true,
 							display: false
 		                }
+		            },{
+		            	id: "reproduction",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
 		            }]
 		        }
 		    }
@@ -260,15 +362,15 @@
 		$(document).on("click", "#visualize_btn", function(){
 			var val = $("#statistics_inpt").val();
 			var parsing_error = false
-			var statistics
+			var data
 			try{
-				statistics = JSON.parse(val);
+				data = JSON.parse(val);
 			}catch(e){
 				alert("The provided datas are a valid JSON");
 				parsing_error = true
 			}
 			if(!parsing_error){
-				visualize_statistics(statistics);
+				visualize_statistics(data["seed"], data["statistics"]);
 			}
 		});
 
@@ -281,9 +383,9 @@
 			return arr;
 		}
 
-		function visualize_statistics(statistics){
+		function visualize_statistics(seed, statistics){
 			
-			chart.data.labels = extrapolate(statistics, "epoch", "#");
+			chart.data.labels = extrapolate(statistics, "epoch", "#", "");
 
 			var id = 0;
 
@@ -307,6 +409,18 @@
 
 			chart.data.datasets[id++].data = extrapolate(statistics, "pop_is_stagnant");
 			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_is_died");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_champion_mutate_weights");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_champion_add_random_link");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_multipoint");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_multipoint_avg");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_singlepoint");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_add_random_link");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_add_random_neuron");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_weights");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_toggle_link_activation");
 
 			chart.update();
 		}

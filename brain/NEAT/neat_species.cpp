@@ -35,7 +35,6 @@ void brain::NtSpecies::add_organism(NtOrganism *p_organism) {
 	ERR_FAIL_COND(!p_organism);
 	ERR_FAIL_COND(p_organism->get_species());
 	organisms.push_back(p_organism);
-	champion = nullptr;
 }
 
 void brain::NtSpecies::remove_organism(const NtOrganism *p_organism) {
@@ -43,7 +42,8 @@ void brain::NtSpecies::remove_organism(const NtOrganism *p_organism) {
 	auto it = std::find(organisms.begin(), organisms.end(), p_organism);
 	if (it != organisms.end())
 		organisms.erase(it);
-	champion = nullptr;
+	if (champion == p_organism)
+		champion = nullptr;
 }
 
 uint32_t brain::NtSpecies::get_born_epoch() const {
@@ -152,7 +152,7 @@ void brain::NtSpecies::adjust_fitness(
 	}
 
 	// Sort organisms, more fit first
-	std::sort(organisms.begin(), organisms.end(), organism_fitness_comparator);
+	std::sort(organisms.begin(), organisms.end(), organism_pers_fitness_comparator);
 
 	// Get champion
 	champion = organisms[0];
@@ -196,6 +196,7 @@ void brain::NtSpecies::reproduce(
 
 	ERR_FAIL_COND(organisms.size() == 0);
 	ERR_FAIL_COND(champion_offspring_count > offspring_count);
+	ERR_FAIL_COND(!champion);
 
 	// Mark all organisms as dead since they are from the previous generation
 	// But don't kill them now since they still need
@@ -207,9 +208,23 @@ void brain::NtSpecies::reproduce(
 		return; // Nothing to do
 
 	bool is_champion_cloned = false;
-	const NtOrganism *champion = *organisms.begin();
 
-	/// Step 1. reproduce the champion offsprings
+	/// Step 1. If the champion is the population champion deserve a clone
+	if (champion->is_the_best()) {
+
+		ERR_FAIL_COND(offspring_count <= 0);
+
+		is_champion_cloned = true;
+
+		NtOrganism *child = owner->create_organism();
+		champion->get_genome().duplicate_in(child->get_genome_mutable());
+
+		--offspring_count;
+		if (champion_offspring_count)
+			--champion_offspring_count;
+	}
+
+	/// Step 2. reproduce the champion offsprings
 	/// The last offspring is a perfect clone
 	{
 		offspring_count -= champion_offspring_count;
@@ -220,7 +235,7 @@ void brain::NtSpecies::reproduce(
 
 			champion->get_genome().duplicate_in(child->get_genome_mutable());
 
-			if (champion_offspring_count > 1) {
+			if (is_champion_cloned || champion_offspring_count > 1) {
 				if (Math::randd() < 0.8) {
 
 					owner->statistics.reproduction_champion_mutate_weights++;
@@ -259,22 +274,14 @@ void brain::NtSpecies::reproduce(
 				}
 
 			} else {
-				// Just an exact copy of the champion
+				/// This happens one time only and do
+				/// An exact copy of the champion
+				/// only if noy yet done
 				is_champion_cloned = true;
 			}
 
 			--champion_offspring_count;
 		}
-	}
-
-	/// Step 2. Check if the champion deserve a clone
-	if (!is_champion_cloned && 4 < offspring_count) {
-		is_champion_cloned = true;
-
-		NtOrganism *child = owner->create_organism();
-		champion->get_genome().duplicate_in(child->get_genome_mutable());
-
-		--offspring_count;
 	}
 
 	/// Step 3. Normal reproduction
@@ -343,8 +350,6 @@ void brain::NtSpecies::reproduce(
 			const real_t r(Math::randd());
 			if (r < m_m_range) {
 
-				owner->statistics.reproduction_mate_multipoint++;
-
 				child->log += "\nMATE multipoint";
 
 				// Multipoint mating
@@ -355,9 +360,10 @@ void brain::NtSpecies::reproduce(
 						dad->get_personal_fitness(),
 						false);
 
-			} else if (r < m_m_a_range) {
+				if (state)
+					owner->statistics.reproduction_mate_multipoint++;
 
-				owner->statistics.reproduction_mate_multipoint_avg++;
+			} else if (r < m_m_a_range) {
 
 				child->log += "\nMATE multipoint avg";
 				// Multipoint Average mating
@@ -368,15 +374,19 @@ void brain::NtSpecies::reproduce(
 						dad->get_personal_fitness(),
 						true);
 
-			} else {
+				if (state)
+					owner->statistics.reproduction_mate_multipoint_avg++;
 
-				owner->statistics.reproduction_mate_singlepoint++;
+			} else {
 
 				child->log += "\nMATE singlepoint";
 				// Singlepoint mating
 				state = child->get_genome_mutable().mate_singlepoint(
 						mom->get_genome(),
 						dad->get_genome());
+
+				if (state)
+					owner->statistics.reproduction_mate_singlepoint++;
 			}
 
 		} else {
@@ -388,8 +398,6 @@ void brain::NtSpecies::reproduce(
 			const real_t r(Math::randd());
 			if (r < m_a_l_range) {
 
-				owner->statistics.reproduction_mutate_add_random_link++;
-
 				child->log += "\nMUTATE add link";
 				// Mutate add link
 				state = child->get_genome_mutable().mutate_add_random_link(
@@ -397,15 +405,19 @@ void brain::NtSpecies::reproduce(
 						r_innovations,
 						owner->innovation_number);
 
-			} else if (r < m_a_n_range) {
+				if (state)
+					owner->statistics.reproduction_mutate_add_random_link++;
 
-				owner->statistics.reproduction_mutate_add_random_neuron++;
+			} else if (r < m_a_n_range) {
 
 				child->log += "\nMUTATE add neuron";
 				// Mutate add neuron
 				state = child->get_genome_mutable().mutate_add_random_neuron(
 						r_innovations,
 						owner->innovation_number);
+
+				if (state)
+					owner->statistics.reproduction_mutate_add_random_neuron++;
 
 			} else if (r < m_l_w_range) {
 
@@ -441,8 +453,9 @@ void brain::NtSpecies::reproduce(
 		if (!state) {
 			// This could happen since Sometimes is not possible to mutate the
 			// organism
-			// TODO just put something there to track this
-			// WARN_PRINTS("Somthing went wrong during the organism reproduction.");
+			child->get_genome_mutable().mutate_all_link_weights(
+					NtPopulation::rand_cold_gaussian,
+					owner);
 		}
 
 		if (!child->get_genome().check_innovation_numbers())

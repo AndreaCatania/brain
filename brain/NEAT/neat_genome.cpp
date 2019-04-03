@@ -215,10 +215,10 @@ bool brain::NtGenome::mutate_add_random_link(
 	for (int tries = 0; tries < max_tries; ++tries) {
 
 		// Spawn a recurrent link
-		if (spawn_recurrent && Math::randd() < 0.35) {
+		if (spawn_recurrent && Math::randd() < 0.1) {
 			// Spawn a self recurrent link
 			/// Since a self recurrent can spawn by taking everything randomly
-			/// a 35% of chance seems fine to me
+			/// a 10% of chance seems fine to me
 			parent_neuron_id =
 					non_input_neurons[(int)(Math::random(0, non_input_neurons_last_index) + 0.5f)];
 

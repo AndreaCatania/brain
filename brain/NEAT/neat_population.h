@@ -16,7 +16,7 @@ struct NtEpochStatistics {
 
 	operator std::string() const {
 
-		return "{\"epoch\":" + itos(epoch) + "," +
+		return "\n{\"epoch\":" + itos(epoch) + "," +
 			   "\n\"is_epoch_advanced\":" + (is_epoch_advanced ? "true" : "false") + "," +
 			   "\n\"pop_champion_fitness\":" + rtos(pop_champion_fitness) + "," +
 			   "\n\"species_count\":" + itos(species_count) + "," +
@@ -216,11 +216,15 @@ struct NtPopulationSettings {
 	uint64_t seed = 1;
 
 	/**
-	 * @brief learning_deviation is a parameter used to control the learning
-	 * delta during the weight changing. Check the Gaussian random to understand
-	 * better its use.
+	 * @brief learning_deviation is a parameter used to define the range of tests
+	 * that is possible to do during weight adjusting.
+	 *
+	 * Note: a too small value could make the genome finding too difficult, and
+	 * a possible good genome could die in the process
+	 *
+	 * IMPORTANT: This parameter is really important for the result
 	 */
-	real_t learning_deviation = 1.f;
+	real_t learning_deviation = 3.f;
 
 	/**
 	 * @brief genetic_compatibility_threshold is used to determine the species
@@ -309,8 +313,8 @@ struct NtPopulationSettings {
 	 * the same probability)
 	 */
 	real_t genetic_mate_multipoint_threshold = 0.5;
-	real_t genetic_mate_multipoint_avg_threshold = 0.4;
-	real_t genetic_mate_singlepoint_threshold = 0.1;
+	real_t genetic_mate_multipoint_avg_threshold = 0.5;
+	real_t genetic_mate_singlepoint_threshold = 0.; // IMPORTANT: Doesn't work so well
 
 	/**
 	 * @brief genetic_mutate_* are used to decide what type of mutation should
@@ -336,7 +340,7 @@ struct NtPopulationSettings {
 	 * This means that these links are useful to remember the previous datas and
 	 * thus the taken decision is affected by the previous datas.
 	 */
-	real_t genetic_mutate_add_link_recurrent_prob = 0.1f;
+	real_t genetic_mutate_add_link_recurrent_prob = 0.05f;
 
 	/**
 	 * @brief species_youngness_age_threshold the ages within a species is considered

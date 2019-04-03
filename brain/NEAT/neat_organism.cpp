@@ -16,7 +16,8 @@ brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		personal_fitness(0.f),
 		expected_offspring(0.f),
 		log(""),
-		brain_area(this) {
+		brain_area(this),
+		the_best(false) {
 }
 
 brain::NtOrganism::~NtOrganism() {
@@ -83,6 +84,14 @@ real_t brain::NtOrganism::get_expected_offspring() const {
 	return expected_offspring;
 }
 
-bool organism_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2) {
-	return p_1->get_fitness() > p_2->get_fitness();
+bool brain::NtOrganism::is_the_best() const {
+	return the_best;
+}
+
+void brain::NtOrganism::set_the_best(bool p_the_best) {
+	the_best = p_the_best;
+}
+
+bool organism_pers_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2) {
+	return p_1->get_personal_fitness() > p_2->get_personal_fitness();
 }

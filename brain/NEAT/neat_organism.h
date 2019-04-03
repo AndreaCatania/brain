@@ -79,6 +79,12 @@ class NtOrganism {
 	 */
 	real_t expected_offspring;
 
+	/**
+	 * @brief the_best this is used to know if the current organism is the best
+	 * organism of the population
+	 */
+	bool the_best;
+
 public:
 	// TODO remove this
 	std::string log;
@@ -175,6 +181,18 @@ public:
 	 * @return
 	 */
 	real_t get_expected_offspring() const;
+
+	/**
+	 * @brief is_the_best
+	 * @return
+	 */
+	bool is_the_best() const;
+
+	/**
+	 * @brief set_the_best
+	 * @param p_the_best
+	 */
+	void set_the_best(bool p_the_best);
 };
 
 } // namespace brain
@@ -185,4 +203,4 @@ public:
  * @param p_2
  * @return
  */
-extern bool organism_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2);
+extern bool organism_pers_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2);

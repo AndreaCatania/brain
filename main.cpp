@@ -176,29 +176,33 @@ void test_NEAT_XOR() {
 
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_compatibility_threshold = 2.1;
-	settings.genetic_weights_significance = 0.1;
+	settings.genetic_compatibility_threshold = 3;
+	settings.genetic_weights_significance = 0.4;
+
+	brain::Math::seed(settings.seed);
 
 	brain::NtPopulation population(
 			brain::NtGenome(3, 1, true),
 			150 /*population size*/,
 			settings);
 
+	uint32_t seed = settings.seed;
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
 		//for (int epoch(0); true; ++epoch) {
 
 		// Shuffle is required to avoid create a pattern
 		{
-			uint32_t seed = time(nullptr);
 			std::shuffle(
 					inputs.begin(),
 					inputs.end(),
-					std::default_random_engine(seed));
+					// Re init with the same seed to maintain the order of shuffling
+					std::default_random_engine(seed + epoch));
 
 			std::shuffle(
 					expected.begin(),
 					expected.end(),
-					std::default_random_engine(seed));
+					// Re init with the same seed to maintain the order of shuffling
+					std::default_random_engine(seed + epoch));
 		}
 
 		/// Step 2. Population testing and evaluation
@@ -225,18 +229,17 @@ void test_NEAT_XOR() {
 
 			real_t fitness = 1.f - (total_error / inputs.size());
 
-			population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
+			//population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
 
-			if (false)
-				if (acceptable_result != inputs.size()) {
+			if (acceptable_result != inputs.size()) {
 
-					population.organism_set_fitness(i, fitness);
-				} else {
+				population.organism_set_fitness(i, fitness);
+			} else {
 
-					// Give a bonus to all organisms that are able to guess
-					// all situations
-					population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
-				}
+				// Give a bonus to all organisms that are able to guess
+				// all situations
+				population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
+			}
 		}
 
 		/// Step 3. advance the epoch
@@ -258,7 +261,11 @@ void test_NEAT_XOR() {
 			s += std::string(*it) + ",";
 		}
 		s.resize(s.size() - 1); // Remove last comma
-		print_line("[" + s + "]");
+		s = "[" + s + "]";
+
+		s = "{\"seed\":" + brain::itos(settings.seed) + ", \"statistics\":" + s + "}";
+
+		print_line(s);
 	}
 
 	brain::SharpBrainArea ba(nullptr);

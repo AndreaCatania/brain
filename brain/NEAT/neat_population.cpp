@@ -68,6 +68,9 @@ bool brain::NtPopulation::epoch_advance() {
 	statistics.epoch = epoch;
 
 	++epoch;
+	if (epoch == 49) { // TODO
+		int a = 0;
+	}
 
 	/// Step 1. Take the best organism and make a copy of its genome
 	NtOrganism *population_champion;
@@ -82,6 +85,8 @@ bool brain::NtPopulation::epoch_advance() {
 	}
 	ERR_FAIL_COND_V(!population_champion, false);
 	population_champion->get_genome().duplicate_in(champion_genome);
+
+	population_champion->set_the_best(true);
 
 	statistics.pop_champion_fitness = population_champion->get_personal_fitness();
 
@@ -221,7 +226,7 @@ bool brain::NtPopulation::epoch_advance() {
 
 		epoch_last_improvement = epoch;
 
-	} else if (settings.cribs_stealing) {
+	} else if (settings.cribs_stealing && ordered_species.size() > 2) {
 
 		/// Stole the cribs from the worst species
 		/// Then reassign it following this criterias:
@@ -235,13 +240,18 @@ bool brain::NtPopulation::epoch_advance() {
 		// Iterates from the botton and skip the champion species
 		for (auto it = ordered_species.rbegin(); it != ordered_species.rend(); ++it) {
 			NtSpecies *s = *it;
+
+			if (ordered_species[1] == s || ordered_species[0] == s) {
+				// Avoid to steal from the two best species
+				break;
+			}
+
 			if (s->get_age() > settings.cribs_stealing_protection_age_threshold &&
 					s->get_offspring_count() > settings.cribs_stealing_limit) {
 
 				// Steal from this species most possible
 				const int possible_booty = s->get_offspring_count() -
-										   settings.cribs_stealing_limit -
-										   stolen_cribs;
+										   settings.cribs_stealing_limit;
 
 				const int wanted_booty = settings.cribs_stealing -
 										 stolen_cribs;
@@ -274,7 +284,7 @@ bool brain::NtPopulation::epoch_advance() {
 				if ((*it)->get_stagnant_epochs() > settings.species_stagnant_age_threshold)
 					continue;
 
-				const int assignment = i <= 1 ? stolen_one_fifth : stolen_one_tenth;
+				const int assignment = i == 0 ? stolen_one_fifth : stolen_one_tenth;
 
 				(*it)->set_offspring_count(
 						(*it)->get_offspring_count() + assignment);
@@ -296,37 +306,51 @@ bool brain::NtPopulation::epoch_advance() {
 
 				// Thanks to this is possible to give always the same percentage
 				// of possibility to the all species no matter the quantity
-				const double roulet_threshold = 0.1 / roulet_spots;
+				const double roulet_threshold = 1. / roulet_spots;
 
 				// This is used as fallback to stop the roulet
 				int spin_left = stolen_cribs * 4;
 
+				real_t roulet_spot_right(0);
+
 				while (stolen_cribs > 0 && spin_left > 0) {
 					--spin_left;
+
 					bool all_are_stagnant = true;
 					// Bost the best species
 					real_t luck_bost = 3;
+					real_t roulet_ball_pos = Math::randd();
+
 					for (auto it = ordered_species.begin(); it != ordered_species.end(); ++it) {
 
-						if ((*it)->get_stagnant_epochs() > settings.species_stagnant_age_threshold)
-							continue;
+						if ((*it)->get_stagnant_epochs() <= settings.species_stagnant_age_threshold) {
 
-						all_are_stagnant = false;
+							all_are_stagnant = false;
+							real_t roulet_spot_left = roulet_spot_right;
+							roulet_spot_right += roulet_threshold;
 
-						if (Math::randf() <= roulet_threshold * luck_bost) {
+							// Make roulet spots circular
+							if (roulet_spot_right >= 1) {
+								roulet_spot_left = roulet_spot_right;
+								roulet_spot_right = roulet_threshold;
+							}
 
-							(*it)->set_offspring_count(
-									(*it)->get_offspring_count() + 1);
+							if (roulet_ball_pos > roulet_spot_left &&
+									roulet_ball_pos <= roulet_spot_right * luck_bost) {
 
-							(*it)->set_champion_offspring_count(
-									(*it)->get_champion_offspring_count() + 1);
+								(*it)->set_offspring_count(
+										(*it)->get_offspring_count() + 1);
 
-							--stolen_cribs;
-							break;
-						} else {
-							luck_bost -= 0.3;
-							luck_bost = MAX(luck_bost, 1); // Never below 1
+								(*it)->set_champion_offspring_count(
+										(*it)->get_champion_offspring_count() + 1);
+
+								--stolen_cribs;
+								break;
+							}
 						}
+
+						luck_bost -= 0.3;
+						luck_bost = MAX(luck_bost, 1); // Never below 1
 					}
 
 					// Premature stop if all are stagnant
