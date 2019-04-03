@@ -69,6 +69,21 @@ public:
 		return sigmoid_fast_derivative(sigmoid(p_x));
 	}
 
+	static _ALWAYS_INLINE_ double relu(double p_x) { return MAX(p_x, 0.); }
+	static _ALWAYS_INLINE_ float relu(float p_x) { return MAX(p_x, 0.f); }
+
+	static _ALWAYS_INLINE_ double relu_derivative(double p_x) { return p_x < 0. ? 0. : 1.; }
+	static _ALWAYS_INLINE_ float relu_derivative(float p_x) { return p_x < 0.f ? 0.f : 1.f; }
+
+	static _ALWAYS_INLINE_ double leaky_relu(double p_x) { return p_x < 0. ? p_x * 0.01 : p_x; }
+	static _ALWAYS_INLINE_ float leaky_relu(float p_x) { return p_x < 0.f ? p_x * 0.01f : p_x; }
+
+	static _ALWAYS_INLINE_ double leaky_relu_derivative(double p_x) { return p_x < 0 ? 0.01 : 1.; }
+	static _ALWAYS_INLINE_ float leaky_relu_derivative(float p_x) { return p_x < 0.f ? 0.01f : 1.f; }
+
+	static _ALWAYS_INLINE_ double tanh_derivative(double p_x) { return 1. - pow(tanh(p_x), 2.); }
+	static _ALWAYS_INLINE_ float tanh_derivative(float p_x) { return 1.f - pow(tanh(float(p_x)), 2.f); }
+
 	static _ALWAYS_INLINE_ double sin(double p_x) { return ::sin(p_x); }
 	static _ALWAYS_INLINE_ float sin(float p_x) { return ::sinf(p_x); }
 
