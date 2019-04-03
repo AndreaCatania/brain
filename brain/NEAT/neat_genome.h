@@ -32,8 +32,12 @@ struct NtNeuronGene : public NtGene {
 	 * @brief NtNeuronGene constructor
 	 * @param p_id
 	 * @param p_type
+	 * @param p_activation_function
 	 */
-	NtNeuronGene(uint32_t p_id, NeuronGeneType p_type);
+	NtNeuronGene(
+			uint32_t p_id,
+			NeuronGeneType p_type,
+			BrainArea::Activation p_activation_func);
 
 	/**
 	 * @brief id of the neuron, it's also the index in the neuron_genes vector
@@ -44,6 +48,11 @@ struct NtNeuronGene : public NtGene {
 	 * @brief type is used to store the type of the neuron gene
 	 */
 	NeuronGeneType type;
+
+	/**
+	 * @brief p_activation_func Neuron activation function
+	 */
+	BrainArea::Activation activation_func;
 
 	/**
 	 * @brief incoming_links is the vector with the ID of the incoming links
@@ -217,16 +226,25 @@ public:
 	 * @param p_input_count
 	 * @param p_output_count
 	 * @param p_randomize_weights = true
+	 * @param p_input_activation_func the input activation function
+	 * @param p_output_activation_func the output activation function
 	 */
-	NtGenome(int p_input_count, int p_output_count, bool p_randomize_weights = true);
+	NtGenome(
+			int p_input_count,
+			int p_output_count,
+			bool p_randomize_weights = true,
+			BrainArea::Activation p_input_activation_func = BrainArea::ACTIVATION_LEAKY_RELU,
+			BrainArea::Activation p_output_activation_func = BrainArea::ACTIVATION_LINEAR);
 
 	/**
 	 * @brief add_neuron add a neuron gene to the genome
 	 * @param p_type
+	 * @param the neuron activatin function
 	 * @return the id of the added neuron
 	 */
 	uint32_t add_neuron(
-			NtNeuronGene::NeuronGeneType p_type);
+			NtNeuronGene::NeuronGeneType p_type,
+			BrainArea::Activation p_activation_func);
 
 	/**
 	 * @brief add_link add an active link gene between two neuron to the genome

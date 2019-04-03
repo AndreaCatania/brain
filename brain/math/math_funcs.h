@@ -84,6 +84,12 @@ public:
 	static _ALWAYS_INLINE_ double tanh_derivative(double p_x) { return 1. - pow(tanh(p_x), 2.); }
 	static _ALWAYS_INLINE_ float tanh_derivative(float p_x) { return 1.f - pow(tanh(float(p_x)), 2.f); }
 
+	static _ALWAYS_INLINE_ double linear(double p_x) { return p_x; }
+	static _ALWAYS_INLINE_ float linear(float p_x) { return p_x; }
+
+	static _ALWAYS_INLINE_ double linear_derivative(double p_x) { return 1.; }
+	static _ALWAYS_INLINE_ float linear_derivative(float p_x) { return 1.f; }
+
 	static _ALWAYS_INLINE_ double sin(double p_x) { return ::sin(p_x); }
 	static _ALWAYS_INLINE_ float sin(float p_x) { return ::sinf(p_x); }
 

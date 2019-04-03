@@ -240,6 +240,19 @@ public:
 	void set_neuron_as_output(NeuronId p_neuron_id);
 
 	/**
+	 * @brief set_neuron_activation
+	 * @param p_neuron_id
+	 */
+	void set_neuron_activation(NeuronId p_neuron_id, Activation p_activation);
+
+	/**
+	 * @brief get_neuron_activation
+	 * @param p_neuron_id
+	 * @return
+	 */
+	Activation get_neuron_activation(NeuronId p_neuron_id) const;
+
+	/**
 	 * @brief Add a link between parent node and child node
 	 * The direction of the linkage is important
 	 *

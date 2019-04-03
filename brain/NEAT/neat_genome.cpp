@@ -4,9 +4,13 @@
 #include "brain/math/math_funcs.h"
 #include <algorithm>
 
-brain::NtNeuronGene::NtNeuronGene(uint32_t p_id, NeuronGeneType p_type) :
+brain::NtNeuronGene::NtNeuronGene(
+		uint32_t p_id,
+		NeuronGeneType p_type,
+		BrainArea::Activation p_activation_func) :
 		id(p_id),
-		type(p_type) {}
+		type(p_type),
+		activation_func(p_activation_func) {}
 
 brain::NtLinkGene::NtLinkGene() {}
 
@@ -32,18 +36,24 @@ brain::NtGenome::NtGenome() :
 brain::NtGenome::NtGenome(
 		int p_input_count,
 		int p_output_count,
-		bool p_randomize_weights) :
+		bool p_randomize_weights,
+		BrainArea::Activation p_input_activation_func,
+		BrainArea::Activation p_output_activation_func) :
 		NtGenome() {
 
 	ERR_FAIL_COND(p_input_count <= 0);
 	ERR_FAIL_COND(p_output_count <= 0);
 
 	for (int i(0); i < p_input_count; ++i) {
-		add_neuron(NtNeuronGene::NEURON_GENE_TYPE_INPUT);
+		add_neuron(
+				NtNeuronGene::NEURON_GENE_TYPE_INPUT,
+				p_input_activation_func);
 	}
 
 	for (int i(0); i < p_output_count; ++i) {
-		add_neuron(NtNeuronGene::NEURON_GENE_TYPE_OUTPUT);
+		add_neuron(
+				NtNeuronGene::NEURON_GENE_TYPE_OUTPUT,
+				p_output_activation_func);
 	}
 
 	int innovation_number(0);
@@ -61,13 +71,16 @@ brain::NtGenome::NtGenome(
 }
 
 uint32_t brain::NtGenome::add_neuron(
-		NtNeuronGene::NeuronGeneType p_type) {
+		NtNeuronGene::NeuronGeneType p_type,
+		BrainArea::Activation p_activation_func) {
 
 	const uint32_t id(neuron_genes.size());
 
-	neuron_genes.push_back(NtNeuronGene(
-			id,
-			p_type));
+	neuron_genes.push_back(
+			NtNeuronGene(
+					id,
+					p_type,
+					p_activation_func));
 	return id;
 }
 
@@ -340,7 +353,9 @@ bool brain::NtGenome::mutate_add_random_neuron(
 	if (!found)
 		return false; // No link to split
 
-	const uint32_t new_neuron_id = add_neuron(NtNeuronGene::NEURON_GENE_TYPE_HIDDEN);
+	const uint32_t new_neuron_id = add_neuron(
+			NtNeuronGene::NEURON_GENE_TYPE_HIDDEN,
+			BrainArea::ACTIVATION_LEAKY_RELU);
 
 	// TODO please handle this properly
 	int innovation_index = find_innovation(
@@ -415,11 +430,11 @@ bool brain::NtGenome::mate_multipoint(
 	// Add all the neurons of the best genome in the same order
 	if (is_innovative_fitter) {
 		for (auto it = innovative->neuron_genes.begin(); it != innovative->neuron_genes.end(); ++it) {
-			add_neuron(it->type);
+			add_neuron(it->type, it->activation_func);
 		}
 	} else {
 		for (auto it = obsolete->neuron_genes.begin(); it != obsolete->neuron_genes.end(); ++it) {
-			add_neuron(it->type);
+			add_neuron(it->type, it->activation_func);
 		}
 	}
 
@@ -527,10 +542,14 @@ bool brain::NtGenome::mate_singlepoint(
 
 		// Copy the neurons from the parent
 		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
-			add_neuron(smaller->neuron_genes[x].type);
+			add_neuron(
+					smaller->neuron_genes[x].type,
+					smaller->neuron_genes[x].activation_func);
 		}
 		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
-			add_neuron(smaller->neuron_genes[x].type);
+			add_neuron(
+					smaller->neuron_genes[x].type,
+					smaller->neuron_genes[x].activation_func);
 		}
 
 		uint32_t id = add_link(
@@ -563,10 +582,14 @@ bool brain::NtGenome::mate_singlepoint(
 
 		// Copy the neurons from the parent
 		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
-			add_neuron(smaller->neuron_genes[x].type);
+			add_neuron(
+					smaller->neuron_genes[x].type,
+					smaller->neuron_genes[x].activation_func);
 		}
 		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
-			add_neuron(smaller->neuron_genes[x].type);
+			add_neuron(
+					smaller->neuron_genes[x].type,
+					smaller->neuron_genes[x].activation_func);
 		}
 
 		uint32_t id = add_link(
@@ -607,10 +630,14 @@ bool brain::NtGenome::mate_singlepoint(
 
 		// Copy the neurons from the parent
 		for (int x(neuron_genes.size()); !has_neuron(link.parent_neuron_id); ++x) {
-			add_neuron(bigger->neuron_genes[x].type);
+			add_neuron(
+					bigger->neuron_genes[x].type,
+					bigger->neuron_genes[x].activation_func);
 		}
 		for (int x(neuron_genes.size()); !has_neuron(link.child_neuron_id); ++x) {
-			add_neuron(bigger->neuron_genes[x].type);
+			add_neuron(
+					bigger->neuron_genes[x].type,
+					bigger->neuron_genes[x].activation_func);
 		}
 
 		uint32_t id = add_link(
@@ -646,6 +673,8 @@ void brain::NtGenome::generate_neural_network(SharpBrainArea &r_brain_area) cons
 				r_brain_area.set_neuron_as_output(id);
 				break;
 		}
+
+		r_brain_area.set_neuron_activation(id, it->activation_func);
 	}
 
 	for (auto it = link_genes.begin(); it != link_genes.end(); ++it) {

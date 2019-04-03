@@ -116,6 +116,21 @@ void brain::SharpBrainArea::set_neuron_as_output(NeuronId p_neuron_id) {
 	ready = false;
 }
 
+void brain::SharpBrainArea::set_neuron_activation(
+		NeuronId p_neuron_id,
+		Activation p_activation) {
+
+	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
+	neurons[p_neuron_id].activation = p_activation;
+}
+
+brain::BrainArea::Activation brain::SharpBrainArea::get_neuron_activation(
+		NeuronId p_neuron_id) const {
+
+	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), ACTIVATION_MAX);
+	return neurons[p_neuron_id].activation;
+}
+
 void brain::SharpBrainArea::add_link(
 		NeuronId p_neuron_parent_id,
 		NeuronId p_neuron_child_id,

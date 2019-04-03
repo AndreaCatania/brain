@@ -182,7 +182,7 @@ void test_NEAT_XOR() {
 	brain::Math::seed(settings.seed);
 
 	brain::NtPopulation population(
-			brain::NtGenome(3, 1, true),
+			brain::NtGenome(3, 1, true, brain::BrainArea::ACTIVATION_RELU, brain::BrainArea::ACTIVATION_TANH),
 			150 /*population size*/,
 			settings);
 
@@ -228,8 +228,6 @@ void test_NEAT_XOR() {
 			}
 
 			real_t fitness = 1.f - (total_error / inputs.size());
-
-			//population.organism_set_fitness(i, brain::Math::pow(fitness + 1, 2));
 
 			if (acceptable_result != inputs.size()) {
 
