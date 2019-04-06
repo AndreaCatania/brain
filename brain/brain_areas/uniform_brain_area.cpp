@@ -185,13 +185,25 @@ real_t brain::UniformBrainArea::learn(
 			propagated_error =
 					weights[WEIGHT_ID(l - 1)].transposed() * propagated_error;
 
-		// Calculate gradient
+		// Calculate gradient (cost of this execution)
 		Matrix &gradient = p_cache->layers_output[l];
 
-		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(l)] == ACTIVATION_MAX, 10000));
-		gradient.map(activation_derivatives[activations[ACTIVATION_ID(l)]]);
+		if (activations[ACTIVATION_ID(l)] == ACTIVATION_SOFTMAX) {
 
-		gradient.element_wise_multiplicate(layer_error);
+			/// This is a special gradient (cost function) calculation when
+			/// the soft max activation function is used
+			/// Explanation:
+			///		https://www.youtube.com/watch?v=mlaLLQofmR8
+			///		https://math.stackexchange.com/questions/945871/derivative-of-softmax-loss-function
+			gradient = layer_error;
+
+		} else {
+			DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(l)] == ACTIVATION_MAX, 10000));
+			gradient.map(activation_derivatives[activations[ACTIVATION_ID(l)]]);
+
+			gradient.element_wise_multiplicate(layer_error);
+		}
+
 		gradient *= p_learn_rate;
 
 		// Prepare the input for delta weight calc
@@ -239,9 +251,16 @@ bool brain::UniformBrainArea::_guess(
 		// Layer calculation
 		r_guess = (weights[i] * r_guess) + biases[i];
 
-		// Activation of next layer
-		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX, false));
-		r_guess.map(activation_functions[activations[ACTIVATION_ID(i + 1)]]);
+		if (activations[ACTIVATION_ID(i + 1)] == ACTIVATION_SOFTMAX) {
+
+			const real_t summ = r_guess.summation();
+			r_guess.map(brain::Math::soft_max_fast, pow(Math_E, summ));
+
+		} else {
+			// Activation of next layer
+			DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX, false));
+			r_guess.map(activation_functions[activations[ACTIVATION_ID(i + 1)]]);
+		}
 	}
 
 	if (p_cache)

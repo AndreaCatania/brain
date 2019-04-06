@@ -36,6 +36,16 @@ brain::RandomPCG brain::Math::default_rand(RandomPCG::DEFAULT_SEED, RandomPCG::D
 
 #define PHI 0x9e3779b9
 
+double brain::Math::soft_max_allert(double p_x) {
+	// IMPORTANT the soft max accept two number, use the proper function
+	CRASH_NOW();
+}
+
+float brain::Math::soft_max_allert(float p_x) {
+	// IMPORTANT the soft max accept two number, use the proper function
+	CRASH_NOW();
+}
+
 uint32_t brain::Math::rand_from_seed(uint64_t *seed) {
 	RandomPCG rng = RandomPCG(*seed, RandomPCG::DEFAULT_INC);
 	uint32_t r = rng.rand();

@@ -46,7 +46,8 @@ void test_uniform_ba_XOR() {
 	// Create brain area
 	brain::UniformBrainArea area1(2, 1, 1);
 
-	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_SIGMOID);
+	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_LEAKY_RELU);
+	area1.set_activations(1, brain::UniformBrainArea::ACTIVATION_BINARY);
 
 	brain::Math::randomize();
 	area1.randomize_weights(1);
@@ -278,8 +279,8 @@ int main() {
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
-	test_NEAT_XOR();
-	//test_uniform_ba_XOR();
+	//test_NEAT_XOR();
+	test_uniform_ba_XOR();
 
 	return 0;
 }
