@@ -183,7 +183,12 @@ void test_NEAT_XOR() {
 	brain::Math::seed(settings.seed);
 
 	brain::NtPopulation population(
-			brain::NtGenome(3, 1, true, brain::BrainArea::ACTIVATION_RELU, brain::BrainArea::ACTIVATION_TANH),
+			brain::NtGenome(
+					3,
+					1,
+					true,
+					brain::BrainArea::ACTIVATION_RELU,
+					brain::BrainArea::ACTIVATION_BINARY),
 			150 /*population size*/,
 			settings);
 
@@ -279,8 +284,8 @@ int main() {
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
-	//test_NEAT_XOR();
-	test_uniform_ba_XOR();
+	test_NEAT_XOR();
+	//test_uniform_ba_XOR();
 
 	return 0;
 }

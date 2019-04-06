@@ -18,8 +18,16 @@ real_t brain::Neuron::get_value(uint32_t p_execution_id) const {
 			else
 				value += it->neuron->get_value(p_execution_id) * it->weight;
 		}
+
 		recurrent = cached_value;
-		cached_value = brain::BrainArea::activation_functions[activation](value);
+
+		if (activation == brain::BrainArea::ACTIVATION_SOFTMAX)
+			// Softmax activation is performed out of this function and works only
+			// for the output neurons
+			cached_value = value;
+		else
+			cached_value = brain::BrainArea::activation_functions[activation](value);
+
 		execution_id = p_execution_id;
 	}
 	return cached_value;
@@ -202,7 +210,10 @@ bool brain::SharpBrainArea::guess(
 		const Matrix &p_input,
 		Matrix &r_guess) const {
 
-	r_guess.resize(outputs.size(), 1);
+	const int output_size = outputs.size();
+	ERR_FAIL_COND_V(!output_size, false);
+
+	r_guess.resize(output_size, 1);
 
 	// If not ready check it
 	if (!ready) {
@@ -222,9 +233,23 @@ bool brain::SharpBrainArea::guess(
 	}
 
 	// Get outputs
-	for (int i(outputs.size() - 1); 0 <= i; --i) {
+	for (int i(0); i < output_size; ++i) {
 		const real_t val = neurons[outputs[i]].get_value(execution_id);
 		r_guess.set(i, 0, val);
+	}
+
+	// Special case for softmax activation function
+	if (ACTIVATION_SOFTMAX == neurons[outputs[0]].activation) {
+
+		const real_t sum_exp(brain::Math::pow(Math_E, r_guess.summation()));
+		for (int i(0); i < output_size; ++i) {
+
+			const real_t v = brain::Math::soft_max_fast(
+					neurons[outputs[i]].get_value(execution_id),
+					sum_exp);
+			neurons[outputs[i]].force_set_value(v, execution_id);
+			r_guess.set(i, 0, v);
+		}
 	}
 
 	return true;
