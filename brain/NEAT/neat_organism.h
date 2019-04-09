@@ -91,9 +91,6 @@ class NtOrganism {
 	bool champion_clone;
 
 public:
-	// TODO remove this
-	std::string log;
-
 	/**
 	 * @brief NtOrganism constructor
 	 */

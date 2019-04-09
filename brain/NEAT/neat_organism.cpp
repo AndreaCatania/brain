@@ -15,7 +15,6 @@ brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		fitness(0.f),
 		personal_fitness(0.f),
 		expected_offspring(0.f),
-		log(""),
 		brain_area(this),
 		the_best(false),
 		champion_clone(false) {

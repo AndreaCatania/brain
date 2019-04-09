@@ -37,8 +37,7 @@ real_t brain::Neuron::get_recurrent(uint32_t p_execution_id) const {
 	return execution_id == p_execution_id ? recurrent : cached_value;
 }
 
-brain::Neuron::Neuron(SharpBrainArea *p, NeuronId p_id) :
-		o(p),
+brain::Neuron::Neuron(NeuronId p_id) :
 		id(p_id),
 		cached_value(0),
 		recurrent(0),
@@ -85,7 +84,7 @@ brain::SharpBrainArea::SharpBrainArea(NtOrganism *p) :
 
 brain::NeuronId brain::SharpBrainArea::add_neuron() {
 	const NeuronId id(neurons.size());
-	neurons.push_back(Neuron(this, id));
+	neurons.push_back(Neuron(id));
 	ready = false;
 	return id;
 }
@@ -154,8 +153,7 @@ void brain::SharpBrainArea::add_link(
 
 	Neuron *child = &*(neurons.begin() + p_neuron_child_id);
 
-	if (child->has_parent(p_neuron_parent_id)) // TODO remove this
-		ERR_FAIL_COND(child->has_parent(p_neuron_parent_id));
+	ERR_FAIL_COND(child->has_parent(p_neuron_parent_id));
 	ERR_FAIL_COND(!p_recurrent && p_neuron_parent_id == p_neuron_child_id);
 
 	child->add_parent(

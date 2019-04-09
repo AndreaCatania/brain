@@ -11,8 +11,7 @@ real_t brain::NtGenetic::compatibility(
 		real_t p_excesses_significance,
 		real_t p_weights_significance) {
 
-	if (!p_genome_1.get_link_count()) // TODO remove this
-		ERR_FAIL_COND_V(!p_genome_1.get_link_count(), -1);
+	ERR_FAIL_COND_V(!p_genome_1.get_link_count(), -1);
 	ERR_FAIL_COND_V(!p_genome_2.get_link_count(), -1);
 
 	real_t D(0);
