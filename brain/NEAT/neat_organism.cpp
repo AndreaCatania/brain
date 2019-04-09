@@ -17,7 +17,8 @@ brain::NtOrganism::NtOrganism(const NtPopulation *p_owner) :
 		expected_offspring(0.f),
 		log(""),
 		brain_area(this),
-		the_best(false) {
+		the_best(false),
+		champion_clone(false) {
 }
 
 brain::NtOrganism::~NtOrganism() {
@@ -84,14 +85,26 @@ real_t brain::NtOrganism::get_expected_offspring() const {
 	return expected_offspring;
 }
 
+void brain::NtOrganism::set_the_best(bool p_the_best) {
+	the_best = p_the_best;
+}
 bool brain::NtOrganism::is_the_best() const {
 	return the_best;
 }
 
-void brain::NtOrganism::set_the_best(bool p_the_best) {
-	the_best = p_the_best;
+void brain::NtOrganism::set_champion_clone(bool p_is_clone) {
+	champion_clone = p_is_clone;
+}
+
+bool brain::NtOrganism::is_champion_clone() const {
+	return champion_clone;
 }
 
 bool organism_pers_fitness_comparator(brain::NtOrganism *p_1, brain::NtOrganism *p_2) {
+	// Necessary to keep the pop champion always on top
+	if (p_1->is_the_best())
+		return true;
+	if (p_2->is_the_best())
+		return false;
 	return p_1->get_personal_fitness() > p_2->get_personal_fitness();
 }

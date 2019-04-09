@@ -19,6 +19,7 @@ struct NtEpochStatistics {
 		return "\n{\"epoch\":" + itos(epoch) + "," +
 			   "\n\"is_epoch_advanced\":" + (is_epoch_advanced ? "true" : "false") + "," +
 			   "\n\"pop_champion_fitness\":" + rtos(pop_champion_fitness) + "," +
+			   "\n\"pop_champion_species_id\":" + itos(pop_champion_species_id) + "," +
 			   "\n\"species_count\":" + itos(species_count) + "," +
 			   "\n\"species_young_count\":" + itos(species_young_count) + "," +
 			   "\n\"species_stagnant_count\":" + itos(species_stagnant_count) + "," +
@@ -48,6 +49,7 @@ struct NtEpochStatistics {
 		epoch = 0;
 		is_epoch_advanced = false;
 		pop_champion_fitness = 0.f;
+		pop_champion_species_id = -1;
 		species_count = 0;
 		species_young_count = 0;
 		species_stagnant_count = 0;
@@ -87,6 +89,11 @@ struct NtEpochStatistics {
 	 * @brief Population champion personal fitness
 	 */
 	real_t pop_champion_fitness;
+
+	/**
+	 * @brief The species ID of the pop champion
+	 */
+	int pop_champion_species_id;
 
 	/**
 	 * @brief species_count
@@ -352,7 +359,7 @@ struct NtPopulationSettings {
 	 * @brief species_youngness_multiplier the fitness multiplier applied to the
 	 * young species
 	 */
-	real_t species_youngness_multiplier = 1.3f;
+	real_t species_youngness_multiplier = 2.f;
 
 	/**
 	 * @brief species_stagnant_age_threshold the ages without improvements

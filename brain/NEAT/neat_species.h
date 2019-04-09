@@ -271,10 +271,11 @@ public:
 } // namespace brain
 
 /**
- * @brief species_fitness_comparator is used to sort an array of species from
- * the most fittest to last
+ * @brief species_comparator is used to sort an array of species from
+ * the most fittest to last.
+ * In case the fitness is the same, is choosen the oldest species
  * @param
  * @param
  * @return
  */
-extern bool species_fitness_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2);
+extern bool species_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2);

@@ -90,6 +90,10 @@ brain::NeuronId brain::SharpBrainArea::add_neuron() {
 	return id;
 }
 
+int brain::SharpBrainArea::get_neuron_count() const {
+	return neurons.size();
+}
+
 bool brain::SharpBrainArea::is_neuron_input(NeuronId p_neuron_id) const {
 	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
 	for (auto it = inputs.begin(); it != inputs.end(); ++it) {

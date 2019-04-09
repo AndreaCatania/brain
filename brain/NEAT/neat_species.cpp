@@ -204,9 +204,6 @@ void brain::NtSpecies::reproduce(
 		(*it)->set_mark_for_death(true);
 	}
 
-	if (!offspring_count)
-		return; // Nothing to do
-
 	bool is_champion_cloned = false;
 
 	/// Step 1. If the champion is the population champion deserve a clone
@@ -219,10 +216,15 @@ void brain::NtSpecies::reproduce(
 		NtOrganism *child = owner->create_organism();
 		champion->get_genome().duplicate_in(child->get_genome_mutable());
 
+		child->set_champion_clone(true);
+
 		--offspring_count;
 		if (champion_offspring_count)
 			--champion_offspring_count;
 	}
+
+	if (!offspring_count)
+		return; // Nothing to do
 
 	/// Step 2. reproduce the champion offsprings
 	/// The last offspring is a perfect clone
@@ -278,6 +280,7 @@ void brain::NtSpecies::reproduce(
 				/// An exact copy of the champion
 				/// only if noy yet done
 				is_champion_cloned = true;
+				child->set_champion_clone(true);
 			}
 
 			--champion_offspring_count;
@@ -483,6 +486,12 @@ void brain::NtSpecies::kill_old_organisms() {
 	}
 }
 
-bool species_fitness_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2) {
-	return p_1->get_average_fitness() > p_2->get_average_fitness();
+bool species_comparator(brain::NtSpecies *p_1, brain::NtSpecies *p_2) {
+	if (ABS(p_1->get_average_fitness() - p_2->get_average_fitness()) <= CMP_EPSILON) {
+
+		return p_1->get_born_epoch() > p_2->get_born_epoch();
+	} else {
+
+		return p_1->get_average_fitness() > p_2->get_average_fitness();
+	}
 }

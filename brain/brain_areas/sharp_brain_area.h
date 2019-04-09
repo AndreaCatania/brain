@@ -206,6 +206,12 @@ public:
 	NeuronId add_neuron();
 
 	/**
+	 * @brief get_neuron_count
+	 * @return
+	 */
+	int get_neuron_count() const;
+
+	/**
 	 * @brief is_neuron_input
 	 * @param p_neuron_id
 	 * @return

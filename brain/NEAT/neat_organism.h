@@ -85,6 +85,11 @@ class NtOrganism {
 	 */
 	bool the_best;
 
+	/**
+	 * @brief champion_clone
+	 */
+	bool champion_clone;
+
 public:
 	// TODO remove this
 	std::string log;
@@ -183,16 +188,28 @@ public:
 	real_t get_expected_offspring() const;
 
 	/**
+	 * @brief set_the_best
+	 * @param p_the_best
+	 */
+	void set_the_best(bool p_the_best);
+
+	/**
 	 * @brief is_the_best
 	 * @return
 	 */
 	bool is_the_best() const;
 
 	/**
-	 * @brief set_the_best
+	 * @brief set_champion_clone
 	 * @param p_the_best
 	 */
-	void set_the_best(bool p_the_best);
+	void set_champion_clone(bool p_is_clone);
+
+	/**
+	 * @brief is_champion_clone
+	 * @return
+	 */
+	bool is_champion_clone() const;
 };
 
 } // namespace brain

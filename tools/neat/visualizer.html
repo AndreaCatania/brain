@@ -103,6 +103,17 @@
 		            borderWidth: 0,
 		            pointRadius: point_radius
 		        },
+		        {
+		            label: 'Pop champion Species ID',
+		            hidden: true,
+		            fill: true,
+		            type: 'line',
+      				yAxisID: 'ids',
+		            backgroundColor: 'rgba(255, 170, 0, 0.1)',
+		            tension: 0,
+		            borderWidth: 0,
+		            pointRadius: point_radius
+		        },
 
 		        // Age
 		        {
@@ -397,6 +408,7 @@
 			chart.data.datasets[id++].data = extrapolate(statistics, "species_stagnant_count");
 
 			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_id");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_champion_species_id");
 
 			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_age");
 

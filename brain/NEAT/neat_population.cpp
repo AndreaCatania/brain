@@ -68,18 +68,33 @@ bool brain::NtPopulation::epoch_advance() {
 	statistics.epoch = epoch;
 
 	++epoch;
-	if (epoch == 49) { // TODO
-		int a = 0;
-	}
 
 	/// Step 1. Take the best organism and make a copy of its genome
-	NtOrganism *population_champion;
+	NtOrganism *population_champion = *organisms.begin();
 	{
-		real_t bp(0);
+		// This algorithm prefer the oldest genome when the fitness is the same
 		for (auto it_o = organisms.begin(); it_o != organisms.end(); ++it_o) {
-			if (bp < (*it_o)->get_personal_fitness()) {
+			bool is_better = false;
+			if (ABS(population_champion->get_personal_fitness() - (*it_o)->get_personal_fitness()) <= CMP_EPSILON) {
+
+				// They have the same personal fitness
+
+				if (population_champion->get_species()->get_id() == (*it_o)->get_species()->get_id()) {
+					// They are the same species
+
+					if ((*it_o)->is_champion_clone()) {
+						is_better = true;
+					}
+				} else {
+					// They are different species so take the oldest
+					is_better = population_champion->get_species()->get_born_epoch() > (*it_o)->get_species()->get_born_epoch();
+				}
+			} else {
+				is_better = population_champion->get_personal_fitness() < (*it_o)->get_personal_fitness();
+			}
+
+			if (is_better) {
 				population_champion = *it_o;
-				bp = population_champion->get_personal_fitness();
 			}
 		}
 	}
@@ -89,6 +104,7 @@ bool brain::NtPopulation::epoch_advance() {
 	population_champion->set_the_best(true);
 
 	statistics.pop_champion_fitness = population_champion->get_personal_fitness();
+	statistics.pop_champion_species_id = population_champion->get_species()->get_id();
 
 	/// Step 2. Compute species average fitness, then adjust it
 	int ages_sum(0);
@@ -113,7 +129,7 @@ bool brain::NtPopulation::epoch_advance() {
 	std::sort(
 			ordered_species.begin(),
 			ordered_species.end(),
-			species_fitness_comparator);
+			species_comparator);
 
 	NtSpecies *best_species = *ordered_species.begin();
 
@@ -376,6 +392,37 @@ bool brain::NtPopulation::epoch_advance() {
 		ERR_FAIL_COND_V(stolen_cribs != 0, false);
 	}
 
+	{
+		/// Population champion species protection mechanism
+		/// Can happen that the pop champion species is stagnant, and go torward
+		/// the death.
+		/// This must be prevented, so here a gift is donated to make the species
+		/// survive.
+		/// Also in the next iteration if the species does well will have the
+		/// possibility to repopulate.
+		NtSpecies *specie_to_save = population_champion->get_species();
+		if (specie_to_save->get_offspring_count() == 0) {
+
+			// Search the species to whom steal 1 crib no matter who
+			NtSpecies *target = nullptr;
+			for (auto it = ordered_species.rbegin(); it != ordered_species.rend(); ++it) {
+				NtSpecies *s = *it;
+				if (s->get_offspring_count()) {
+					target = s;
+					break;
+				}
+			}
+
+			ERR_FAIL_COND_V(!target, false);
+			target->set_offspring_count(target->get_offspring_count() - 1);
+			if (target->get_champion_offspring_count() >= target->get_champion_offspring_count()) {
+				target->set_champion_offspring_count(target->get_champion_offspring_count() - 1);
+			}
+			specie_to_save->set_offspring_count(1);
+			specie_to_save->reset_age_of_last_improvement();
+		}
+	}
+
 	statistics.species_best_offspring = best_species->get_offspring_count();
 	statistics.species_best_champion_offspring = best_species->get_champion_offspring_count();
 
@@ -411,10 +458,19 @@ bool brain::NtPopulation::epoch_advance() {
 	auto best_species_iterator =
 			std::find(species.begin(), species.end(), best_species);
 	if (best_species_iterator == species.end()) {
-
+		best_species = nullptr;
 		statistics.species_best_is_died = true;
 		WARN_PRINTS("IMPORTANT For some reason the best species died. Is there a bug somewhere?");
 	}
+
+	bool exist_champion_clone = false;
+	for (auto it = organisms.begin(); it != organisms.end(); ++it) {
+		if ((*it)->is_champion_clone()) {
+			exist_champion_clone = true;
+			break;
+		}
+	}
+	ERR_FAIL_COND_V(!exist_champion_clone, false);
 
 	statistics.is_epoch_advanced = true;
 

@@ -169,19 +169,19 @@ void test_NEAT_XOR() {
 
 	const int epoch_max(100);
 
-	/// Statistics
+	// Statistics
 	std::vector<brain::NtEpochStatistics> statistics;
 	statistics.reserve(epoch_max);
 
-	/// Population creation
-
+	// Settings
 	brain::NtPopulationSettings settings;
 	settings.seed = time(nullptr);
-	settings.genetic_compatibility_threshold = 3;
-	settings.genetic_weights_significance = 0.4;
+	settings.seed = 1554825747; // TODO test seed
 
 	brain::Math::seed(settings.seed);
+	uint32_t shuffle_seed = settings.seed;
 
+	// Population creation
 	brain::NtPopulation population(
 			brain::NtGenome(
 					3,
@@ -192,9 +192,8 @@ void test_NEAT_XOR() {
 			150 /*population size*/,
 			settings);
 
-	uint32_t seed = settings.seed;
+	// Execution
 	for (int epoch(0); epoch < epoch_max; ++epoch) {
-		//for (int epoch(0); true; ++epoch) {
 
 		// Shuffle is required to avoid create a pattern
 		{
@@ -202,13 +201,13 @@ void test_NEAT_XOR() {
 					inputs.begin(),
 					inputs.end(),
 					// Re init with the same seed to maintain the order of shuffling
-					std::default_random_engine(seed + epoch));
+					std::default_random_engine(shuffle_seed + epoch));
 
 			std::shuffle(
 					expected.begin(),
 					expected.end(),
 					// Re init with the same seed to maintain the order of shuffling
-					std::default_random_engine(seed + epoch));
+					std::default_random_engine(shuffle_seed + epoch));
 		}
 
 		/// Step 2. Population testing and evaluation
@@ -234,6 +233,9 @@ void test_NEAT_XOR() {
 			}
 
 			real_t fitness = 1.f - (total_error / inputs.size());
+
+			//const real_t brain_size_penality = 0.1 * brain_area->get_neuron_count();
+			//fitness -= brain_size_penality;
 
 			if (acceptable_result != inputs.size()) {
 
