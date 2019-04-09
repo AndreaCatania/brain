@@ -278,10 +278,10 @@ extern std::string _last_error;
 		brain::_err_error_exists = false;                                    \
 	}
 
-#define ERR_PRINTS(m_string)                                                                           \
-	{                                                                                                  \
-		brain::_err_print_error(FUNCTION_STR, __FILE__, __LINE__, String(m_string).utf8().get_data()); \
-		brain::_err_error_exists = false;                                                              \
+#define ERR_PRINTS(m_string)                                                                      \
+	{                                                                                             \
+		brain::_err_print_error(FUNCTION_STR, __FILE__, __LINE__, std::string(m_string).c_str()); \
+		brain::_err_error_exists = false;                                                         \
 	}
 
 /** Print a warning string.

@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="./bootstrap.min.js"></script>
+	  	<link rel="stylesheet" href="./bootstrap.min.css"/>
+		
+		<script src="./jquery-3.3.1.slim.min.js"></script>
+
+		<script src="./Chart.min.js"></script>
+	  	<link rel="stylesheet" href="./Chart.min.css"/>
+	</head>
+	<body class="container-fluid">
+		<div class="row">
+			<div class="col">
+				<form>
+					<div class="form-group">
+					    <label for="statistics_inpt">Neat statistics to visualize</label>
+					    <textarea class="form-control" id="statistics_inpt" rows="1"></textarea>
+					</div>
+  					<button type="button" id="visualize_btn" class="btn btn-primary">Visualize</button>
+				</form>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				
+				<canvas id="chart" class="w-100"></canvas>
+				
+			</div>
+		</div>
+
+		
+	</body>
+	<script>
+
+		var point_radius = 0.75;
+
+		var chart = new Chart($('#chart')[0].getContext('2d'), {
+		    type: 'bar',
+		    data: {
+		        labels: [],
+		        datasets: [
+		        // Fitness section
+		        {
+		            label: 'Pop champion fitness',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'fitness',
+		            borderColor: 'rgba(255, 95, 0, 1)',
+		            borderWidth: 3,
+		            pointRadius: point_radius
+		        },
+		        {
+		            label: 'Species AVG fitness',
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'fitness',
+		            borderColor: 'rgba(255, 117, 36, 1)',
+		            borderWidth: 3,
+		            pointRadius: point_radius
+		        },
+
+		        // Species counting
+		        {
+		            label: 'Species count',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(54, 247, 54, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Young Species',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(110, 234, 0, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Stagnant Species',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'species_count',
+		            borderColor: 'rgba(83, 177, 0, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // id section
+		        {
+		            label: 'Best Species ID',
+		            hidden: true,
+		            fill: true,
+		            type: 'line',
+      				yAxisID: 'ids',
+		            backgroundColor: 'rgba(69, 86, 54, 0.1)',
+		            tension: 0,
+		            borderWidth: 0,
+		            pointRadius: point_radius
+		        },
+		        {
+		            label: 'Pop champion Species ID',
+		            hidden: true,
+		            fill: true,
+		            type: 'line',
+      				yAxisID: 'ids',
+		            backgroundColor: 'rgba(255, 170, 0, 0.1)',
+		            tension: 0,
+		            borderWidth: 0,
+		            pointRadius: point_radius
+		        },
+
+		        // Age
+		        {
+		            label: 'Best Species Age',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'age',
+		            borderColor: 'rgba(69, 86, 54, 0.4)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // offspring
+		        {
+		            label: 'Best Species offspring pre steal',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(46, 117, 248, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Best Species offspring',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(3, 52, 255, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Best Species champion offspring',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(29, 72, 250, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'pop stolen cribs',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'offspring',
+		            borderColor: 'rgba(88, 121, 255, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // Epoch
+		        {
+		            label: 'Pop epoch last improvement',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'epoch',
+		            borderColor: 'rgba(49, 63, 118, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },
+
+		        // Bools
+		        {
+		            label: 'Pop stagnant',
+		            hidden: true,
+		            fill: true,
+      				yAxisID: 'bools',
+		            backgroundColor: 'rgba(255, 0, 0, 0.4)',
+		            borderWidth: 0,
+		            pointRadius: 0
+		        },{
+		            label: 'Best species died',
+		            hidden: true,
+		            fill: true,
+      				yAxisID: 'bools',
+		            backgroundColor: 'rgba(171, 100, 0, 0.4)',
+		            borderWidth: 0,
+		            pointRadius: 0
+		        },
+
+				// Reproduction
+		        {
+		            label: 'Champion mutate weights',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 213, 8, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Champion add random link',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 222, 62, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate multipoint',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(77.6, 0, 36.9, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate multipoint avg',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(66.7, 0, 31.4, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mate singlepoint',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(255, 27, 135, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate add random link',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(91, 0, 123, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate add random neuron',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(130, 0, 177, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate weights',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(72.5, 0, 98.4, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        },{
+		            label: 'Mutate toggle link activation',
+		            hidden: true,
+		            fill: false,
+		            type: 'line',
+      				yAxisID: 'reproduction',
+		            borderColor: 'rgba(84, 0, 114, 1)',
+		            borderWidth: 1,
+		            pointRadius: point_radius
+		        }]
+		    },
+		    options: {
+		    	responsive: true,
+    			maintainAspectRatio: false,
+		        scales: {
+		            yAxes: [{
+		            	id: "fitness",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "species_count",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "ids",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "age",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "offspring",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "epoch",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "bools",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            },{
+		            	id: "reproduction",
+		            	gridLines: {
+							drawBorder: false,
+							display: false
+					 	},
+		                ticks: {
+		                    beginAtZero: true,
+							display: false
+		                }
+		            }]
+		        }
+		    }
+		});
+
+		$(document).on("click", "#visualize_btn", function(){
+			var val = $("#statistics_inpt").val();
+			var parsing_error = false
+			var data
+			try{
+				data = JSON.parse(val);
+			}catch(e){
+				alert("The provided datas are a valid JSON");
+				parsing_error = true
+			}
+			if(!parsing_error){
+				visualize_statistics(data["seed"], data["statistics"]);
+			}
+		});
+
+
+		function extrapolate(statistics, ele, prefix=0, postfix=0){
+			var arr = Array();
+			statistics.forEach(function(e){
+				arr.push(prefix + e[ele] + postfix);
+			});
+			return arr;
+		}
+
+		function visualize_statistics(seed, statistics){
+			
+			chart.data.labels = extrapolate(statistics, "epoch", "#", "");
+
+			var id = 0;
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_champion_fitness");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_avg_fitness");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_count");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_young_count");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_stagnant_count");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_id");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_champion_species_id");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_age");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_offspring_pre_steal");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_offspring");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_champion_offspring");
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_stolen_cribs");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_epoch_last_improvement");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "pop_is_stagnant");
+			chart.data.datasets[id++].data = extrapolate(statistics, "species_best_is_died");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_champion_mutate_weights");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_champion_add_random_link");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_multipoint");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_multipoint_avg");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mate_singlepoint");
+
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_add_random_link");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_add_random_neuron");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_weights");
+			chart.data.datasets[id++].data = extrapolate(statistics, "reproduction_mutate_toggle_link_activation");
+
+			chart.update();
+		}
+
+
+	</script>
+</html>

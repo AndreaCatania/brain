@@ -1,17 +1,21 @@
 #pragma once
 
+#include "brain/brain_areas/brain_area.h"
 #include "brain/math/matrix.h"
 #include <vector>
 
 namespace brain {
-class BrainArea {
+
+/**
+ * @brief The UniformBrainArea class is the type of brain area that give the
+ * possibility to create fully connected neural network
+ *
+ * The execution of the guess function is usually two times slower than the
+ * sharp brain area, but its creation is faster.
+ */
+class UniformBrainArea : public brain::BrainArea {
 
 public:
-	enum Activation {
-		ACTIVATION_SIGMOID,
-		ACTIVATION_MAX
-	};
-
 	struct LearningCache {
 		std::vector<brain::Matrix> layers_output;
 	};
@@ -22,17 +26,17 @@ private:
 	std::vector<Activation> activations;
 
 public:
-	BrainArea();
-	BrainArea(
+	UniformBrainArea();
+	UniformBrainArea(
 			uint32_t p_input_layer_size,
 			uint32_t p_hidden_layers_count,
 			uint32_t p_output_layer_size);
 
 	void set_input_layer_size(uint32_t p_size);
-	uint32_t get_input_layer_size() const;
+	virtual uint32_t get_input_layer_size() const;
 
 	void set_output_layer_size(uint32_t p_size);
-	uint32_t get_output_layer_size() const;
+	virtual uint32_t get_output_layer_size() const;
 
 	void set_hidden_layers_count(uint32_t p_count);
 	uint32_t get_hidden_layers_count() const;
@@ -48,22 +52,23 @@ public:
 	void set_hidden_layer_activation(uint32_t p_layer, Activation p_activation);
 	Activation get_hidden_layer_activation(uint32_t p_layer) const;
 
-	void randomize_weights(real_t p_range);
-	void fill_weights(real_t p_value);
+	virtual void randomize_weights(real_t p_range);
+	virtual void fill_weights(real_t p_value);
 
 	void randomize_biases(real_t p_range);
 	void fill_biases(real_t p_value);
 
-	int get_layer_count();
+	int get_layer_count() const;
 	const Matrix &get_layer_weights(const int p_layer) const;
 
 	void set_weight(int p_index, const Matrix &p_matrix);
-	void set_biases(int p_index, const Matrix &p_matrix);
-	void set_activations(int p_index, Activation p_activation);
+	const std::vector<Matrix> &get_weights() const { return weights; }
 
-	const std::vector<Matrix> &get_weights() { return weights; }
-	const std::vector<Matrix> &get_biases() { return biases; }
-	const std::vector<Activation> &get_activations() { return activations; }
+	void set_biases(int p_index, const Matrix &p_matrix);
+	const std::vector<Matrix> &get_biases() const { return biases; }
+
+	void set_activations(int p_index, Activation p_activation);
+	const std::vector<Activation> &get_activations() const { return activations; }
 
 	/**
 	 * @brief learn
@@ -83,15 +88,19 @@ public:
 			real_t p_learn_rate,
 			LearningCache *p_cache);
 
+	virtual bool guess(
+			const Matrix &p_input,
+			Matrix &r_guess) const;
+
 	/**
 	 * @brief guess
 	 * @param p_input Input data
 	 * @param r_guess result
 	 */
-	void guess(
+	bool _guess(
 			const Matrix &p_input,
 			Matrix &r_guess,
-			LearningCache *p_cache = nullptr);
+			LearningCache *p_cache = nullptr) const;
 
 	/// Metadata
 	/// First is an uint32_t with the size of the entire buffer
@@ -171,4 +180,5 @@ private:
 	void set_layer_size(uint32_t p_layer, uint32_t p_size);
 	uint32_t get_layer_size(uint32_t p_layer) const;
 };
+
 } // namespace brain
