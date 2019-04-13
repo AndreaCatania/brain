@@ -32,7 +32,9 @@
 
 #include "brain/error_macros.h"
 
-brain::RandomPCG brain::Math::default_rand(RandomPCG::DEFAULT_SEED, RandomPCG::DEFAULT_INC);
+brain::RandomPCG brain::Math::default_rand(
+		brain::RandomPCG::DEFAULT_SEED,
+		brain::RandomPCG::DEFAULT_INC);
 
 #define PHI 0x9e3779b9
 
