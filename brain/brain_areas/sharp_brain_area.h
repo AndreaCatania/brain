@@ -33,6 +33,23 @@ struct Link {
 	 * @brief If this link is a recurrent link
 	 */
 	bool is_recurrent;
+
+	/**
+	 * @brief Constructor
+	 * @param p_neuron
+	 * @param p_neuron_id
+	 * @param p_weight
+	 * @param p_is_recurrent
+	 */
+	Link(
+			Neuron *p_neuron,
+			NeuronId p_neuron_id,
+			real_t p_weight,
+			bool p_is_recurrent) :
+			neuron(p_neuron),
+			neuron_id(p_neuron_id),
+			weight(p_weight),
+			is_recurrent(p_is_recurrent) {}
 };
 
 /**

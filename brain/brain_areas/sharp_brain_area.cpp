@@ -1,5 +1,6 @@
 #include "sharp_brain_area.h"
 
+#include "brain/NEAT/neat_organism.h"
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
 #include <algorithm>
@@ -65,7 +66,7 @@ uint32_t brain::Neuron::get_parent_count() const {
 
 void brain::Neuron::add_parent(NeuronId p_neuron_id, real_t p_weight, bool p_recurrent) {
 
-	parents.push_back({ nullptr, p_neuron_id, p_weight, p_recurrent });
+	parents.push_back(Link(nullptr, p_neuron_id, p_weight, p_recurrent));
 }
 
 void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
@@ -73,8 +74,6 @@ void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
 
 	parents[p_parent_index].weight = p_weight;
 }
-
-#include "brain/NEAT/neat_organism.h"
 
 brain::SharpBrainArea::SharpBrainArea(NtOrganism *p) :
 		o(p),
@@ -243,7 +242,7 @@ bool brain::SharpBrainArea::guess(
 	// Special case for softmax activation function
 	if (ACTIVATION_SOFTMAX == neurons[outputs[0]].activation) {
 
-		const real_t sum_exp(brain::Math::pow(Math_E, r_guess.summation()));
+		const real_t sum_exp(brain::Math::pow(real_t(Math_E), r_guess.summation()));
 		for (int i(0); i < output_size; ++i) {
 
 			const real_t v = brain::Math::soft_max_fast(

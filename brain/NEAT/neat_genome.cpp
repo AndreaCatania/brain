@@ -518,6 +518,7 @@ bool brain::NtGenome::mate_multipoint(
 			suppress_link(id);
 		}
 	}
+	return true;
 }
 
 bool brain::NtGenome::mate_singlepoint(
