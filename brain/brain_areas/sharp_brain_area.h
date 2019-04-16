@@ -204,11 +204,10 @@ class SharpBrainArea : public brain::BrainArea {
 	bool ready;
 
 public:
-	class NtOrganism *o; // TODO remove this please
 	/**
 	 * @brief SharpBrainArea constructor
 	 */
-	SharpBrainArea(class NtOrganism *p);
+	SharpBrainArea();
 
 	/**
 	 * @brief add_neuron

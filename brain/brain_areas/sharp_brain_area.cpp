@@ -75,8 +75,7 @@ void brain::Neuron::set_weight(uint32_t p_parent_index, real_t p_weight) {
 	parents[p_parent_index].weight = p_weight;
 }
 
-brain::SharpBrainArea::SharpBrainArea(NtOrganism *p) :
-		o(p),
+brain::SharpBrainArea::SharpBrainArea() :
 		brain::BrainArea(brain::BRAIN_AREA_TYPE_SHARP),
 		execution_id(0),
 		ready(false) {}

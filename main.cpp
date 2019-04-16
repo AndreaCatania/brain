@@ -274,7 +274,7 @@ void test_NEAT_XOR() {
 		print_line(s);
 	}
 
-	brain::SharpBrainArea ba(nullptr);
+	brain::SharpBrainArea ba;
 	population.get_champion_network(ba);
 	// TODO get the population champion and test it.
 	int b = 0;
