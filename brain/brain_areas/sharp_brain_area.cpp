@@ -80,6 +80,31 @@ brain::SharpBrainArea::SharpBrainArea() :
 		execution_id(0),
 		ready(false) {}
 
+void brain::SharpBrainArea::operator=(const SharpBrainArea &p_brain_area) {
+
+	execution_id = p_brain_area.execution_id;
+	ready = p_brain_area.ready;
+
+	neurons.resize(p_brain_area.neurons.size());
+	inputs.resize(p_brain_area.inputs.size());
+	outputs.resize(p_brain_area.outputs.size());
+
+	std::copy(
+			p_brain_area.neurons.begin(),
+			p_brain_area.neurons.end(),
+			neurons.begin());
+
+	std::copy(
+			p_brain_area.inputs.begin(),
+			p_brain_area.inputs.end(),
+			inputs.begin());
+
+	std::copy(
+			p_brain_area.outputs.begin(),
+			p_brain_area.outputs.end(),
+			outputs.begin());
+}
+
 brain::NeuronId brain::SharpBrainArea::add_neuron() {
 	const NeuronId id(neurons.size());
 	neurons.push_back(Neuron(id));

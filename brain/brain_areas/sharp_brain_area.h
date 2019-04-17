@@ -96,6 +96,11 @@ struct Neuron {
 	mutable uint32_t execution_id;
 
 	/**
+	 * @brief No initialization constructor
+	 */
+	Neuron() {}
+
+	/**
 	 * @brief Neuron constructor
 	 * @param p_id
 	 */
@@ -208,6 +213,12 @@ public:
 	 * @brief SharpBrainArea constructor
 	 */
 	SharpBrainArea();
+
+	/**
+	 * @brief copy
+	 * @param p_brain_area
+	 */
+	void operator=(const brain::SharpBrainArea &p_brain_area);
 
 	/**
 	 * @brief add_neuron
