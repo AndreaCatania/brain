@@ -237,6 +237,26 @@ public:
 			BrainArea::Activation p_output_activation_func = BrainArea::ACTIVATION_LINEAR);
 
 	/**
+	 * @brief NtGenome this constructor created automatically a fully connected
+	 * genome with input and outputs passes as parameters.
+	 *
+	 * This constructor is perfect to create the ancestor genome to pass to
+	 * create the population
+	 *
+	 * @param p_input_count
+	 * @param p_output_count
+	 * @param p_randomize_weights = true
+	 * @param p_input_activation_func the input activation function
+	 * @param p_output_activation_func the output activation function
+	 */
+	void construct(
+			int p_input_count,
+			int p_output_count,
+			bool p_randomize_weights,
+			BrainArea::Activation p_input_activation_func,
+			BrainArea::Activation p_output_activation_func);
+
+	/**
 	 * @brief add_neuron add a neuron gene to the genome
 	 * @param p_type
 	 * @param the neuron activatin function

@@ -41,8 +41,25 @@ brain::NtGenome::NtGenome(
 		BrainArea::Activation p_output_activation_func) :
 		NtGenome() {
 
+	construct(
+			p_input_count,
+			p_output_count,
+			p_randomize_weights,
+			p_input_activation_func,
+			p_output_activation_func);
+}
+
+void brain::NtGenome::construct(
+		int p_input_count,
+		int p_output_count,
+		bool p_randomize_weights,
+		BrainArea::Activation p_input_activation_func,
+		BrainArea::Activation p_output_activation_func) {
+
 	ERR_FAIL_COND(p_input_count <= 0);
 	ERR_FAIL_COND(p_output_count <= 0);
+
+	clear();
 
 	for (int i(0); i < p_input_count; ++i) {
 		add_neuron(

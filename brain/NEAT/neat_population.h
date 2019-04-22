@@ -559,7 +559,14 @@ public:
 	 */
 	void organism_set_fitness(
 			uint32_t p_organism_i,
-			real_t p_fitness) const;
+			real_t p_fitness);
+
+	/**
+	 * @brief organism_get_fitness
+	 * @param p_organism_i
+	 * @return
+	 */
+	real_t organism_get_fitness(uint32_t p_organism_i) const;
 
 	/**
 	 * @brief epoch_advance is who make possible the turnover of the population.

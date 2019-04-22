@@ -57,9 +57,14 @@ const brain::SharpBrainArea *brain::NtPopulation::organism_get_network(uint32_t 
 	return &organisms[p_organism_i]->get_brain_area();
 }
 
-void brain::NtPopulation::organism_set_fitness(uint32_t p_organism_i, real_t p_fitness) const {
+void brain::NtPopulation::organism_set_fitness(uint32_t p_organism_i, real_t p_fitness) {
 	ERR_FAIL_INDEX(p_organism_i, population_size);
 	organisms[p_organism_i]->set_evaluation(p_fitness);
+}
+
+real_t brain::NtPopulation::organism_get_fitness(uint32_t p_organism_i) const {
+	ERR_FAIL_INDEX_V(p_organism_i, population_size, 0);
+	return organisms[p_organism_i]->get_personal_fitness();
 }
 
 bool brain::NtPopulation::epoch_advance() {
