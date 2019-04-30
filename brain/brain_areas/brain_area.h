@@ -1,6 +1,7 @@
 #pragma once
 
 #include "brain/math/matrix.h"
+#include <vector>
 
 typedef real_t (*activation_func)(real_t p_val);
 
@@ -113,6 +114,63 @@ public:
 	virtual bool guess(
 			const Matrix &p_input,
 			Matrix &r_guess) const = 0;
+
+	/**
+	 * @brief get_buffer_metadata_size
+	 * @param p_buffer_metadata
+	 * @return
+	 *
+	 * Returns the size of the metadata
+	 */
+	virtual int get_buffer_metadata_size() const = 0;
+
+	/**
+	 * @brief get_buffer_size
+	 * @param p_buffer_metadata
+	 * @return
+	 *
+	 * Read the metadata and returns the size of the entire buffer
+	 */
+	virtual uint32_t get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const = 0;
+
+	/**
+	 * @brief is_buffer_corrupted
+	 * @param p_buffer
+	 * @return
+	 *
+	 * Return true if the buffer is corrup
+	 */
+	virtual bool is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const = 0;
+
+	/**
+	 * @brief is_buffer_compatible
+	 * @param p_buffer
+	 * @return
+	 *
+	 * This function returns true if the buffer is compatible with the
+	 * current structure
+	 */
+	virtual bool is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const = 0;
+
+	/**
+	 * @brief set_buffer
+	 * @param p_buffer
+	 * @return
+	 *
+	 * Restore the weights the biases and activations.
+	 *
+	 * This function alter the current structure of the brain area,
+	 * use the function is_buffer_compatible to know if this buffer
+	 * is compatible with the current structure
+	 */
+	virtual bool set_buffer(const std::vector<uint8_t> &p_buffer) = 0;
+
+	/**
+	 * @brief get_buffer return a buffer with the current knowledge
+	 * @param p_buffer
+	 * @return
+	 */
+	virtual bool get_buffer(std::vector<uint8_t> &r_buffer) const = 0;
 };
 
 } // namespace brain

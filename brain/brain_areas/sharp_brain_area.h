@@ -50,6 +50,12 @@ struct Link {
 			neuron_id(p_neuron_id),
 			weight(p_weight),
 			is_recurrent(p_is_recurrent) {}
+
+	/**
+	 * @brief Link This is here only to allow array manipulation
+	 * So please not use this directly
+	 */
+	Link() {}
 };
 
 /**
@@ -166,6 +172,27 @@ struct Neuron {
 	 * @return
 	 */
 	real_t get_recurrent(uint32_t p_execution_id) const;
+
+	/**
+	 * @brief get_byte_size returns the bytes to allocate to store this neuron
+	 * in a buffer
+	 * @return
+	 */
+	size_t get_byte_size() const;
+
+	/**
+	 * @brief from_byte is used to set the data from a buffere to this neuron
+	 * @param p_buffer
+	 * @param p_size_of_real
+	 */
+	void from_byte(const uint8_t *p_buffer, int p_size_of_real);
+
+	/**
+	 * @brief to_byte write the current neuron data inside the buffer,
+	 * that must have a lenght >= get_byte_size()
+	 * @param r_buffer
+	 */
+	void to_byte(uint8_t *p_buffer) const;
 };
 
 /**
@@ -346,6 +373,81 @@ public:
 	virtual bool guess(
 			const Matrix &p_input,
 			Matrix &r_guess) const;
+
+	/**
+	 * @brief The MetadataIndices enum
+	 * First is an uint32_t with the size of the entire buffer
+	 * Second is an uint32_t that point the size of the real_t
+	 * Third is an uint32_t with the weight count
+	 * Forth is an uint32_t with the biases count
+	 * Fifth is an uint32_t with the activation count
+	 * From now on all arrays store in this order weights, biases, activations
+	 */
+	enum MetadataIndices {
+		METADATA_BUFFER_SIZE,
+		METADATA_REAL_SIZE,
+		METADATA_NEURON_COUNT,
+		METADATA_INPUT_COUNT,
+		METADATA_OUTPUT_COUNT,
+		METADATA_MAX
+	};
+
+	/**
+	 * @brief get_buffer_metadata_size
+	 * @param p_buffer_metadata
+	 * @return
+	 *
+	 * Returns the size of the metadata
+	 */
+	virtual int get_buffer_metadata_size() const;
+
+	/**
+	 * @brief get_buffer_size
+	 * @param p_buffer_metadata
+	 * @return
+	 *
+	 * Read the metadata and returns the size of the entire buffer
+	 */
+	virtual uint32_t get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const;
+
+	/**
+	 * @brief is_buffer_corrupted
+	 * @param p_buffer
+	 * @return
+	 *
+	 * Return true if the buffer is corrup
+	 */
+	virtual bool is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const;
+
+	/**
+	 * @brief is_buffer_compatible
+	 * @param p_buffer
+	 * @return
+	 *
+	 * This function returns true if the buffer is compatible with the
+	 * current structure
+	 */
+	virtual bool is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const;
+
+	/**
+	 * @brief set_buffer
+	 * @param p_buffer
+	 * @return
+	 *
+	 * Restore the weights the biases and activations.
+	 *
+	 * This function alter the current structure of the brain area,
+	 * use the function is_buffer_compatible to know if this buffer
+	 * is compatible with the current structure
+	 */
+	virtual bool set_buffer(const std::vector<uint8_t> &p_buffer);
+
+	/**
+	 * @brief get_buffer return a buffer with the current knowledge
+	 * @param p_buffer
+	 * @return
+	 */
+	virtual bool get_buffer(std::vector<uint8_t> &r_buffer) const;
 
 private:
 	/**

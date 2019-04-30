@@ -38,6 +38,55 @@ real_t brain::Neuron::get_recurrent(uint32_t p_execution_id) const {
 	return execution_id == p_execution_id ? recurrent : cached_value;
 }
 
+size_t brain::Neuron::get_byte_size() const {
+
+	return sizeof(brain::BrainArea::Activation) + // Activation
+		   sizeof(NeuronId) + // Neuron id
+		   sizeof(uint32_t) + // Parent count
+		   sizeof(Link) * parents.size(); // The space required to store a link
+}
+
+void brain::Neuron::from_byte(const uint8_t *p_buffer, int p_size_of_real) {
+
+	// Not yet supported for this class load the Link with a different real size (precision)
+	ERR_FAIL_COND(sizeof(real_t) != p_size_of_real);
+
+	cached_value = 0;
+	execution_id = 0;
+	recurrent = 0;
+
+	activation = *(brain::BrainArea::Activation *)p_buffer;
+
+	p_buffer += sizeof(brain::BrainArea::Activation);
+	id = *(NeuronId *)p_buffer;
+
+	p_buffer += sizeof(NeuronId);
+	parents.resize(*(uint32_t *)p_buffer);
+
+	p_buffer += sizeof(uint32_t);
+	std::copy(
+			(Link *)p_buffer,
+			((Link *)p_buffer) + parents.size(),
+			parents.data());
+}
+
+void brain::Neuron::to_byte(uint8_t *p_buffer) const {
+
+	*(brain::BrainArea::Activation *)p_buffer = activation;
+
+	p_buffer += sizeof(brain::BrainArea::Activation);
+	*(NeuronId *)p_buffer = id;
+
+	p_buffer += sizeof(NeuronId);
+	*(uint32_t *)p_buffer = parents.size();
+
+	p_buffer += sizeof(uint32_t);
+	std::copy(
+			parents.begin(),
+			parents.end(),
+			(Link *)p_buffer);
+}
+
 brain::Neuron::Neuron(NeuronId p_id) :
 		id(p_id),
 		cached_value(0),
@@ -276,6 +325,132 @@ bool brain::SharpBrainArea::guess(
 			r_guess.set(i, 0, v);
 		}
 	}
+
+	return true;
+}
+
+int brain::SharpBrainArea::get_buffer_metadata_size() const {
+	return sizeof(uint32_t) * METADATA_MAX; // Metadata size
+}
+
+uint32_t brain::SharpBrainArea::get_buffer_size(const std::vector<uint8_t> &p_buffer_metadata) const {
+	const uint32_t buffer_size = ((uint32_t *)p_buffer_metadata.data())[METADATA_BUFFER_SIZE];
+	return buffer_size;
+}
+
+bool brain::SharpBrainArea::is_buffer_corrupted(const std::vector<uint8_t> &p_buffer) const {
+
+	const uint32_t buffer_size = ((uint32_t *)p_buffer.data())[METADATA_BUFFER_SIZE];
+	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t neuron_count = ((uint32_t *)p_buffer.data())[METADATA_NEURON_COUNT];
+	const uint32_t input_count = ((uint32_t *)p_buffer.data())[METADATA_INPUT_COUNT];
+	const uint32_t output_count = ((uint32_t *)p_buffer.data())[METADATA_OUTPUT_COUNT];
+
+	ERR_FAIL_COND_V(p_buffer.size() != buffer_size, true);
+	ERR_FAIL_COND_V(sizeof(float) != real_size && sizeof(double) != real_size, true);
+	ERR_FAIL_COND_V(input_count + output_count > neuron_count, true);
+
+	return false;
+}
+
+bool brain::SharpBrainArea::is_buffer_compatible(const std::vector<uint8_t> &p_buffer) const {
+
+	ERR_FAIL_COND_V(is_buffer_corrupted(p_buffer), false);
+
+	//const uint32_t buffer_size = ((uint32_t *)p_buffer.data())[METADATA_BUFFER_SIZE];
+	//const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t neuron_count = ((uint32_t *)p_buffer.data())[METADATA_NEURON_COUNT];
+	const uint32_t input_count = ((uint32_t *)p_buffer.data())[METADATA_INPUT_COUNT];
+	const uint32_t output_count = ((uint32_t *)p_buffer.data())[METADATA_OUTPUT_COUNT];
+
+	if (
+			neurons.size() == neuron_count ||
+			inputs.size() == input_count ||
+			outputs.size() == output_count)
+		return false;
+
+	return true;
+}
+
+bool brain::SharpBrainArea::set_buffer(const std::vector<uint8_t> &p_buffer) {
+
+	ERR_FAIL_COND_V(is_buffer_corrupted(p_buffer), false);
+
+	ready = false;
+
+	// Read metadata
+	const uint32_t real_size = ((uint32_t *)p_buffer.data())[METADATA_REAL_SIZE];
+	const uint32_t neuron_count = ((uint32_t *)p_buffer.data())[METADATA_NEURON_COUNT];
+	const uint32_t input_count = ((uint32_t *)p_buffer.data())[METADATA_INPUT_COUNT];
+	const uint32_t output_count = ((uint32_t *)p_buffer.data())[METADATA_OUTPUT_COUNT];
+
+	neurons.resize(neuron_count);
+	inputs.resize(input_count);
+	outputs.resize(output_count);
+
+	const uint8_t *b_support = p_buffer.data() + get_buffer_metadata_size();
+
+	for (auto it = neurons.begin(); it != neurons.end(); ++it) {
+		it->from_byte(b_support, real_size);
+		const size_t neuron_size = it->get_byte_size();
+		b_support += neuron_size;
+	}
+
+	std::copy(
+			(NeuronId *)b_support,
+			((NeuronId *)b_support) + input_count,
+			inputs.data());
+
+	b_support += sizeof(NeuronId) * input_count;
+
+	std::copy(
+			(NeuronId *)b_support,
+			((NeuronId *)b_support) + output_count,
+			outputs.data());
+
+	return true;
+}
+
+bool brain::SharpBrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
+
+	const int real_size = sizeof(real_t);
+
+	uint32_t buffer_size = get_buffer_metadata_size();
+
+	for (auto it = neurons.begin(); it != neurons.end(); ++it) {
+
+		buffer_size += it->get_byte_size();
+	}
+
+	buffer_size += sizeof(NeuronId) * (inputs.size() + outputs.size());
+
+	r_buffer.resize(buffer_size);
+
+	((uint32_t *)r_buffer.data())[METADATA_BUFFER_SIZE] = buffer_size;
+	((uint32_t *)r_buffer.data())[METADATA_REAL_SIZE] = real_size;
+	((uint32_t *)r_buffer.data())[METADATA_NEURON_COUNT] = neurons.size();
+	((uint32_t *)r_buffer.data())[METADATA_INPUT_COUNT] = inputs.size();
+	((uint32_t *)r_buffer.data())[METADATA_OUTPUT_COUNT] = outputs.size();
+
+	uint8_t *b_support = r_buffer.data() + get_buffer_metadata_size();
+
+	for (auto it = neurons.begin(); it != neurons.end(); ++it) {
+		it->to_byte(b_support);
+		const size_t neuron_size = it->get_byte_size();
+		b_support += neuron_size;
+	}
+
+	std::copy(
+			inputs.begin(),
+			inputs.end(),
+			(NeuronId *)b_support);
+
+	b_support += sizeof(NeuronId) * inputs.size();
+
+	std::copy(
+			outputs.begin(),
+			outputs.end(),
+			(NeuronId *)b_support);
 
 	return true;
 }
