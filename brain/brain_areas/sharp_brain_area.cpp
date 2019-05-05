@@ -191,6 +191,26 @@ bool brain::SharpBrainArea::is_neuron_output(NeuronId p_neuron_id) const {
 	return false;
 }
 
+uint32_t brain::SharpBrainArea::get_neuron_parent_count(NeuronId p_neuron_id) const {
+	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), 0);
+	return neurons[p_neuron_id].parents.size();
+}
+
+brain::NeuronId brain::SharpBrainArea::get_neuron_parent_id(NeuronId p_neuron_id, uint32_t p_link_id) const {
+	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), -1);
+	return neurons[p_neuron_id].parents[p_link_id].neuron_id;
+}
+
+bool brain::SharpBrainArea::get_neuron_parent_is_recurrent(NeuronId p_neuron_id, uint32_t p_link_id) const {
+	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), false);
+	return neurons[p_neuron_id].parents[p_link_id].is_recurrent;
+}
+
+real_t brain::SharpBrainArea::get_neuron_parent_weight(NeuronId p_neuron_id, uint32_t p_link_id) const {
+	ERR_FAIL_INDEX_V(p_neuron_id, neurons.size(), 0);
+	return neurons[p_neuron_id].parents[p_link_id].weight;
+}
+
 void brain::SharpBrainArea::set_neuron_as_output(NeuronId p_neuron_id) {
 	ERR_FAIL_INDEX(p_neuron_id, neurons.size());
 	ERR_FAIL_COND(is_neuron_input(p_neuron_id));

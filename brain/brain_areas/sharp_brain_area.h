@@ -289,6 +289,39 @@ public:
 	bool is_neuron_output(NeuronId p_neuron_id) const;
 
 	/**
+	 * @brief get_neuron_parent_count returns the parent linkage count
+	 * @param p_neuron_id
+	 * @return
+	 */
+	uint32_t get_neuron_parent_count(NeuronId p_neuron_id) const;
+
+	/**
+	 * @brief get_neuron_parent returns the NeuronId of the parent
+	 * @param p_neuron_id
+	 * @param p_i
+	 * @return
+	 */
+	NeuronId get_neuron_parent_id(NeuronId p_neuron_id, uint32_t p_link_id) const;
+
+	/**
+	 * @brief get_neuron_parent_is_recurrent return true if the link to parent
+	 * is recurrent
+	 *
+	 * @param p_neuron_id
+	 * @param p_link_id
+	 * @return
+	 */
+	bool get_neuron_parent_is_recurrent(NeuronId p_neuron_id, uint32_t p_link_id) const;
+
+	/**
+	 * @brief get_neuron_parent_weight returns the weight of the link
+	 * @param p_neuron_id
+	 * @param p_i
+	 * @return
+	 */
+	real_t get_neuron_parent_weight(NeuronId p_neuron_id, uint32_t p_link_id) const;
+
+	/**
 	 * @brief set_neuron_as_output
 	 * @param p_neuron_id
 	 *
