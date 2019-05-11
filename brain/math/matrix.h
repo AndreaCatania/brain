@@ -12,7 +12,7 @@ class Matrix {
 
 	uint32_t rows;
 	uint32_t columns;
-        real_t *matrix;
+	real_t *matrix;
 
 public:
 	Matrix();
@@ -42,7 +42,7 @@ public:
 	void unsafe_set_row(const uint32_t p_row, const real_t *const p_data);
 
 	void set(int p_row, int p_column, real_t p_value);
-	inline real_t get(int p_row, int p_column) const;
+	real_t get(int p_row, int p_column) const;
 
 	void set_all(real_t p_value);
 
@@ -66,10 +66,10 @@ public:
 	void transpose();
 	Matrix transposed() const;
 
-        size_t get_byte_size() const;
+	size_t get_byte_size() const;
 
-        void from_byte(const uint8_t *r_buffer, int p_size_of_real);
-        void to_byte(uint8_t *r_buffer) const;
+	void from_byte(const uint8_t *r_buffer, int p_size_of_real);
+	void to_byte(uint8_t *r_buffer) const;
 
 	void operator=(const Matrix &p_other);
 
