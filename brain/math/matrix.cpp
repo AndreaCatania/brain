@@ -112,6 +112,14 @@ real_t brain::Matrix::summation() const {
 	return t;
 }
 
+real_t brain::Matrix::exp_summation() const {
+	real_t t(0);
+	FOREACH {
+		t += Math::exp(ELEMENT);
+	}
+	return t;
+}
+
 void brain::Matrix::element_wise_multiplicate(const Matrix &p_other) {
 	ERR_FAIL_COND(get_row_count() != p_other.get_row_count());
 	ERR_FAIL_COND(get_column_count() != p_other.get_column_count());

@@ -56,6 +56,7 @@ public:
 	Matrix mapped(matrix_map_a1 p_func, real_t p_arg1) const;
 
 	real_t summation() const;
+	real_t exp_summation() const;
 
 	/**
 	 * Perform a element wise multiplication

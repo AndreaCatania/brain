@@ -38,6 +38,9 @@ public:
 	void set_output_layer_size(uint32_t p_size);
 	virtual uint32_t get_output_layer_size() const;
 
+	void set_output_layer_activation(Activation p_activation);
+	Activation get_output_layer_activation() const;
+
 	void set_hidden_layers_count(uint32_t p_count);
 	uint32_t get_hidden_layers_count() const;
 

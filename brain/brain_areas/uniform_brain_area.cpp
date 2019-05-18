@@ -47,6 +47,14 @@ uint32_t brain::UniformBrainArea::get_output_layer_size() const {
 	return get_layer_size(OUTPUT_LAYER_ID);
 }
 
+void brain::UniformBrainArea::set_output_layer_activation(Activation p_activation) {
+	activations[ACTIVATION_ID(OUTPUT_LAYER_ID)] = p_activation;
+}
+
+brain::BrainArea::Activation brain::UniformBrainArea::get_output_layer_activation() const {
+	return activations[ACTIVATION_ID(OUTPUT_LAYER_ID)];
+}
+
 void brain::UniformBrainArea::set_hidden_layers_count(uint32_t p_count) {
 
 	const int prev_size_output_layer = get_layer_size(OUTPUT_LAYER_ID);
@@ -57,7 +65,7 @@ void brain::UniformBrainArea::set_hidden_layers_count(uint32_t p_count) {
 	activations.resize(p_count + 2 - 1);
 
 	set_layer_size(OUTPUT_LAYER_ID, prev_size_output_layer);
-	activations[activations.size() - 1] = prev_activ_output_layer;
+	activations[OUTPUT_LAYER_ID] = prev_activ_output_layer;
 }
 
 uint32_t brain::UniformBrainArea::get_hidden_layers_count() const {
@@ -253,8 +261,8 @@ bool brain::UniformBrainArea::_guess(
 
 		if (activations[ACTIVATION_ID(i + 1)] == ACTIVATION_SOFTMAX) {
 
-			const real_t summ = r_guess.summation();
-			r_guess.map(brain::Math::soft_max_fast, pow(Math_E, summ));
+			const real_t summ = r_guess.exp_summation();
+			r_guess.map(brain::Math::soft_max_fast, summ);
 
 		} else {
 			// Activation of next layer

@@ -335,7 +335,7 @@ bool brain::SharpBrainArea::guess(
 	// Special case for softmax activation function
 	if (ACTIVATION_SOFTMAX == neurons[outputs[0]].activation) {
 
-		const real_t sum_exp(brain::Math::pow(real_t(Math_E), r_guess.summation()));
+		const real_t sum_exp(r_guess.exp_summation());
 		for (int i(0); i < output_size; ++i) {
 
 			const real_t v = brain::Math::soft_max_fast(

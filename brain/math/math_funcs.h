@@ -96,12 +96,9 @@ public:
 	static _ALWAYS_INLINE_ double binary_step_derivative(double p_x) { return 1.; }
 	static _ALWAYS_INLINE_ float binary_step_derivative(float p_x) { return 1.f; }
 
-	static _ALWAYS_INLINE_ double soft_max(double p_x, double p_total) { return pow(Math_E, p_x) / pow(Math_E, p_total); }
-	static _ALWAYS_INLINE_ float soft_max(float p_x, float p_total) { return pow(float(Math_E), p_x) / pow(float(Math_E), p_total); }
-
-	/// To be used the total must be treated in this way -> p_total_exp = pow(Math_E, p_total)
+	/// To be used the total must be the sum of each exponential value
 	static _ALWAYS_INLINE_ double soft_max_fast(double p_x, double p_total_exp) { return pow(Math_E, p_x) / p_total_exp; }
-	/// To be used the total must be treated in this way -> p_total_exp = pow(Math_E, p_total)
+	/// To be used the total must be the sum of each exponential value
 	static _ALWAYS_INLINE_ float soft_max_fast(float p_x, float p_total_exp) { return pow(float(Math_E), p_x) / p_total_exp; }
 
 	static _ALWAYS_INLINE_ double soft_max_derivative(double p_x) { return p_x * (1. - p_x); }
