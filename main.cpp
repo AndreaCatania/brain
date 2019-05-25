@@ -47,7 +47,7 @@ void test_uniform_ba_XOR() {
 	brain::UniformBrainArea area1(2, 1, 1);
 
 	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_LEAKY_RELU);
-	area1.set_layer_activation(2, brain::UniformBrainArea::ACTIVATION_SIGMOID);
+	area1.set_layer_activation(2, brain::UniformBrainArea::ACTIVATION_BINARY);
 
 	brain::Math::randomize();
 	area1.randomize_weights(1);
@@ -82,25 +82,124 @@ void test_uniform_ba_XOR() {
 
 	real_t error;
 	brain::UniformBrainArea::LearningCache lc;
-	for (int t(0); t < 100000; ++t) {
-		for (int i(0); i < inputs.size(); ++i) {
-			error = area1.learn(inputs[i], expected[i], 0.05, &lc);
+
+	int learn_mode = 0;
+	if (learn_mode == 0) {
+
+		// Online gradient descent
+		for (int t(0); t < 100000; ++t) {
+
+			for (int i(0); i < inputs.size(); ++i) {
+				error = area1.learn(
+						inputs[i],
+						expected[i],
+						0.1,
+						true,
+						NULL,
+						&lc);
+			}
+
+			// GD prefer shuffled data
+			uint32_t seed = time(nullptr);
+			std::shuffle(
+					inputs.begin(),
+					inputs.end(),
+					std::default_random_engine(seed));
+
+			std::shuffle(
+					expected.begin(),
+					expected.end(),
+					std::default_random_engine(seed));
 		}
 
-		// SGD prefer shuffled data
-		uint32_t seed = time(nullptr);
-		std::shuffle(
-				inputs.begin(),
-				inputs.end(),
-				std::default_random_engine(seed));
+		print_line("Error: " + brain::rtos(error));
 
-		std::shuffle(
-				expected.begin(),
-				expected.end(),
-				std::default_random_engine(seed));
+	} else if (learn_mode == 1) {
+
+		// Batch gradient descent
+		int samples_count = 0;
+		brain::UniformBrainArea::DeltaGradients total_dg;
+		brain::UniformBrainArea::DeltaGradients _volatile_dg;
+		for (int t(0); t < 100000; ++t) {
+
+			for (int i(0); i < inputs.size(); ++i) {
+				error = area1.learn(
+						inputs[i],
+						expected[i],
+						0.01,
+						false,
+						&_volatile_dg,
+						&lc);
+
+				++samples_count;
+				total_dg += _volatile_dg;
+			}
+
+			// GD prefer shuffled data
+			uint32_t seed = time(nullptr);
+			std::shuffle(
+					inputs.begin(),
+					inputs.end(),
+					std::default_random_engine(seed));
+
+			std::shuffle(
+					expected.begin(),
+					expected.end(),
+					std::default_random_engine(seed));
+		}
+
+		total_dg /= samples_count;
+
+		area1.update_weights(total_dg);
+
+	} else if (learn_mode == 2) {
+
+		// Mini batch gradient descent
+		int samples_count = 0;
+		brain::UniformBrainArea::DeltaGradients total_dg;
+		brain::UniformBrainArea::DeltaGradients _volatile_dg;
+		for (int t(0); t < 100000; ++t) {
+
+			for (int i(0); i < inputs.size(); ++i) {
+				error = area1.learn(
+						inputs[i],
+						expected[i],
+						0.01,
+						false,
+						&_volatile_dg,
+						&lc);
+
+				++samples_count;
+				total_dg += _volatile_dg;
+			}
+
+			if (samples_count >= 64) {
+				total_dg /= samples_count;
+				area1.update_weights(total_dg);
+
+				total_dg.weights.resize(0);
+				total_dg.biases.resize(0);
+				samples_count = 0;
+			}
+
+			// GD prefer shuffled data
+			uint32_t seed = time(nullptr);
+			std::shuffle(
+					inputs.begin(),
+					inputs.end(),
+					std::default_random_engine(seed));
+
+			std::shuffle(
+					expected.begin(),
+					expected.end(),
+					std::default_random_engine(seed));
+		}
+
+		if (samples_count > 0) {
+			total_dg /= samples_count;
+			area1.update_weights(total_dg);
+		}
 	}
-
-	print_line("Error: " + brain::rtos(error));
 
 	// Just guess now
 	brain::Matrix guess;
@@ -286,8 +385,8 @@ int main() {
 	error_handler->errfunc = print_error_callback;
 	brain::add_error_handler(error_handler);
 
-	test_NEAT_XOR();
-	//test_uniform_ba_XOR();
+	//test_NEAT_XOR();
+	test_uniform_ba_XOR();
 
 	return 0;
 }

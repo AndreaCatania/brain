@@ -268,6 +268,23 @@ brain::Matrix brain::Matrix::operator-(const brain::Matrix &p_other) const {
 	return ret;
 }
 
+void brain::Matrix::operator/=(int p_num) {
+	ERR_FAIL_COND(p_num <= 0);
+
+	for (int r(0); r < rows; ++r) {
+		for (int c(0); c < columns; ++c) {
+
+			matrix[GET_ID(r, c)] /= p_num;
+		}
+	}
+}
+
+brain::Matrix brain::Matrix::operator/(int p_num) const {
+	brain::Matrix ret(*this);
+	ret /= p_num;
+	return ret;
+}
+
 brain::Matrix::operator std::string() const {
 	std::string s("Matrix:\n");
 	for (int r(0); r < rows; ++r) {

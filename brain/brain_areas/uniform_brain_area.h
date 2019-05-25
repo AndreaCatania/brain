@@ -23,6 +23,9 @@ public:
 	struct DeltaGradients {
 		std::vector<Matrix> weights;
 		std::vector<Matrix> biases;
+
+		void operator+=(const DeltaGradients &p_other);
+		void operator/=(int p_num);
 	};
 
 	/**
@@ -30,6 +33,15 @@ public:
 	 * during the learning phase
 	 */
 	struct LearningCache {
+
+		/**
+		 * @brief layers_input has the not yet actived data
+		 */
+		std::vector<brain::Matrix> layers_input;
+
+		/**
+		 * @brief layers_output has the actived data
+		 */
 		std::vector<brain::Matrix> layers_output;
 	};
 
@@ -102,6 +114,7 @@ public:
 	const Matrix &get_layer_weights(const int p_layer) const;
 
 	void set_layer_biases(int p_layer, const Matrix &p_matrix);
+
 	void set_layer_activation(int p_layer, Activation p_activation);
 
 	const std::vector<Matrix> &get_weights() const { return weights; }

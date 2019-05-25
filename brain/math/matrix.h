@@ -85,6 +85,9 @@ public:
 	void operator-=(const Matrix &p_other);
 	Matrix operator-(const Matrix &p_other) const;
 
+	void operator/=(int p_num);
+	Matrix operator/(int p_num) const;
+
 	operator std::string() const;
 
 private:

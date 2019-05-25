@@ -11,11 +11,44 @@
 #define WEIGHT_INDEX(layer) (layer)
 #define BIAS_INDEX(layer) (layer)
 
+void brain::UniformBrainArea::DeltaGradients::operator+=(const DeltaGradients &p_other) {
+
+	if (weights.size() == 0) {
+
+		weights.resize(p_other.weights.size());
+		biases.resize(p_other.biases.size());
+
+		for (int i = 0; i < weights.size(); ++i) {
+			weights[i] = p_other.weights[i];
+			biases[i] = p_other.biases[i];
+		}
+
+	} else {
+
+		ERR_FAIL_COND(weights.size() != p_other.weights.size());
+		ERR_FAIL_COND(biases.size() != p_other.biases.size());
+
+		for (int i = 0; i < weights.size(); ++i) {
+			weights[i] += p_other.weights[i];
+			biases[i] += p_other.biases[i];
+		}
+	}
+}
+
+void brain::UniformBrainArea::DeltaGradients::operator/=(int p_num) {
+	ERR_FAIL_COND(p_num <= 0);
+
+	for (int i = 0; i < weights.size(); ++i) {
+		weights[i] /= p_num;
+		biases[i] /= p_num;
+	}
+}
+
 brain::UniformBrainArea::UniformBrainArea() :
 		brain::BrainArea(BRAIN_AREA_TYPE_UNIFORM) {
 	weights.resize(1);
 	biases.resize(1);
-	activations.push_back(ACTIVATION_SIGMOID);
+	activations.push_back(ACTIVATION_RELU);
 }
 
 brain::UniformBrainArea::UniformBrainArea(
@@ -130,7 +163,7 @@ void brain::UniformBrainArea::fill_biases(real_t p_value) {
 }
 
 int brain::UniformBrainArea::get_layer_count() const {
-	return weights.size() + 1;
+	return OUTPUT_INDEX + 1;
 }
 
 void brain::UniformBrainArea::set_layer_weights(int p_layer, const Matrix &p_matrix) {
@@ -199,7 +232,7 @@ real_t brain::UniformBrainArea::learn(
 					weights[WEIGHT_INDEX(l - 1)].transposed() * propagated_error;
 
 		// Calculate gradient (cost of this execution)
-		Matrix &gradient = r_cache->layers_output[l];
+		Matrix &gradient = r_cache->layers_input[l];
 
 		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(l)] == ACTIVATION_MAX, 10000));
 
@@ -272,18 +305,22 @@ bool brain::UniformBrainArea::_guess(
 	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_INDEX), false);
 	ERR_FAIL_COND_V(p_input.get_column_count() != 1, false);
 
-	if (p_cache)
-		p_cache->layers_output.resize(get_layer_count());
-
 	r_data = p_input;
+
+	if (p_cache) {
+		p_cache->layers_input.resize(get_layer_count());
+		p_cache->layers_output.resize(get_layer_count());
+		p_cache->layers_input[0] = r_data;
+		p_cache->layers_output[0] = r_data;
+	}
 
 	for (int layer(0); layer < weights.size(); ++layer) {
 
-		if (p_cache)
-			p_cache->layers_output[layer] = r_data;
-
-		// Move the data forward to next layer
+		// Move the data forward to the next layer
 		r_data = (weights[WEIGHT_INDEX(layer)] * r_data) + biases[BIAS_INDEX(layer)];
+
+		if (p_cache)
+			p_cache->layers_input[layer + 1] = r_data;
 
 		// Compute next layer activation
 		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(layer + 1)] == ACTIVATION_MAX, false));
@@ -292,15 +329,16 @@ bool brain::UniformBrainArea::_guess(
 
 			const real_t summ = r_data.exp_summation();
 			r_data.map(brain::Math::soft_max_fast, summ);
+
 		} else {
 
 			r_data.map(
 					activation_functions[activations[ACTIVATION_INDEX(layer + 1)]]);
 		}
-	}
 
-	if (p_cache)
-		p_cache->layers_output[get_layer_count() - 1] = r_data;
+		if (p_cache)
+			p_cache->layers_output[layer + 1] = r_data;
+	}
 
 	return true;
 }
