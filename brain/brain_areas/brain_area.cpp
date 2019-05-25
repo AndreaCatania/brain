@@ -12,7 +12,7 @@ activation_func brain::BrainArea::activation_functions[] = {
 };
 
 activation_func brain::BrainArea::activation_derivatives[] = {
-	brain::Math::sigmoid_fast_derivative,
+	brain::Math::sigmoid_derivative,
 	brain::Math::relu_derivative,
 	brain::Math::leaky_relu_derivative,
 	brain::Math::tanh_derivative,

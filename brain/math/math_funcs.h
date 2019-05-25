@@ -49,24 +49,24 @@ public:
 
 	static const uint64_t RANDOM_MAX = 0xFFFFFFFF;
 
-	static _ALWAYS_INLINE_ double sigmoid(double p_x) { return 1.0 / (1.0 + pow(Math_E, -p_x)); }
-	static _ALWAYS_INLINE_ float sigmoid(float p_x) { return 1.0f / (1.0f + pow(static_cast<float>(Math_E), -p_x)); }
+	static _ALWAYS_INLINE_ double sigmoid(double p_x) { return 1.0 / (1.0 + exp(-p_x)); }
+	static _ALWAYS_INLINE_ float sigmoid(float p_x) { return 1.0f / (1.0f + exp(-p_x)); }
 
 	/**
 	 * This is the derivative works only if you pass the sigmoid of X
 	 */
-	static _ALWAYS_INLINE_ double sigmoid_fast_derivative(double p_sigmoid) {
+	static _ALWAYS_INLINE_ double _fast_sigmoid_derivative(double p_sigmoid) {
 		return p_sigmoid * (1.0 - p_sigmoid);
 	}
-	static _ALWAYS_INLINE_ float sigmoid_fast_derivative(float p_sigmoid) {
+	static _ALWAYS_INLINE_ float _fast_sigmoid_derivative(float p_sigmoid) {
 		return p_sigmoid * (1.0f - p_sigmoid);
 	}
 
 	static _ALWAYS_INLINE_ double sigmoid_derivative(double p_x) {
-		return sigmoid_fast_derivative(sigmoid(p_x));
+		return _fast_sigmoid_derivative(sigmoid(p_x));
 	}
 	static _ALWAYS_INLINE_ float sigmoid_derivative(float p_x) {
-		return sigmoid_fast_derivative(sigmoid(p_x));
+		return _fast_sigmoid_derivative(sigmoid(p_x));
 	}
 
 	static _ALWAYS_INLINE_ double relu(double p_x) { return MAX(p_x, 0.); }
