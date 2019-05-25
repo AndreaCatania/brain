@@ -16,11 +16,46 @@ namespace brain {
 class UniformBrainArea : public brain::BrainArea {
 
 public:
+	/**
+	 * @brief The DeltaGradients struct holds the delta weight to add for
+	 * all the layers.
+	 */
+	struct DeltaGradients {
+		std::vector<Matrix> weights;
+		std::vector<Matrix> biases;
+	};
+
+	/**
+	 * @brief The LearningCache struct holds the information that are used
+	 * during the learning phase
+	 */
 	struct LearningCache {
 		std::vector<brain::Matrix> layers_output;
 	};
 
 private:
+	/**
+	 * @brief weights, biases, activations, are organized in this way:
+	 *
+	 * Weights[3]
+	 * Biases[3]
+	 * Activations[2]
+	 *
+	 * layer 0            layer 1                         layer 2
+	 * | -- weight - bias | -- Activation - weight - bias | -- Activation - weight - bias
+	 * | -- weight - bias | -- Activation - weight - bias | -- Activation - weight - bias
+	 * | -- weight - bias | -- Activation - weight - bias | -- Activation - weight - bias
+	 *
+	 * To facilitate the reading use the below macros, they accept the
+	 * layer ID and returns the index to use in these arrays.
+	 *
+	 * INPUT_INDEX
+	 * HIDDEN_INDEX(layer)
+	 * OUTPUT_INDEX
+	 * ACTIVATION_INDEX(layer)
+	 * WEIGHT_INDEX(layer)
+	 * BIAS_INDEX(layer)
+	 */
 	std::vector<Matrix> weights;
 	std::vector<Matrix> biases;
 	std::vector<Activation> activations;
@@ -78,7 +113,11 @@ public:
 	 * @param p_guess
 	 * @param p_expected
 	 * @param p_learn_rate usually something around 0.05
-	 * @param p_cache if null the cache is cleared for each call
+	 * @param p_update_weights if false the weights will not updated.
+	 *			Useful when you need to take the delta weight
+	 * @param r_gradients if not null, it's filled with the delta gradients
+	 *			calculated, then is possible to use them in
+	 * @param r_cache if null the cache is cleared for each call
 	 * @return Returns the error of this guess, 0 == Accurate
 	 *
 	 * This function can be used to train the brain area.
@@ -89,11 +128,17 @@ public:
 			const Matrix &p_input,
 			const Matrix &p_expected,
 			real_t p_learn_rate,
-			LearningCache *p_cache);
+			bool p_update_weights = true,
+			DeltaGradients *r_gradients = NULL,
+			LearningCache *r_cache = NULL);
 
-	virtual bool guess(
-			const Matrix &p_input,
-			Matrix &r_guess) const;
+	/**
+	 * @brief update_weights can be used to updated the weights using the DeltaGradients.
+	 * This function is useful to perform Batch or mini batch gradient descent
+	 *
+	 * @param p_gradients
+	 */
+	void update_weights(const DeltaGradients &p_gradients);
 
 	/**
 	 * @brief guess
@@ -104,6 +149,10 @@ public:
 			const Matrix &p_input,
 			Matrix &r_guess,
 			LearningCache *p_cache = nullptr) const;
+
+	virtual bool guess(
+			const Matrix &p_input,
+			Matrix &r_guess) const;
 
 	/**
 	 * @brief The MetadataIndices enum

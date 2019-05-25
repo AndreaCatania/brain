@@ -3,15 +3,13 @@
 #include "brain/error_macros.h"
 #include "brain/math/math_funcs.h"
 
-#define HIDDEN_LAYER(layer) (layer + 1)
-#define HIDDEN_LAYER_COUNT(count) (count - 2)
+#define INPUT_INDEX 0
+#define HIDDEN_INDEX(layer) (layer + 1)
+#define OUTPUT_INDEX weights.size()
 
-#define INPUT_LAYER_ID 0
-#define OUTPUT_LAYER_ID weights.size()
-
-#define ACTIVATION_ID(layer) ((layer)-1)
-#define WEIGHT_ID(layer) (layer)
-#define BIAS_ID(layer) (layer)
+#define ACTIVATION_INDEX(layer) ((layer)-1)
+#define WEIGHT_INDEX(layer) (layer)
+#define BIAS_INDEX(layer) (layer)
 
 brain::UniformBrainArea::UniformBrainArea() :
 		brain::BrainArea(BRAIN_AREA_TYPE_UNIFORM) {
@@ -31,41 +29,41 @@ brain::UniformBrainArea::UniformBrainArea(
 }
 
 void brain::UniformBrainArea::set_input_layer_size(uint32_t p_size) {
-	set_layer_size(INPUT_LAYER_ID, p_size);
+	set_layer_size(INPUT_INDEX, p_size);
 }
 
 uint32_t brain::UniformBrainArea::get_input_layer_size() const {
-	return get_layer_size(INPUT_LAYER_ID);
+	return get_layer_size(INPUT_INDEX);
 }
 
 void brain::UniformBrainArea::set_output_layer_size(uint32_t p_size) {
 
-	set_layer_size(OUTPUT_LAYER_ID, p_size);
+	set_layer_size(OUTPUT_INDEX, p_size);
 }
 
 uint32_t brain::UniformBrainArea::get_output_layer_size() const {
-	return get_layer_size(OUTPUT_LAYER_ID);
+	return get_layer_size(OUTPUT_INDEX);
 }
 
 void brain::UniformBrainArea::set_output_layer_activation(Activation p_activation) {
-	activations[ACTIVATION_ID(OUTPUT_LAYER_ID)] = p_activation;
+	activations[ACTIVATION_INDEX(OUTPUT_INDEX)] = p_activation;
 }
 
 brain::BrainArea::Activation brain::UniformBrainArea::get_output_layer_activation() const {
-	return activations[ACTIVATION_ID(OUTPUT_LAYER_ID)];
+	return activations[ACTIVATION_INDEX(OUTPUT_INDEX)];
 }
 
 void brain::UniformBrainArea::set_hidden_layers_count(uint32_t p_count) {
 
-	const int prev_size_output_layer = get_layer_size(OUTPUT_LAYER_ID);
+	const int prev_size_output_layer = get_layer_size(OUTPUT_INDEX);
 	const Activation prev_activ_output_layer = activations[activations.size() - 1];
 
 	weights.resize(p_count + 2 - 1);
 	biases.resize(p_count + 2 - 1);
 	activations.resize(p_count + 2 - 1);
 
-	set_layer_size(OUTPUT_LAYER_ID, prev_size_output_layer);
-	activations[OUTPUT_LAYER_ID] = prev_activ_output_layer;
+	set_layer_size(OUTPUT_INDEX, prev_size_output_layer);
+	activations[OUTPUT_INDEX] = prev_activ_output_layer;
 }
 
 uint32_t brain::UniformBrainArea::get_hidden_layers_count() const {
@@ -82,11 +80,11 @@ void brain::UniformBrainArea::set_hidden_layer(
 }
 
 void brain::UniformBrainArea::set_hidden_layer_size(uint32_t p_hidden_layer, uint32_t p_size) {
-	set_layer_size(HIDDEN_LAYER(p_hidden_layer), p_size);
+	set_layer_size(HIDDEN_INDEX(p_hidden_layer), p_size);
 }
 
 uint32_t brain::UniformBrainArea::get_hidden_layer_size(uint32_t p_hidden_layer) const {
-	return get_layer_size(HIDDEN_LAYER(p_hidden_layer));
+	return get_layer_size(HIDDEN_INDEX(p_hidden_layer));
 }
 
 void brain::UniformBrainArea::set_hidden_layer_activation(uint32_t p_hidden_layer, Activation p_activation) {
@@ -158,20 +156,27 @@ real_t brain::UniformBrainArea::learn(
 		const Matrix &p_input,
 		const Matrix &p_expected,
 		real_t p_learn_rate,
-		LearningCache *p_cache) {
+		bool p_update_weights,
+		DeltaGradients *r_gradients,
+		LearningCache *r_cache) {
 
-	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_INDEX), 10000);
 	ERR_FAIL_COND_V(p_input.get_column_count() != 1, 10000);
-	ERR_FAIL_COND_V(p_expected.get_row_count() != get_layer_size(OUTPUT_LAYER_ID), 10000);
+	ERR_FAIL_COND_V(p_expected.get_row_count() != get_layer_size(OUTPUT_INDEX), 10000);
 	ERR_FAIL_COND_V(p_expected.get_column_count() != 1, 10000);
 
-	const bool shared_cache = p_cache;
+	if (r_gradients) {
+		r_gradients->weights.resize(weights.size());
+		r_gradients->biases.resize(biases.size());
+	}
+
+	const bool shared_cache = r_cache;
 	if (!shared_cache) {
-		p_cache = new LearningCache;
+		r_cache = new LearningCache;
 	}
 
 	brain::Matrix guess_res;
-	_guess(p_input, guess_res, p_cache);
+	_guess(p_input, guess_res, r_cache);
 
 	const Matrix total_error = p_expected - guess_res;
 	Matrix propagated_error = total_error;
@@ -191,12 +196,14 @@ real_t brain::UniformBrainArea::learn(
 		// Skip propagation if we are on penultimate layer
 		if (1 <= l - 1)
 			propagated_error =
-					weights[WEIGHT_ID(l - 1)].transposed() * propagated_error;
+					weights[WEIGHT_INDEX(l - 1)].transposed() * propagated_error;
 
 		// Calculate gradient (cost of this execution)
-		Matrix &gradient = p_cache->layers_output[l];
+		Matrix &gradient = r_cache->layers_output[l];
 
-		if (activations[ACTIVATION_ID(l)] == ACTIVATION_SOFTMAX) {
+		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(l)] == ACTIVATION_MAX, 10000));
+
+		if (activations[ACTIVATION_INDEX(l)] == ACTIVATION_SOFTMAX) {
 
 			/// This is a special gradient (cost function) calculation when
 			/// the soft max activation function is used
@@ -206,29 +213,48 @@ real_t brain::UniformBrainArea::learn(
 			gradient = layer_error;
 
 		} else {
-			DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(l)] == ACTIVATION_MAX, 10000));
-			gradient.map(activation_derivatives[activations[ACTIVATION_ID(l)]]);
 
+			gradient.map(activation_derivatives[activations[ACTIVATION_INDEX(l)]]);
 			gradient.element_wise_multiplicate(layer_error);
 		}
 
 		gradient *= p_learn_rate;
 
 		// Prepare the input for delta weight calc
-		const Matrix input_transposed(p_cache->layers_output[l - 1].transposed());
+		const Matrix input_transposed(r_cache->layers_output[l - 1].transposed());
 
-		// Adjust weights by its delta
-		weights[WEIGHT_ID(l - 1)] += (gradient * input_transposed);
-		biases[BIAS_ID(l - 1)] += gradient;
+		if (p_update_weights) {
+
+			// Adjust weights by its delta
+			weights[WEIGHT_INDEX(l - 1)] += (gradient * input_transposed);
+			biases[BIAS_INDEX(l - 1)] += gradient;
+		}
+
+		if (r_gradients) {
+			r_gradients->weights[WEIGHT_INDEX(l - 1)] = (gradient * input_transposed);
+			r_gradients->biases[BIAS_INDEX(l - 1)] = gradient;
+		}
 	}
 
 	if (!shared_cache) {
-		delete p_cache;
-		p_cache = nullptr;
+		delete r_cache;
+		r_cache = nullptr;
 	}
 
 	// Total error = Σ((expected - guess)^2)
 	return total_error.mapped(brain::Math::pow, 2).summation();
+}
+
+void brain::UniformBrainArea::update_weights(const DeltaGradients &p_gradients) {
+
+	ERR_FAIL_COND(p_gradients.weights.size() != weights.size());
+	ERR_FAIL_COND(p_gradients.biases.size() != biases.size());
+
+	for (int l(0); l < get_layer_count(); ++l) {
+
+		weights[WEIGHT_INDEX(l)] += p_gradients.weights[WEIGHT_INDEX(l)];
+		biases[BIAS_INDEX(l)] += p_gradients.biases[BIAS_INDEX(l)];
+	}
 }
 
 bool brain::UniformBrainArea::guess(
@@ -240,39 +266,41 @@ bool brain::UniformBrainArea::guess(
 
 bool brain::UniformBrainArea::_guess(
 		const Matrix &p_input,
-		Matrix &r_guess,
+		Matrix &r_data,
 		LearningCache *p_cache) const {
 
-	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_LAYER_ID), false);
+	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_INDEX), false);
 	ERR_FAIL_COND_V(p_input.get_column_count() != 1, false);
 
 	if (p_cache)
 		p_cache->layers_output.resize(get_layer_count());
 
-	r_guess = p_input;
+	r_data = p_input;
 
-	for (int i(0); i < weights.size(); ++i) {
+	for (int layer(0); layer < weights.size(); ++layer) {
 
 		if (p_cache)
-			p_cache->layers_output[i] = r_guess;
+			p_cache->layers_output[layer] = r_data;
 
-		// Layer calculation
-		r_guess = (weights[i] * r_guess) + biases[i];
+		// Move the data forward to next layer
+		r_data = (weights[WEIGHT_INDEX(layer)] * r_data) + biases[BIAS_INDEX(layer)];
 
-		if (activations[ACTIVATION_ID(i + 1)] == ACTIVATION_SOFTMAX) {
+		// Compute next layer activation
+		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(layer + 1)] == ACTIVATION_MAX, false));
 
-			const real_t summ = r_guess.exp_summation();
-			r_guess.map(brain::Math::soft_max_fast, summ);
+		if (activations[ACTIVATION_INDEX(layer + 1)] == ACTIVATION_SOFTMAX) {
 
+			const real_t summ = r_data.exp_summation();
+			r_data.map(brain::Math::soft_max_fast, summ);
 		} else {
-			// Activation of next layer
-			DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_ID(i + 1)] == ACTIVATION_MAX, false));
-			r_guess.map(activation_functions[activations[ACTIVATION_ID(i + 1)]]);
+
+			r_data.map(
+					activation_functions[activations[ACTIVATION_INDEX(layer + 1)]]);
 		}
 	}
 
 	if (p_cache)
-		p_cache->layers_output[get_layer_count() - 1] = r_guess;
+		p_cache->layers_output[get_layer_count() - 1] = r_data;
 
 	return true;
 }
@@ -415,7 +443,7 @@ bool brain::UniformBrainArea::get_buffer(std::vector<uint8_t> &r_buffer) const {
 }
 
 void brain::UniformBrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) {
-	ERR_FAIL_INDEX(p_layer, OUTPUT_LAYER_ID + 1);
+	ERR_FAIL_INDEX(p_layer, OUTPUT_INDEX + 1);
 
 	// Update previous weight layer size
 	if (0 < p_layer) {
@@ -438,8 +466,9 @@ void brain::UniformBrainArea::set_layer_size(uint32_t p_layer, uint32_t p_size) 
 uint32_t brain::UniformBrainArea::get_layer_size(uint32_t p_layer) const {
 	ERR_FAIL_INDEX_V(p_layer, weights.size() + 1, 0);
 
-	if (p_layer == OUTPUT_LAYER_ID) {
-		// This happens only for the last layer
+	if (p_layer == OUTPUT_INDEX) {
+		// To know the last layer size, is enough count the row size of the last
+		// layer weight matrix
 		return weights[p_layer - 1].get_row_count();
 	} else {
 		return weights[p_layer].get_column_count();
