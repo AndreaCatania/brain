@@ -47,7 +47,7 @@ void test_uniform_ba_XOR() {
 	brain::UniformBrainArea area1(2, 1, 1);
 
 	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_LEAKY_RELU);
-	area1.set_activations(1, brain::UniformBrainArea::ACTIVATION_BINARY);
+	area1.set_layer_activation(2, brain::UniformBrainArea::ACTIVATION_SIGMOID);
 
 	brain::Math::randomize();
 	area1.randomize_weights(1);

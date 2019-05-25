@@ -97,15 +97,15 @@ public:
 	void fill_biases(real_t p_value);
 
 	int get_layer_count() const;
+
+	void set_layer_weights(int p_layer, const Matrix &p_matrix);
 	const Matrix &get_layer_weights(const int p_layer) const;
 
-	void set_weight(int p_index, const Matrix &p_matrix);
+	void set_layer_biases(int p_layer, const Matrix &p_matrix);
+	void set_layer_activation(int p_layer, Activation p_activation);
+
 	const std::vector<Matrix> &get_weights() const { return weights; }
-
-	void set_biases(int p_index, const Matrix &p_matrix);
 	const std::vector<Matrix> &get_biases() const { return biases; }
-
-	void set_activations(int p_index, Activation p_activation);
 	const std::vector<Activation> &get_activations() const { return activations; }
 
 	/**

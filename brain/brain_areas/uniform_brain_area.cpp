@@ -133,23 +133,23 @@ int brain::UniformBrainArea::get_layer_count() const {
 	return weights.size() + 1;
 }
 
+void brain::UniformBrainArea::set_layer_weights(int p_layer, const Matrix &p_matrix) {
+	ERR_FAIL_INDEX(WEIGHT_INDEX(p_layer), weights.size());
+	weights[WEIGHT_INDEX(p_layer)] = p_matrix;
+}
+
 const brain::Matrix &brain::UniformBrainArea::get_layer_weights(const int p_layer) const {
-	return weights[p_layer];
+	return weights[WEIGHT_INDEX(p_layer)];
 }
 
-void brain::UniformBrainArea::set_weight(int p_index, const Matrix &p_matrix) {
-	ERR_FAIL_INDEX(p_index, weights.size());
-	weights[p_index] = p_matrix;
+void brain::UniformBrainArea::set_layer_biases(int p_layer, const Matrix &p_matrix) {
+	ERR_FAIL_INDEX(BIAS_INDEX(p_layer), biases.size());
+	biases[BIAS_INDEX(p_layer)] = p_matrix;
 }
 
-void brain::UniformBrainArea::set_biases(int p_index, const Matrix &p_matrix) {
-	ERR_FAIL_INDEX(p_index, biases.size());
-	biases[p_index] = p_matrix;
-}
-
-void brain::UniformBrainArea::set_activations(int p_index, Activation p_activation) {
-	ERR_FAIL_INDEX(p_index, activations.size());
-	activations[p_index] = p_activation;
+void brain::UniformBrainArea::set_layer_activation(int p_layer, Activation p_activation) {
+	ERR_FAIL_INDEX(ACTIVATION_INDEX(p_layer), activations.size());
+	activations[ACTIVATION_INDEX(p_layer)] = p_activation;
 }
 
 real_t brain::UniformBrainArea::learn(
