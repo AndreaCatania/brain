@@ -32,17 +32,17 @@ public:
 	 * @brief The LearningCache struct holds the information that are used
 	 * during the learning phase
 	 */
-	struct LearningCache {
+	struct LearningData {
 
 		/**
 		 * @brief layers_input has the not yet actived data
 		 */
-		std::vector<brain::Matrix> layers_input;
+		std::vector<brain::Matrix> layers_input_signal;
 
 		/**
 		 * @brief layers_output has the actived data
 		 */
-		std::vector<brain::Matrix> layers_output;
+		std::vector<brain::Matrix> layers_output_signal;
 	};
 
 private:
@@ -143,7 +143,7 @@ public:
 			real_t p_learn_rate,
 			bool p_update_weights = true,
 			DeltaGradients *r_gradients = NULL,
-			LearningCache *r_cache = NULL);
+			LearningData *r_cache = NULL);
 
 	/**
 	 * @brief update_weights can be used to updated the weights using the DeltaGradients.
@@ -157,11 +157,13 @@ public:
 	 * @brief guess
 	 * @param p_input Input data
 	 * @param r_guess result
+	 * @param r_ld is the learning data, pass null if you don't need to know
+	 *			these info
 	 */
 	bool _guess(
 			const Matrix &p_input,
 			Matrix &r_guess,
-			LearningCache *p_cache = nullptr) const;
+			LearningData *r_ld = nullptr) const;
 
 	virtual bool guess(
 			const Matrix &p_input,

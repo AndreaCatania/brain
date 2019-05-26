@@ -191,7 +191,32 @@ real_t brain::UniformBrainArea::learn(
 		real_t p_learn_rate,
 		bool p_update_weights,
 		DeltaGradients *r_gradients,
-		LearningCache *r_cache) {
+		LearningData *r_ld) {
+
+	///
+	/// This function executes the backpropagation of the error.
+	///
+	/// The error function is calculated using the equation: Σ((expected - guess)^2)
+	///		where the expected is the target output provided by the used
+	///		while the guess is the output of the neural network.
+	///
+	/// To calculate the gradient (called also slope) that then is used to
+	///		update each weight, is used the below equation, that is the result
+	///		of the application of the chain rule to this equation: dE / dW
+	///
+	///			gradient = error * derivative(input_of_neuron) * output_previous_neuron
+	///
+	///		Note: The gradient is calculated in this way because of its variable
+	///		dependencies that may be not few and so trivial to calculate, so
+	///		turns out that this is the most simple way to calculate it.
+	///
+	///		This equation can be used to calculates the gradient for any layer.
+	///		Is important to say that the error must descent (must be back
+	///		propagated), to allow the correct application of the above equation.
+	///		To perform this action is necessary to take the error and
+	///		backpropagate to each node taking in cosideration the various link
+	///		weights.
+	///
 
 	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_INDEX), 10000);
 	ERR_FAIL_COND_V(p_input.get_column_count() != 1, 10000);
@@ -203,79 +228,82 @@ real_t brain::UniformBrainArea::learn(
 		r_gradients->biases.resize(biases.size());
 	}
 
-	const bool shared_cache = r_cache;
-	if (!shared_cache) {
-		r_cache = new LearningCache;
+	const bool is_using_shared_cache = r_ld;
+	if (!is_using_shared_cache) {
+		r_ld = new LearningData;
 	}
 
-	brain::Matrix guess_res;
-	_guess(p_input, guess_res, r_cache);
+	/// --- Take the NN output ---
 
-	const Matrix total_error = p_expected - guess_res;
-	Matrix propagated_error = total_error;
+	brain::Matrix guess_res;
+	_guess(p_input, guess_res, r_ld);
+
+	/// --- Back propagation phase ---
+
+	Matrix propagated_error = p_expected - guess_res;
+
+	// Total error = Σ((expected - guess)^2)
+	real_t total_error = propagated_error.mapped(brain::Math::pow, 2).summation();
 
 	Matrix layer_error;
-
-	/// Back propagation
-
-	/// The first task of this cycle is to calculate the error for the
-	/// layer - 1  before updates the weights.
-	/// Then calculate the gradient error and apply this gradient to the weight
-	for (int l(get_layer_count() - 1); 1 <= l; --l) {
+	for (int layer(get_layer_count() - 1); 1 <= layer; --layer) {
 
 		layer_error = propagated_error;
 
-		// Propagate the error before change the weights
-		// Skip propagation if we are on penultimate layer
-		if (1 <= l - 1)
+		/// Step 1. Progate the error backward.
+		if (layer > 0) {
+			// Skip for the penultimate layer since we are done.
 			propagated_error =
-					weights[WEIGHT_INDEX(l - 1)].transposed() * propagated_error;
+					weights[WEIGHT_INDEX(layer - 1)].transposed() * propagated_error;
+		}
 
-		// Calculate gradient (cost of this execution)
-		Matrix &gradient = r_cache->layers_input[l];
+		/// Step 2. Calculate the layer input signal derivative
+		Matrix derivative = r_ld->layers_input_signal[layer];
 
-		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(l)] == ACTIVATION_MAX, 10000));
-
-		if (activations[ACTIVATION_INDEX(l)] == ACTIVATION_SOFTMAX) {
+		if (activations[ACTIVATION_INDEX(layer)] == ACTIVATION_SOFTMAX) {
 
 			/// This is a special gradient (cost function) calculation when
 			/// the soft max activation function is used
 			/// Explanation:
 			///		https://www.youtube.com/watch?v=mlaLLQofmR8
 			///		https://math.stackexchange.com/questions/945871/derivative-of-softmax-loss-function
-			gradient = layer_error;
+			derivative = layer_error;
 
 		} else {
 
-			gradient.map(activation_derivatives[activations[ACTIVATION_INDEX(l)]]);
-			gradient.element_wise_multiplicate(layer_error);
+			DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(layer)] == ACTIVATION_MAX, 10000));
+			derivative.map(activation_derivatives[activations[ACTIVATION_INDEX(layer)]]);
 		}
 
+		const Matrix transposed_output_prev_layer(r_ld->layers_output_signal[layer - 1].transposed());
+
+		/// Step 3. Calculate the gradient
+		/// Note: The output is multiplied later for performance reason
+		Matrix &gradient = derivative;
+		gradient.element_wise_multiplicate(layer_error);
+
+		/// Step 4. scaling
 		gradient *= p_learn_rate;
 
-		// Prepare the input for delta weight calc
-		const Matrix input_transposed(r_cache->layers_output[l - 1].transposed());
-
+		/// Step 5. Update phase
 		if (p_update_weights) {
-
-			// Adjust weights by its delta
-			weights[WEIGHT_INDEX(l - 1)] += (gradient * input_transposed);
-			biases[BIAS_INDEX(l - 1)] += gradient;
+			weights[WEIGHT_INDEX(layer - 1)] += gradient * transposed_output_prev_layer;
+			biases[BIAS_INDEX(layer - 1)] += gradient;
 		}
 
 		if (r_gradients) {
-			r_gradients->weights[WEIGHT_INDEX(l - 1)] = (gradient * input_transposed);
-			r_gradients->biases[BIAS_INDEX(l - 1)] = gradient;
+			r_gradients->weights[WEIGHT_INDEX(layer - 1)] = gradient * transposed_output_prev_layer;
+			r_gradients->biases[BIAS_INDEX(layer - 1)] = gradient;
 		}
 	}
 
-	if (!shared_cache) {
-		delete r_cache;
-		r_cache = nullptr;
+	if (!is_using_shared_cache) {
+		// Clear cache
+		delete r_ld;
+		r_ld = nullptr;
 	}
 
-	// Total error = Σ((expected - guess)^2)
-	return total_error.mapped(brain::Math::pow, 2).summation();
+	return total_error;
 }
 
 void brain::UniformBrainArea::update_weights(const DeltaGradients &p_gradients) {
@@ -300,18 +328,18 @@ bool brain::UniformBrainArea::guess(
 bool brain::UniformBrainArea::_guess(
 		const Matrix &p_input,
 		Matrix &r_data,
-		LearningCache *p_cache) const {
+		LearningData *p_ld) const {
 
 	ERR_FAIL_COND_V(p_input.get_row_count() != get_layer_size(INPUT_INDEX), false);
 	ERR_FAIL_COND_V(p_input.get_column_count() != 1, false);
 
 	r_data = p_input;
 
-	if (p_cache) {
-		p_cache->layers_input.resize(get_layer_count());
-		p_cache->layers_output.resize(get_layer_count());
-		p_cache->layers_input[0] = r_data;
-		p_cache->layers_output[0] = r_data;
+	if (p_ld) {
+		p_ld->layers_input_signal.resize(get_layer_count());
+		p_ld->layers_output_signal.resize(get_layer_count());
+		p_ld->layers_input_signal[0] = r_data;
+		p_ld->layers_output_signal[0] = r_data;
 	}
 
 	for (int layer(0); layer < weights.size(); ++layer) {
@@ -319,8 +347,8 @@ bool brain::UniformBrainArea::_guess(
 		// Move the data forward to the next layer
 		r_data = (weights[WEIGHT_INDEX(layer)] * r_data) + biases[BIAS_INDEX(layer)];
 
-		if (p_cache)
-			p_cache->layers_input[layer + 1] = r_data;
+		if (p_ld)
+			p_ld->layers_input_signal[layer + 1] = r_data;
 
 		// Compute next layer activation
 		DEBUG_ONLY(ERR_FAIL_COND_V(activations[ACTIVATION_INDEX(layer + 1)] == ACTIVATION_MAX, false));
@@ -336,8 +364,8 @@ bool brain::UniformBrainArea::_guess(
 					activation_functions[activations[ACTIVATION_INDEX(layer + 1)]]);
 		}
 
-		if (p_cache)
-			p_cache->layers_output[layer + 1] = r_data;
+		if (p_ld)
+			p_ld->layers_output_signal[layer + 1] = r_data;
 	}
 
 	return true;

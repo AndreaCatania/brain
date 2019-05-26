@@ -47,7 +47,7 @@ void test_uniform_ba_XOR() {
 	brain::UniformBrainArea area1(2, 1, 1);
 
 	area1.set_hidden_layer(0, 2, brain::UniformBrainArea::ACTIVATION_LEAKY_RELU);
-	area1.set_layer_activation(2, brain::UniformBrainArea::ACTIVATION_BINARY);
+	area1.set_layer_activation(2, brain::UniformBrainArea::ACTIVATION_LINEAR);
 
 	brain::Math::randomize();
 	area1.randomize_weights(1);
@@ -81,7 +81,7 @@ void test_uniform_ba_XOR() {
 	}
 
 	real_t error;
-	brain::UniformBrainArea::LearningCache lc;
+	brain::UniformBrainArea::LearningData lc;
 
 	int learn_mode = 0;
 	if (learn_mode == 0) {
