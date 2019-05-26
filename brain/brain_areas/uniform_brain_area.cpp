@@ -204,15 +204,15 @@ real_t brain::UniformBrainArea::learn(
 	///		update each weight, is used the below equation, that is the result
 	///		of the application of the chain rule to this equation: dE / dW
 	///
-	///			gradient = error * derivative(input_of_neuron) * output_previous_neuron
+	///			gradient = -error * derivative(input_of_neuron) * output_previous_neuron
 	///
 	///		Note: The gradient is calculated in this way because of its variable
 	///		dependencies that may be not few and so trivial to calculate, so
 	///		turns out that this is the most simple way to calculate it.
 	///
 	///		This equation can be used to calculates the gradient for any layer.
-	///		Is important to say that the error must descent (must be back
-	///		propagated), to allow the correct application of the above equation.
+	///		Is important to say that the error must be back propagated,
+	///		to allow the correct application of the above equation.
 	///		To perform this action is necessary to take the error and
 	///		backpropagate to each node taking in cosideration the various link
 	///		weights.
@@ -282,13 +282,15 @@ real_t brain::UniformBrainArea::learn(
 		Matrix &gradient = derivative;
 		gradient.element_wise_multiplicate(layer_error);
 
-		/// Step 4. scaling
-		gradient *= p_learn_rate;
+		/// Step 4. Scake and multipling with -1 since we have a minus at the
+		/// start of the equation
+		gradient *= -p_learn_rate;
 
 		/// Step 5. Update phase
 		if (p_update_weights) {
-			weights[WEIGHT_INDEX(layer - 1)] += gradient * transposed_output_prev_layer;
-			biases[BIAS_INDEX(layer - 1)] += gradient;
+			// Subtract the gradient since we want to descent the slope
+			weights[WEIGHT_INDEX(layer - 1)] -= gradient * transposed_output_prev_layer;
+			biases[BIAS_INDEX(layer - 1)] -= gradient;
 		}
 
 		if (r_gradients) {
@@ -313,8 +315,9 @@ void brain::UniformBrainArea::update_weights(const DeltaGradients &p_gradients) 
 
 	for (int l(0); l < get_layer_count(); ++l) {
 
-		weights[WEIGHT_INDEX(l)] += p_gradients.weights[WEIGHT_INDEX(l)];
-		biases[BIAS_INDEX(l)] += p_gradients.biases[BIAS_INDEX(l)];
+		// Subtract the gradient since we want to descent the slope
+		weights[WEIGHT_INDEX(l)] -= p_gradients.weights[WEIGHT_INDEX(l)];
+		biases[BIAS_INDEX(l)] -= p_gradients.biases[BIAS_INDEX(l)];
 	}
 }
 
